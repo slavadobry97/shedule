@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "node scripts/sync-version.js && next dev -H 0.0.0.0 --webpack",
     "build": "node scripts/sync-version.js && next build --webpack",
+    "cf:build": "node scripts/sync-version.js && next build --webpack && node -e \"require('fs').rmSync('.next/cache', {recursive: true, force: true})\"",
     "start": "next start",
     "lint": "next lint"
   },
