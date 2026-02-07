@@ -6,3 +6,6 @@ old-netlify-config
 docs
 *.md
 !README.md
+.next/cache
+cache
+*.log
