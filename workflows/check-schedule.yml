@@ -1,0 +1,17 @@
+name: Check Schedule Changes
+
+on:
+  schedule:
+    # Каждые 5 минут
+    - cron: '*/5 * * * *'
+  workflow_dispatch: # Ручной запуск для теста
+
+jobs:
+  check-changes:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger schedule check
+        run: |
+          curl -X GET "https://shedule-rgsu.vercel.app/api/push/check" \
+            -H "Accept: application/json" \
+            --max-time 30
