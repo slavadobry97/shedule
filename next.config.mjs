@@ -13,9 +13,8 @@ const withPWA = withPWAInit({
 });
 
 /** @type {import('next').NextConfig} */
-const nextConfig = {
-    output: 'standalone',
-};
+const nextConfig = {};
+
 
 export default withPWA(nextConfig);
 
