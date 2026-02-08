@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
+import { MinimalistLogo } from "@/components/ui/minimalist-logo";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -226,42 +227,28 @@ export default function Home({ initialGroup, initialTeacher }: DynamicSchedulePr
 
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{
-            duration: 0.8,
-            ease: [0.23, 1, 0.32, 1],
-            repeat: Infinity,
-            repeatType: "reverse"
+          animate={{
+            opacity: 1,
+            scale: 1,
+            filter: [
+              "drop-shadow(0 0 0px rgba(34, 50, 96, 0))",
+              "drop-shadow(0 0 40px rgba(34, 50, 96, 0.6))",
+              "drop-shadow(0 0 0px rgba(34, 50, 96, 0))"
+            ]
           }}
-          className="relative z-10 flex flex-col items-center gap-6"
+          transition={{
+            opacity: { duration: 0.4 },
+            scale: { duration: 0.4 },
+            filter: {
+              duration: 2.5,
+              ease: "easeInOut",
+              repeat: Infinity,
+              repeatType: "loop"
+            }
+          }}
+          className="relative z-10 flex items-center justify-center"
         >
-          <div className="relative flex items-center justify-center">
-            <div className="absolute inset-0 bg-primary/20 blur-3xl rounded-full" />
-            <div className="relative bg-background/50 backdrop-blur-xl p-6 rounded-[2rem] shadow-2xl ring-1 ring-black/5 dark:ring-white/10">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="w-16 h-16 text-primary"
-              >
-                <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
-                <path d="M6 12v5c3 3 9 3 12 0v-5" />
-              </svg>
-            </div>
-          </div>
-
-          <div className="flex flex-col items-center gap-2 text-center">
-            <h3 className="text-xl font-bold tracking-tight text-foreground/80">
-              РГСУ Расписание
-            </h3>
-            <p className="text-sm font-medium text-muted-foreground animate-pulse">
-              Загрузка данных...
-            </p>
-          </div>
+          <MinimalistLogo className="w-64 h-64" />
         </motion.div>
       </div>
     );

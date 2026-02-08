@@ -174,10 +174,11 @@ export function ScheduleView({ scheduleData, initialGroup, initialTeacher }: Sch
 
   const uniqueGroups = useMemo(() => Array.from(
     new Set(scheduleData.map((item) => item.group))
-  ), [scheduleData]);
+  ).sort((a, b) => a.localeCompare(b, "ru", { numeric: true })), [scheduleData]);
+
   const uniqueTeachers = useMemo(() => Array.from(
     new Set(scheduleData.map((item) => item.teacher))
-  ), [scheduleData]);
+  ).sort((a, b) => a.localeCompare(b, "ru", { numeric: true })), [scheduleData]);
 
   useEffect(() => {
     if (initialGroup && initialGroup !== "all") setSelectedGroup(initialGroup);
@@ -187,12 +188,24 @@ export function ScheduleView({ scheduleData, initialGroup, initialTeacher }: Sch
   // Show Welcome Screen if no selection made
   if (selectedGroup === "all" && selectedTeacher === "all") {
     return (
-      <div className="fixed inset-0 z-10 bg-background">
+      <div className="fixed inset-0 z-50 bg-background">
         <WelcomeScreen
           groups={uniqueGroups}
           teachers={uniqueTeachers}
-          onGroupSelect={(g) => setSelectedGroup(g)}
-          onTeacherSelect={(t) => setSelectedTeacher(t)}
+          onGroupSelect={(g) => {
+            setSelectedGroup(g);
+            if (typeof window !== "undefined") {
+              localStorage.setItem(STORAGE_KEYS.SELECTED_GROUP, g);
+              localStorage.setItem(STORAGE_KEYS.SELECTED_TEACHER, "all");
+            }
+          }}
+          onTeacherSelect={(t) => {
+            setSelectedTeacher(t);
+            if (typeof window !== "undefined") {
+              localStorage.setItem(STORAGE_KEYS.SELECTED_TEACHER, t);
+              localStorage.setItem(STORAGE_KEYS.SELECTED_GROUP, "all");
+            }
+          }}
         />
       </div>
     );
