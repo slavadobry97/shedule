@@ -45,6 +45,7 @@ import {
     ArrowUpDown,
     ArrowUp,
     ArrowDown,
+    MapPin,
     SlidersHorizontal,
     Loader2,
     History,
@@ -758,6 +759,65 @@ export default function DebugClient() {
             });
         });
 
+        // 6. АНАЛИТИКА АУДИТОРИЙ
+
+        // Использование аудиторий
+        const classroomUsage: Record<string, number> = {};
+        schedule.forEach(item => {
+            if (item.classroom) {
+                classroomUsage[item.classroom] = (classroomUsage[item.classroom] || 0) + 1;
+            }
+        });
+
+        // Конфликты аудиторий (двойное бронирование разными преподавателями)
+        const classroomConflicts: { classroom: string; date: string; time: string; teachers: string[]; subjects: string[] }[] = [];
+        const classroomOccupancy = new Map<string, { teacher: string; subject: string; group: string }>();
+
+        schedule.forEach(item => {
+            if (item.classroom && item.date && item.time && item.teacher) {
+                const key = `${item.classroom}|${item.date}|${item.time}`;
+                const existing = classroomOccupancy.get(key);
+
+                if (existing) {
+                    // Конфликт только если разные преподаватели (потоковая лекция - не конфликт)
+                    if (existing.teacher !== item.teacher) {
+                        const existingConflict = classroomConflicts.find(
+                            c => c.classroom === item.classroom && c.date === item.date && c.time === item.time
+                        );
+
+                        if (existingConflict) {
+                            if (!existingConflict.teachers.includes(item.teacher)) {
+                                existingConflict.teachers.push(item.teacher);
+                                existingConflict.subjects.push(item.subject);
+                            }
+                        } else {
+                            classroomConflicts.push({
+                                classroom: item.classroom,
+                                date: item.date,
+                                time: item.time,
+                                teachers: [existing.teacher, item.teacher],
+                                subjects: [existing.subject, item.subject]
+                            });
+                        }
+                    }
+                } else {
+                    classroomOccupancy.set(key, {
+                        teacher: item.teacher,
+                        subject: item.subject,
+                        group: item.group
+                    });
+                }
+            }
+        });
+
+        // Процент использования аудиторий (для выявления недоиспользуемых)
+        const totalTimeSlots = uniqueDates.size * VALID_TIME_SLOTS.length; // Всего возможных слотов
+        const classroomUtilization = Object.entries(classroomUsage).map(([classroom, count]) => ({
+            classroom,
+            count,
+            utilizationPercent: (count / totalTimeSlots) * 100
+        })).sort((a, b) => a.utilizationPercent - b.utilizationPercent); // Сортировка по возрастанию (недоиспользуемые первыми)
+
         return {
             total: schedule.length,
             groups: uniqueGroups.size,
@@ -783,6 +843,13 @@ export default function DebugClient() {
                 .slice(0, 15), // Топ-15 нагруженных для контекста
             gaps: gaps.slice(0, 20), // Первые 20 окон для примера
             totalGaps: gaps.length,
+            // Аналитика аудиторий
+            classroomUsage: Object.entries(classroomUsage)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 10), // Топ-10 аудиторий
+            classroomConflicts: classroomConflicts,
+            hasClassroomConflicts: classroomConflicts.length > 0,
+            classroomUtilization: classroomUtilization, // Все аудитории с процентом использования
         };
     }, [schedule]);
 
@@ -994,6 +1061,281 @@ export default function DebugClient() {
                             </CardContent>
                         </Card>
                     </div>
+
+                    {/* Аналитика (свернута по умолчанию) */}
+                    <Accordion type="multiple" className="space-y-4">
+                        {/* Нагрузка преподавателей */}
+                        {stats?.teacherWorkload && stats.teacherWorkload.length > 0 && (
+                            <AccordionItem value="teacher-workload" className="border rounded-lg">
+                                <AccordionTrigger className="px-6 hover:no-underline">
+                                    <div className="flex items-center gap-2">
+                                        <User className="h-5 w-5 text-primary" />
+                                        <div className="text-left">
+                                            <p className="font-semibold">Нагрузка преподавателей</p>
+                                            <p className="text-sm text-muted-foreground font-normal">
+                                                Топ-10 самых загруженных преподавателей
+                                            </p>
+                                        </div>
+                                    </div>
+                                </AccordionTrigger>
+                                <AccordionContent className="px-6 pb-6">
+                                    <div className="space-y-3">
+                                        {stats.teacherWorkload.slice(0, 10).map(([teacher, count], index) => {
+                                            const maxCount = stats.teacherWorkload[0][1];
+                                            const percentage = (count / maxCount) * 100;
+
+                                            // Цветовая кодировка
+                                            let barColor = "bg-green-500";
+                                            if (percentage > 80) barColor = "bg-red-500";
+                                            else if (percentage > 60) barColor = "bg-amber-500";
+
+                                            return (
+                                                <div key={teacher} className="space-y-1">
+                                                    <div className="flex items-center justify-between text-sm">
+                                                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                                                            <Badge variant="outline" className="font-mono shrink-0">
+                                                                #{index + 1}
+                                                            </Badge>
+                                                            <span className="truncate font-medium">{teacher}</span>
+                                                        </div>
+                                                        <span className="font-bold tabular-nums shrink-0 ml-2">
+                                                            {count} пар
+                                                        </span>
+                                                    </div>
+                                                    <div className="h-2 bg-muted rounded-full overflow-hidden">
+                                                        <div
+                                                            className={`h-full ${barColor} transition-all`}
+                                                            style={{ width: `${percentage}%` }}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                    {stats.teacherWorkload.length > 10 && (
+                                        <p className="text-xs text-muted-foreground mt-4">
+                                            Показано топ-10 из {stats.teacherWorkload.length} преподавателей
+                                        </p>
+                                    )}
+                                </AccordionContent>
+                            </AccordionItem>
+                        )}
+
+                        {/* Окна в расписании */}
+                        {stats?.gaps && stats.gaps.length > 0 && (
+                            <AccordionItem value="schedule-gaps" className="border rounded-lg">
+                                <AccordionTrigger className="px-6 hover:no-underline">
+                                    <div className="flex items-center gap-2">
+                                        <Clock className="h-5 w-5 text-amber-500" />
+                                        <div className="text-left">
+                                            <p className="font-semibold">Окна в расписании групп</p>
+                                            <p className="text-sm text-muted-foreground font-normal">
+                                                Найдено {stats.totalGaps} свободных слотов между занятиями
+                                            </p>
+                                        </div>
+                                    </div>
+                                </AccordionTrigger>
+                                <AccordionContent className="px-6 pb-6">
+                                    <div className="mb-4 p-3 bg-amber-50 dark:bg-amber-950/20 rounded-lg border border-amber-200 dark:border-amber-900/50">
+                                        <div className="flex items-center gap-2">
+                                            <AlertTriangle className="h-4 w-4 text-amber-600" />
+                                            <p className="text-sm font-medium text-amber-900 dark:text-amber-100">
+                                                Найдено {stats.totalGaps} окон в расписании
+                                            </p>
+                                        </div>
+                                        <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
+                                            Окна снижают посещаемость и увеличивают время пребывания студентов в университете
+                                        </p>
+                                    </div>
+
+                                    <div className="space-y-2 max-h-80 overflow-y-auto">
+                                        {stats.gaps.map((gap, index) => (
+                                            <div
+                                                key={`${gap.group}-${gap.date}-${gap.gapTime}-${index}`}
+                                                className="flex items-center justify-between p-2 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
+                                            >
+                                                <div className="flex items-center gap-2 min-w-0 flex-1">
+                                                    <Users className="h-4 w-4 text-muted-foreground shrink-0" />
+                                                    <span className="font-medium truncate">{gap.group}</span>
+                                                </div>
+                                                <div className="flex items-center gap-2 shrink-0">
+                                                    <Badge variant="outline" className="font-mono text-xs">
+                                                        {gap.date}
+                                                    </Badge>
+                                                    <Badge variant="secondary" className="font-mono text-xs">
+                                                        {gap.gapTime}
+                                                    </Badge>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    {stats.totalGaps > 20 && (
+                                        <p className="text-xs text-muted-foreground mt-4">
+                                            Показано первых 20 из {stats.totalGaps} окон
+                                        </p>
+                                    )}
+                                </AccordionContent>
+                            </AccordionItem>
+                        )}
+
+                        {/* Использование аудиторий */}
+                        {stats?.classroomUsage && stats.classroomUsage.length > 0 && (
+                            <AccordionItem value="classroom-usage" className="border rounded-lg">
+                                <AccordionTrigger className="px-6 hover:no-underline">
+                                    <div className="flex items-center gap-2">
+                                        <MapPin className="h-5 w-5 text-blue-500" />
+                                        <div className="text-left">
+                                            <p className="font-semibold">Использование аудиторий</p>
+                                            <p className="text-sm text-muted-foreground font-normal">
+                                                Топ-10 аудиторий и {stats.hasClassroomConflicts ? `${stats.classroomConflicts.length} конфликтов` : 'конфликтов нет'}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </AccordionTrigger>
+                                <AccordionContent className="px-6 pb-6 space-y-6">
+                                    {/* Конфликты (если есть) */}
+                                    {stats.hasClassroomConflicts && (
+                                        <div className="p-3 bg-red-50 dark:bg-red-950/20 rounded-lg border border-red-200 dark:border-red-900/50">
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <AlertOctagon className="h-4 w-4 text-red-600" />
+                                                <p className="text-sm font-medium text-red-900 dark:text-red-100">
+                                                    Найдено {stats.classroomConflicts.length} конфликтов (двойное бронирование)
+                                                </p>
+                                            </div>
+                                            <p className="text-xs text-red-700 dark:text-red-300 mb-3">
+                                                Разные преподаватели используют одну аудиторию в одно время
+                                            </p>
+                                            <div className="space-y-2 max-h-60 overflow-y-auto">
+                                                {stats.classroomConflicts.map((conflict, index) => (
+                                                    <div
+                                                        key={`${conflict.classroom}-${conflict.date}-${conflict.time}-${index}`}
+                                                        className="p-2 bg-white dark:bg-gray-900 rounded border border-red-200 dark:border-red-800"
+                                                    >
+                                                        <div className="flex items-center justify-between mb-1">
+                                                            <div className="flex items-center gap-2">
+                                                                <MapPin className="h-3.5 w-3.5 text-red-600" />
+                                                                <span className="font-semibold text-sm">ауд. {conflict.classroom}</span>
+                                                            </div>
+                                                            <div className="flex items-center gap-1">
+                                                                <Badge variant="outline" className="font-mono text-xs">
+                                                                    {conflict.date}
+                                                                </Badge>
+                                                                <Badge variant="destructive" className="font-mono text-xs">
+                                                                    {conflict.time}
+                                                                </Badge>
+                                                            </div>
+                                                        </div>
+                                                        <div className="text-xs space-y-1">
+                                                            {conflict.teachers.map((teacher, i) => (
+                                                                <div key={i} className="flex items-center gap-1 text-muted-foreground">
+                                                                    <User className="h-3 w-3" />
+                                                                    <span>{teacher}</span>
+                                                                    <span className="text-xs">({conflict.subjects[i]})</span>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Топ-10 аудиторий */}
+                                    <div>
+                                        <h4 className="text-sm font-semibold mb-3">Топ-10 самых используемых аудиторий</h4>
+                                        <div className="space-y-3">
+                                            {stats.classroomUsage.map(([classroom, count], index) => {
+                                                const maxCount = stats.classroomUsage[0][1];
+                                                const percentage = (count / maxCount) * 100;
+
+                                                // Цветовая кодировка
+                                                let barColor = "bg-blue-500";
+                                                if (percentage > 80) barColor = "bg-purple-500";
+                                                else if (percentage > 60) barColor = "bg-blue-600";
+
+                                                return (
+                                                    <div key={classroom} className="space-y-1">
+                                                        <div className="flex items-center justify-between text-sm">
+                                                            <div className="flex items-center gap-2 min-w-0 flex-1">
+                                                                <Badge variant="outline" className="font-mono shrink-0">
+                                                                    #{index + 1}
+                                                                </Badge>
+                                                                <MapPin className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                                                                <span className="truncate font-medium">ауд. {classroom}</span>
+                                                            </div>
+                                                            <span className="font-bold tabular-nums shrink-0 ml-2">
+                                                                {count} пар
+                                                            </span>
+                                                        </div>
+                                                        <div className="h-2 bg-muted rounded-full overflow-hidden">
+                                                            <div
+                                                                className={`h-full ${barColor} transition-all`}
+                                                                style={{ width: `${percentage}%` }}
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+
+                                    {/* Недоиспользуемые аудитории */}
+                                    {stats.classroomUtilization && stats.classroomUtilization.length > 0 && (
+                                        <div>
+                                            <h4 className="text-sm font-semibold mb-2">Недоиспользуемые аудитории (для планирования ремонта)</h4>
+                                            <p className="text-xs text-muted-foreground mb-3">
+                                                Аудитории с низкой загрузкой - кандидаты на ремонт или перепрофилирование
+                                            </p>
+                                            <div className="space-y-2">
+                                                {stats.classroomUtilization.slice(0, 10).map((item) => {
+                                                    // Цветовая кодировка по загрузке
+                                                    let bgColor = "bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-900/50";
+                                                    let textColor = "text-green-700 dark:text-green-300";
+                                                    let badgeVariant: "default" | "secondary" | "destructive" | "outline" = "outline";
+
+                                                    if (item.utilizationPercent < 10) {
+                                                        bgColor = "bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-900/50";
+                                                        textColor = "text-red-700 dark:text-red-300";
+                                                        badgeVariant = "destructive";
+                                                    } else if (item.utilizationPercent < 25) {
+                                                        bgColor = "bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-900/50";
+                                                        textColor = "text-amber-700 dark:text-amber-300";
+                                                        badgeVariant = "secondary";
+                                                    }
+
+                                                    return (
+                                                        <div
+                                                            key={item.classroom}
+                                                            className={`p-2 rounded-lg border ${bgColor}`}
+                                                        >
+                                                            <div className="flex items-center justify-between">
+                                                                <div className="flex items-center gap-2">
+                                                                    <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
+                                                                    <span className="font-medium text-sm">ауд. {item.classroom}</span>
+                                                                </div>
+                                                                <div className="flex items-center gap-2">
+                                                                    <span className={`text-xs ${textColor} font-medium`}>
+                                                                        {item.count} пар
+                                                                    </span>
+                                                                    <Badge variant={badgeVariant} className="text-xs">
+                                                                        {item.utilizationPercent.toFixed(1)}%
+                                                                    </Badge>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                            <p className="text-xs text-muted-foreground mt-3">
+                                                🔴 Менее 10% - критически низкая загрузка | 🟡 10-25% - низкая загрузка | 🟢 Более 25% - нормальная
+                                            </p>
+                                        </div>
+                                    )}
+                                </AccordionContent>
+                            </AccordionItem>
+                        )}
+                    </Accordion>
 
                 </TabsContent>
 
@@ -1268,7 +1610,7 @@ export default function DebugClient() {
             </Tabs >
 
             {/* Плавающая кнопка ИИ Помощника */}
-            <div className="fixed bottom-20 right-6 z-50">
+            <div className="fixed bottom-6 right-6 z-50">
                 <AnimatePresence>
                     <motion.div
                         initial={{ opacity: 0, scale: 0.5 }}

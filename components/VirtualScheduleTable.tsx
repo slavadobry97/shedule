@@ -44,6 +44,7 @@ const ROW_HEIGHT = 50;
 
 export default function VirtualScheduleTable({ scheduleData, isLoading = false }: VirtualScheduleTableProps) {
     const [filter, setFilter] = useState("");
+    const [debouncedFilter, setDebouncedFilter] = useState("");
     const [filterType, setFilterType] = useState("teacher");
     const [sortField, setSortField] = useState<SortField | null>(null);
     const [sortDirection, setSortDirection] = useState<SortDirection>(null);
@@ -53,6 +54,15 @@ export default function VirtualScheduleTable({ scheduleData, isLoading = false }
 
     // State for filter options to avoid blocking render
     const [filterOptions, setFilterOptions] = useState<{ value: string; label: string }[]>([]);
+
+    // Debounce filter input for better performance
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedFilter(filter);
+        }, 300); // 300ms delay
+
+        return () => clearTimeout(timer);
+    }, [filter]);
 
     // Effect to calculate filter options asynchronously
     useEffect(() => {
@@ -90,9 +100,9 @@ export default function VirtualScheduleTable({ scheduleData, isLoading = false }
     // Фильтрация данных с поддержкой поиска по всем полям
     const filteredData = useMemo(() => {
         if (!scheduleData) return [];
-        if (!filter) return []; // Не показывать данные пока не выбран фильтр
+        if (!debouncedFilter) return []; // Не показывать данные пока не выбран фильтр
 
-        const searchLower = filter.toLowerCase();
+        const searchLower = debouncedFilter.toLowerCase();
 
         return scheduleData.filter((item) => {
             // Поиск по всем полям
@@ -107,7 +117,7 @@ export default function VirtualScheduleTable({ scheduleData, isLoading = false }
             const value = item[filterType as keyof ScheduleItem];
             return value && String(value).toLowerCase().includes(searchLower);
         });
-    }, [scheduleData, filter, filterType]);
+    }, [scheduleData, debouncedFilter, filterType]);
 
     // Сортировка данных
     const sortedData = useMemo(() => {

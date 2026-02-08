@@ -1,23 +1,25 @@
 import type { Metadata, Viewport } from "next";
+import Link from "next/link";
 import { ThemeProvider } from "next-themes";
 import { Toaster } from "@/components/ui/sonner";
 import { Header } from "@/components/Header";
+import { Analytics } from "@vercel/analytics/react";
 
 import localFont from "next/font/local";
 import "./globals.css";
 
 // Подключение шрифтов
-
-
 const evolventaSans = localFont({
   src: "./fonts/Evolventa-Regular.woff",
   variable: "--font-evolventa-sans",
   weight: "400",
+  display: "swap", // Prevents font blocking
 });
 const evolventaBold = localFont({
   src: "./fonts/Evolventa-Bold.woff",
   variable: "--font-evolventa-bold",
   weight: "700",
+  display: "swap", // Prevents font blocking
 });
 
 // Настройки вьюпорта и темы
@@ -45,7 +47,7 @@ export const metadata: Metadata = {
   formatDetection: {
     telephone: false,
   },
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://rgsu-schedule.pages.dev'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://rgsu-schedule.vercel.app'),
   alternates: {
     canonical: '/',
   },
@@ -80,13 +82,29 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${evolventaSans.variable} ${evolventaBold.variable}`} suppressHydrationWarning>
+      <head>
+        <link
+          rel="preload"
+          href="/fonts/Evolventa-Regular.woff"
+          as="font"
+          type="font/woff"
+          crossOrigin="anonymous"
+        />
+        <link
+          rel="preload"
+          href="/fonts/Evolventa-Bold.woff"
+          as="font"
+          type="font/woff"
+          crossOrigin="anonymous"
+        />
+      </head>
       <body>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <Header />
           {children}
           <Toaster richColors position="top-center" />
         </ThemeProvider>
-
+        <Analytics />
       </body>
     </html>
   );

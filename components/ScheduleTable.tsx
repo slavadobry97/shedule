@@ -39,8 +39,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
 
 interface ScheduleTableProps {
   scheduleData: ScheduleItem[];
@@ -52,12 +50,22 @@ type SortDirection = "asc" | "desc" | null;
 
 export default function ScheduleTable({ scheduleData, isLoading = false }: ScheduleTableProps) {
   const [filter, setFilter] = useState("");
+  const [debouncedFilter, setDebouncedFilter] = useState("");
   const [filterType, setFilterType] = useState("teacher");
   const [sortField, setSortField] = useState<SortField | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(DEFAULT_PAGE_SIZE);
   const [comboboxOpen, setComboboxOpen] = useState(false);
+
+  // Debounce filter input for better performance
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedFilter(filter);
+    }, 300); // 300ms delay
+
+    return () => clearTimeout(timer);
+  }, [filter]);
 
   // Получаем уникальные значения для выбранного типа фильтра
   const filterOptions = useMemo(() => {
@@ -85,7 +93,7 @@ export default function ScheduleTable({ scheduleData, isLoading = false }: Sched
   const filteredData = useMemo(() => {
     if (!filter || !scheduleData) return scheduleData || [];
 
-    const searchLower = filter.toLowerCase();
+    const searchLower = debouncedFilter.toLowerCase();
 
     return scheduleData.filter((item) => {
       // Поиск по всем полям
@@ -100,7 +108,7 @@ export default function ScheduleTable({ scheduleData, isLoading = false }: Sched
       const value = item[filterType as keyof ScheduleItem];
       return value && String(value).toLowerCase().includes(searchLower);
     });
-  }, [scheduleData, filter, filterType]);
+  }, [scheduleData, debouncedFilter, filterType]);
 
   // Сортировка данных
   const sortedData = useMemo(() => {
@@ -196,7 +204,11 @@ export default function ScheduleTable({ scheduleData, isLoading = false }: Sched
     setItemsPerPage(Number(value));
   }, []);
 
-  const downloadPDF = useCallback(() => {
+  const downloadPDF = useCallback(async () => {
+    // Dynamic import to reduce initial bundle size
+    const jsPDF = (await import("jspdf")).default;
+    const autoTable = (await import("jspdf-autotable")).default;
+
     const doc = new jsPDF();
 
     doc.addFont(
