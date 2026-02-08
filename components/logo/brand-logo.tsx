@@ -1,16 +1,16 @@
 import { cn } from "@/lib/utils";
 
-interface MinimalistLogoProps extends React.SVGProps<SVGSVGElement> {
+interface BrandLogoProps extends React.SVGProps<SVGSVGElement> {
     className?: string;
 }
 
-export function MinimalistLogo({ className, ...props }: MinimalistLogoProps) {
+export function BrandLogo({ className, ...props }: BrandLogoProps) {
     return (
         <svg
             viewBox="0 0 517 772"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
-            className={cn("fill-[#223260]", className)}
+            className={cn("fill-current text-brand", className)}
             {...props}
         >
             <path d="M59.732 676.124C54.8813 677.666 47.8293 678.326 39.0133 678.326H30.1947V635.128H40.3347C50.252 635.128 54.8813 635.568 59.512 636.669C68.3267 639.096 73.6173 646.81 73.6173 657.168C73.6173 666.424 68.3267 673.697 59.732 676.124ZM83.3147 614.629C73.6173 608.457 62.596 606.254 40.3347 606.254H0V769.136H30.1947V707.2H39.8947C62.1547 707.2 72.5133 705.437 81.332 700.588C95.4373 692.653 104.033 675.904 104.033 656.506C104.033 638.212 96.5387 623.224 83.3147 614.629Z" />

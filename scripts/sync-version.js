@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
 
 const changelogPath = path.join(__dirname, '../PUBLIC_CHANGELOG.md');
 const packagePath = path.join(__dirname, '../package.json');
@@ -27,4 +28,28 @@ try {
 } catch (error) {
   console.error('\x1b[31m[Sync Version] Error:\x1b[0m', error.message);
   process.exit(1);
+}
+
+// Mimic Vite's network address display
+try {
+  const interfaces = os.networkInterfaces();
+  const addresses = [];
+  for (const k in interfaces) {
+    for (const k2 in interfaces[k]) {
+      const address = interfaces[k][k2];
+      if (address.family === 'IPv4' && !address.internal) {
+        addresses.push(address.address);
+      }
+    }
+  }
+
+  if (addresses.length > 0) {
+    console.log('\n\x1b[36m[Network Access]\x1b[0m You can now view rgsu on your local network:');
+    addresses.forEach((addr) => {
+      console.log(`  ➜  Network:   \x1b[36mhttp://${addr}:3000\x1b[0m`);
+    });
+    console.log('');
+  }
+} catch (e) {
+  // Ignore network errors
 }

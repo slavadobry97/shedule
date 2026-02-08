@@ -6,7 +6,7 @@ import { User, Users, Check, Loader2, GraduationCap, type LucideIcon } from "luc
 import { Button } from "@/components/ui/button";
 import { ResponsiveComboBox } from "./responsive-combobox";
 import { cn } from "@/lib/utils";
-import { RgsuLogo } from "@/components/ui/logo";
+import { FullLogo } from "@/components/logo/full-logo";
 
 interface WelcomeScreenProps {
     groups: string[];
@@ -102,7 +102,7 @@ export function WelcomeScreen({
                         className="flex flex-col items-center text-center"
                     >
                         <div className="w-72 h-auto mb-3">
-                            <RgsuLogo className="w-full h-auto" />
+                            <FullLogo className="w-full h-auto" />
                         </div>
                         <p className="text-xl text-muted-foreground font-normal">
                             Расписание занятий

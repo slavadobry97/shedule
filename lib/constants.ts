@@ -31,6 +31,15 @@ export const TIME_SLOTS = [
     "20.30 - 22.00",
 ];
 
+export const TIME_TO_PAIR_NUMBER: Record<string, number> = TIME_SLOTS.reduce((acc, time, index) => {
+    acc[time] = index + 1;
+    return acc;
+}, {} as Record<string, number>);
+
+export const getPairNumber = (time: string): number => {
+    return TIME_TO_PAIR_NUMBER[time] || 0;
+};
+
 // --- UI Configuration ---
 
 export const PAGE_SIZE_OPTIONS = [10, 25, 50] as const;
@@ -69,3 +78,8 @@ export const API_ENDPOINTS = {
 } as const;
 
 export const REFRESH_INTERVAL = 60000;
+
+export const APP_INFO = {
+    TITLE: "Расписание РГСУ",
+    SUBTITLE: "Филиал в г. Минске",
+} as const;

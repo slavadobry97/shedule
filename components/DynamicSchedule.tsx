@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { MinimalistLogo } from "@/components/ui/minimalist-logo";
+import { BrandLogo } from "@/components/logo/brand-logo";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -248,7 +248,7 @@ export default function Home({ initialGroup, initialTeacher }: DynamicSchedulePr
           }}
           className="relative z-10 flex items-center justify-center"
         >
-          <MinimalistLogo className="w-64 h-64" />
+          <BrandLogo className="w-64 h-64" />
         </motion.div>
       </div>
     );
