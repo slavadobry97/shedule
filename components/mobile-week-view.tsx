@@ -34,7 +34,7 @@ const DayButton = React.memo(({ date, dayLabel, isSelected, isPast, onSelect }: 
             aria-selected={isSelected}
             aria-label={`${dayLabel}, ${dayNumber}`}
             className={cn(
-                "relative flex flex-col items-center justify-center min-w-[3.5rem] h-16 rounded-xl transition-all duration-200 border shrink-0 z-10 p-0",
+                "relative flex flex-col items-center justify-center h-16 rounded-xl transition-all duration-200 border shrink-0 z-10 p-0",
                 isSelected ? "border-transparent font-bold scale-105 hover:bg-transparent" : "border-border hover:bg-muted bg-background",
                 isPast && !isSelected && "opacity-60"
             )}
@@ -60,41 +60,17 @@ const DayButton = React.memo(({ date, dayLabel, isSelected, isPast, onSelect }: 
 DayButton.displayName = "DayButton";
 
 export function MobileWeekView({ currentDate, onSelectDate, className }: MobileWeekViewProps) {
-    const scrollRef = useRef<HTMLDivElement>(null);
-
     // Minimize date calculations
     const weekStart = useMemo(() => startOfWeek(currentDate, { weekStartsOn: 1 }), [currentDate]);
     const today = useMemo(() => startOfToday(), []);
 
-    // Scroll active element into view
-    useEffect(() => {
-        if (scrollRef.current) {
-            const activeElement = scrollRef.current.querySelector('[data-active="true"]') as HTMLElement;
-            if (activeElement) {
-                const container = scrollRef.current;
-
-                // Calculate position relative to container
-                const scrollLeft = activeElement.offsetLeft - (container.offsetWidth / 2) + (activeElement.offsetWidth / 2);
-
-                container.scrollTo({
-                    left: scrollLeft,
-                    behavior: 'smooth'
-                });
-            }
-        }
-    }, [currentDate]);
-
     return (
         <div
-            ref={scrollRef}
-            className={cn("relative h-20 overflow-hidden touch-pan-y overscroll-none", className)}
+            className={cn("relative py-2 px-1", className)}
             role="tablist"
             aria-label="Calendar week view"
         >
-            <div
-                className="flex space-x-2 overflow-x-auto py-2 px-4 scrollbar-hide w-full"
-                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-            >
+            <div className="grid grid-cols-6 gap-1 w-full">
                 {DAYS_OF_WEEK.map((day, index) => {
                     const date = addDays(weekStart, index);
                     const isSelected = isSameDay(date, currentDate);

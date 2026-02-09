@@ -150,9 +150,6 @@ export function MobileScheduleView({
                 </div>
             ) : (
                 <div
-                    onTouchStart={onTouchStart}
-                    onTouchMove={onTouchMove}
-                    onTouchEnd={onTouchEnd}
                     className="min-h-[calc(100vh-200px)] relative touch-pan-y overscroll-none" // Add touch-pan-y to fix "whole screen" swipe
                 >
                     {/* Навигация по неделям (Mobile Style) */}
@@ -218,6 +215,9 @@ export function MobileScheduleView({
                             initial="enter"
                             animate="center"
                             exit="exit"
+                            onTouchStart={onTouchStart}
+                            onTouchMove={onTouchMove}
+                            onTouchEnd={onTouchEnd}
                             transition={{ x: { type: "spring", stiffness: 300, damping: 30 }, opacity: { duration: 0.2 } }}
                             className="space-y-3 min-h-[50vh] w-full"
                         >

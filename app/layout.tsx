@@ -82,22 +82,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${evolventaSans.variable} ${evolventaBold.variable}`} suppressHydrationWarning>
-      <head>
-        <link
-          rel="preload"
-          href="/fonts/Evolventa-Regular.woff"
-          as="font"
-          type="font/woff"
-          crossOrigin="anonymous"
-        />
-        <link
-          rel="preload"
-          href="/fonts/Evolventa-Bold.woff"
-          as="font"
-          type="font/woff"
-          crossOrigin="anonymous"
-        />
-      </head>
+
       <body>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <Header />
