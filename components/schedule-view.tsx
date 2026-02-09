@@ -211,6 +211,20 @@ export function ScheduleView({ scheduleData, initialGroup, initialTeacher }: Sch
     );
   }
 
+  const handleGroupChange = (newGroup: string) => {
+    setSelectedGroup(newGroup);
+    if (newGroup !== "all") {
+      setSelectedTeacher("all");
+    }
+  };
+
+  const handleTeacherChange = (newTeacher: string) => {
+    setSelectedTeacher(newTeacher);
+    if (newTeacher !== "all") {
+      setSelectedGroup("all");
+    }
+  };
+
   return (
     <div className="container mx-auto p-2 sm:p-4 space-y-3 sm:space-y-6 overflow-x-auto">
       <ScheduleFilters
@@ -218,8 +232,8 @@ export function ScheduleView({ scheduleData, initialGroup, initialTeacher }: Sch
         teachers={uniqueTeachers}
         selectedGroup={selectedGroup}
         selectedTeacher={selectedTeacher}
-        onGroupChange={setSelectedGroup}
-        onTeacherChange={setSelectedTeacher}
+        onGroupChange={handleGroupChange}
+        onTeacherChange={handleTeacherChange}
         onSaveGroup={handleSaveGroup}
         onSaveTeacher={handleSaveTeacher}
       />

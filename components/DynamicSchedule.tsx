@@ -160,7 +160,7 @@ export default function Home({ initialGroup, initialTeacher }: DynamicSchedulePr
             // Если ничего не выбрано (или выбрано "все"), показываем всё. 
             // Иначе - только то, что совпадает.
             if ((!selectedGroup || selectedGroup === 'all') && (!selectedTeacher || selectedTeacher === 'all')) {
-              return true;
+              return false;
             }
             return groupMatch || teacherMatch;
           };

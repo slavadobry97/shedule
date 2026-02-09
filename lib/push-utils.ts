@@ -116,7 +116,7 @@ export function matchesFilters(
     const hasTeacherFilter = filters.teachers.length > 0;
 
     if (!hasGroupFilter && !hasTeacherFilter) {
-        return true;
+        return false;
     }
 
     const groupMatch = hasGroupFilter && filters.groups.includes(item.group);
