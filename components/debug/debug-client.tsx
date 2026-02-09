@@ -58,6 +58,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ClassroomHeatmap } from "@/components/debug/classroom-heatmap";
 import { useState, useMemo, useTransition, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useVirtualizer } from "@tanstack/react-virtual";
@@ -810,13 +811,33 @@ export default function DebugClient() {
             }
         });
 
+        // Аудитории по дням для штрих-кода
+        const classroomDailyUsage: Record<string, Set<string>> = {};
+        schedule.forEach(item => {
+            if (item.classroom && item.dayOfWeek) {
+                if (!classroomDailyUsage[item.classroom]) classroomDailyUsage[item.classroom] = new Set();
+                classroomDailyUsage[item.classroom].add(item.dayOfWeek.toLowerCase());
+            }
+        });
+
+        const WEEK_DAYS_SHORT = ["пн", "вт", "ср", "чт", "пт", "сб"];
+
         // Процент использования аудиторий (для выявления недоиспользуемых)
         const totalTimeSlots = uniqueDates.size * VALID_TIME_SLOTS.length; // Всего возможных слотов
-        const classroomUtilization = Object.entries(classroomUsage).map(([classroom, count]) => ({
-            classroom,
-            count,
-            utilizationPercent: (count / totalTimeSlots) * 100
-        })).sort((a, b) => a.utilizationPercent - b.utilizationPercent); // Сортировка по возрастанию (недоиспользуемые первыми)
+        const classroomUtilization = Object.entries(classroomUsage).map(([classroom, count]) => {
+            const daysUsed = classroomDailyUsage[classroom] || new Set();
+            const dailyPattern = WEEK_DAYS_SHORT.map(day => {
+                // Пытаемся найти день в сете (учитывая возможные варианты написания, хотя schedule обычно нормализован)
+                return Array.from(daysUsed).some(d => d.includes(day));
+            });
+
+            return {
+                classroom,
+                count,
+                utilizationPercent: (count / totalTimeSlots) * 100,
+                dailyPattern
+            };
+        }).sort((a, b) => a.classroom.localeCompare(b.classroom, undefined, { numeric: true })); // Сортировка по номеру аудитории
 
         return {
             total: schedule.length,
@@ -1281,55 +1302,9 @@ export default function DebugClient() {
                                     </div>
 
                                     {/* Недоиспользуемые аудитории */}
-                                    {stats.classroomUtilization && stats.classroomUtilization.length > 0 && (
-                                        <div>
-                                            <h4 className="text-sm font-semibold mb-2">Недоиспользуемые аудитории (для планирования ремонта)</h4>
-                                            <p className="text-xs text-muted-foreground mb-3">
-                                                Аудитории с низкой загрузкой - кандидаты на ремонт или перепрофилирование
-                                            </p>
-                                            <div className="space-y-2">
-                                                {stats.classroomUtilization.slice(0, 10).map((item) => {
-                                                    // Цветовая кодировка по загрузке
-                                                    let bgColor = "bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-900/50";
-                                                    let textColor = "text-green-700 dark:text-green-300";
-                                                    let badgeVariant: "default" | "secondary" | "destructive" | "outline" = "outline";
-
-                                                    if (item.utilizationPercent < 10) {
-                                                        bgColor = "bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-900/50";
-                                                        textColor = "text-red-700 dark:text-red-300";
-                                                        badgeVariant = "destructive";
-                                                    } else if (item.utilizationPercent < 25) {
-                                                        bgColor = "bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-900/50";
-                                                        textColor = "text-amber-700 dark:text-amber-300";
-                                                        badgeVariant = "secondary";
-                                                    }
-
-                                                    return (
-                                                        <div
-                                                            key={item.classroom}
-                                                            className={`p-2 rounded-lg border ${bgColor}`}
-                                                        >
-                                                            <div className="flex items-center justify-between">
-                                                                <div className="flex items-center gap-2">
-                                                                    <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
-                                                                    <span className="font-medium text-sm">ауд. {item.classroom}</span>
-                                                                </div>
-                                                                <div className="flex items-center gap-2">
-                                                                    <span className={`text-xs ${textColor} font-medium`}>
-                                                                        {item.count} пар
-                                                                    </span>
-                                                                    <Badge variant={badgeVariant} className="text-xs">
-                                                                        {item.utilizationPercent.toFixed(1)}%
-                                                                    </Badge>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    );
-                                                })}
-                                            </div>
-                                            <p className="text-xs text-muted-foreground mt-3">
-                                                🔴 Менее 10% - критически низкая загрузка | 🟡 10-25% - низкая загрузка | 🟢 Более 25% - нормальная
-                                            </p>
+                                    {stats?.classroomUtilization && stats.classroomUtilization.length > 0 && (
+                                        <div className="pt-4">
+                                            <ClassroomHeatmap data={stats.classroomUtilization} />
                                         </div>
                                     )}
                                 </AccordionContent>

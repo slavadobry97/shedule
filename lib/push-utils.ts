@@ -242,11 +242,13 @@ function formatNotificationBody(
         return `${typeText}: ${item.subject} (${item.date}, ${item.time})`;
     }
 
-    // Группируем по группам
-    const groups = [...new Set(items.map((i) => i.group))];
-    if (groups.length === 1) {
-        return `${typeText} ${items.length} занятий для ${groups[0]}`;
-    }
+    // Группируем по уникальным названиям предметов затронутых пар
+    const subjectNames = [...new Set(items.map((i) => i.subject))];
+    const details = subjectNames.slice(0, 3).join(', ');
+    const moreCount = subjectNames.length > 3 ? ` и ещё ${subjectNames.length - 3}` : '';
 
-    return `${typeText} ${items.length} занятий`;
+    const groups = [...new Set(items.map((i) => i.group))];
+    const groupSuffix = groups.length === 1 ? ` для ${groups[0]}` : '';
+
+    return `${typeText}${groupSuffix}: ${details}${moreCount}`;
 }
