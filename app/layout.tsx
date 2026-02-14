@@ -47,7 +47,11 @@ export const metadata: Metadata = {
   formatDetection: {
     telephone: false,
   },
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://rgsu-schedule.vercel.app'),
+  metadataBase: new URL(
+    (process.env.NEXT_PUBLIC_SITE_URL ?? "https://rgsu-schedule.vercel.app").startsWith("http")
+      ? process.env.NEXT_PUBLIC_SITE_URL ?? "https://rgsu-schedule.vercel.app"
+      : `https://${process.env.NEXT_PUBLIC_SITE_URL}`
+  ),
   alternates: {
     canonical: '/',
   },
