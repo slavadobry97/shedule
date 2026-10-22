@@ -191,7 +191,8 @@ shedule/
 │   └── ...               # Кастомные компоненты
 ├── lib/                   # Утилиты и хелперы
 │   ├── push-utils.ts     # Push-уведомления
-│   └── schedule-utils.ts # Работа с расписанием
+│   ├── schedule-utils.ts # Работа с расписанием
+│   └── debug-analysis.ts # Разбор данных расписания для /debug
 ├── public/               # Статические файлы
 │   ├── manifest.json     # PWA манифест
 │   └── sw.js            # Service Worker

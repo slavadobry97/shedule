@@ -1,10 +1,11 @@
 "use client";
 
-import { cn } from "@/lib/utils";
+import { cn } from "cn";
 import { addDays, format, isSameDay, startOfWeek, isBefore, startOfToday } from "date-fns";
 import React, { useRef, useEffect, useMemo } from "react";
 import { DAYS_OF_WEEK } from "@/lib/constants";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
+import { MOTION_DURATION, motionTransition } from "@/lib/motion";
 
 interface MobileWeekViewProps {
     currentDate: Date;
@@ -24,6 +25,7 @@ interface DayButtonProps {
 
 const DayButton = React.memo(({ date, dayLabel, isSelected, isPast, onSelect }: DayButtonProps) => {
     const dayNumber = format(date, "dd");
+    const reduceMotion = useReducedMotion();
 
     return (
         <Button
@@ -34,7 +36,7 @@ const DayButton = React.memo(({ date, dayLabel, isSelected, isPast, onSelect }: 
             aria-selected={isSelected}
             aria-label={`${dayLabel}, ${dayNumber}`}
             className={cn(
-                "relative flex flex-col items-center justify-center h-16 rounded-xl transition-all duration-200 border shrink-0 z-10 p-0",
+                "relative flex flex-col items-center justify-center h-16 rounded-xl transition-[color,background-color,border-color,transform] duration-200 border shrink-0 z-10 p-0",
                 isSelected ? "border-transparent font-bold scale-105 hover:bg-transparent" : "border-border hover:bg-muted bg-background",
                 isPast && !isSelected && "opacity-60"
             )}
@@ -43,7 +45,7 @@ const DayButton = React.memo(({ date, dayLabel, isSelected, isPast, onSelect }: 
                 <motion.div
                     layoutId="active-day-bg"
                     className="absolute -inset-px bg-primary rounded-xl -z-10 shadow-md"
-                    transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                    transition={motionTransition(reduceMotion, { duration: MOTION_DURATION.base })}
                 />
             )}
 

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useTheme } from "next-themes"
-import { SunIcon, MoonIcon } from 'lucide-react'
+import { MoonIcon, SunIcon } from "@/components/icons";
 import { Button } from "@/components/ui/button"
 
 export default function ThemeSwitcher() {

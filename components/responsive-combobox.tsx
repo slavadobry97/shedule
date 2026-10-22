@@ -1,9 +1,9 @@
 "use client";
 
 import * as React from "react";
-import { Check, ChevronsUpDown, Search } from "lucide-react";
+import { CheckIcon, ChevronDownIcon, SearchIcon } from "@/components/icons";
 
-import { cn } from "@/lib/utils";
+import { cn } from "cn";
 import { Button } from "@/components/ui/button";
 import {
     Command,
@@ -94,7 +94,7 @@ export function ResponsiveComboBox({
                                 renderItem(item, value === item.value)
                             ) : (
                                 <>
-                                    <Check
+                                    <CheckIcon
                                         className={cn(
                                             "mr-2 h-4 w-4",
                                             value === item.value ? "opacity-100" : "opacity-0"
@@ -124,7 +124,7 @@ export function ResponsiveComboBox({
                         <span className="truncate">
                             {selectedItem ? selectedItem.label : placeholder}
                         </span>
-                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        <ChevronDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-60" />
                     </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
@@ -147,7 +147,7 @@ export function ResponsiveComboBox({
                     <span className="truncate">
                         {selectedItem ? selectedItem.label : placeholder}
                     </span>
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    <ChevronDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-60" />
                 </Button>
             </DrawerTrigger>
             <DrawerContent>

@@ -98,8 +98,18 @@ VAPID_PUBLIC_KEY=your_vapid_public_key
 VAPID_PRIVATE_KEY=your_vapid_private_key
 NEXT_PUBLIC_VAPID_PUBLIC_KEY=your_vapid_public_key
 
-# Gemini AI
-GEMINI_API_KEY=your_gemini_api_key
+# ИИ-чат отладки (OpenAI-совместимый API)
+AI_PROVIDER=openrouter
+OPENROUTER_API_KEY=your_openrouter_api_key
+AI_MODEL=dots-studio/dots-3-note-preview:free
+# Белый список для переключателя моделей в чате: provider/model через запятую.
+# Пусто — переключателя нет, работает только AI_MODEL.
+AI_ALLOWED_MODELS=openrouter/dots-studio/dots-3-note-preview:free,openrouter/nvidia/nemotron-3.5-lightning:free
+
+# Аналитика Plausible (домен — как он указан в настройках Plausible)
+NEXT_PUBLIC_PLAUSIBLE_DOMAIN=shedule.rgsu.by
+# Свой инстанс (Plausible CE) — если не задан, идёт в облако plausible.io:
+# NEXT_PUBLIC_PLAUSIBLE_ENDPOINT=https://analytics.rgsu.by/api/event
 ```
 
 > **Важно**: Для многострочных значений (например, `GOOGLE_PRIVATE_KEY`) вставьте значение с переносами строк как есть.

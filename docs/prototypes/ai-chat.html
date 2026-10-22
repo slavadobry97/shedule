@@ -1,0 +1,923 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ИИ-помощник — три варианта</title>
+<style>
+@font-face {
+    font-family: "Evolventa";
+    src: url("../../app/fonts/Evolventa-Regular.woff") format("woff");
+    font-weight: 400;
+    font-display: swap;
+}
+@font-face {
+    font-family: "Evolventa";
+    src: url("../../app/fonts/Evolventa-Bold.woff") format("woff");
+    font-weight: 700;
+    font-display: swap;
+}
+
+:root {
+    --royal: #102fa1;
+    --navy: #082567;
+    --foreground: hsl(222.2 84% 4.9%);
+    --muted-fg: hsl(215.4 16.3% 46.9%);
+    --muted: hsl(210 40% 96.1%);
+    --border: hsl(214.3 31.8% 91.4%);
+    --canvas: color-mix(in srgb, #102fa1 4%, #ffffff);
+    --card: #ffffff;
+    --radius: 0.65rem;
+    --warning: hsl(32 95% 38%);
+    --success: hsl(142 71% 38%);
+    --ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--canvas);
+    color: var(--foreground);
+    font: 14px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+}
+
+.page {
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: 36px 28px 56px;
+}
+
+.page-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 22px;
+}
+
+.eyebrow {
+    margin: 0 0 8px;
+    font: 500 10px/1 ui-monospace, SFMono-Regular, Consolas, monospace;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted-fg);
+}
+
+h1 {
+    margin: 0;
+    font-family: "Evolventa", Georgia, serif;
+    font-size: 28px;
+    letter-spacing: -0.01em;
+}
+
+.lede {
+    margin: 8px 0 0;
+    max-width: 620px;
+    color: var(--muted-fg);
+    font-size: 13px;
+}
+
+.tabs {
+    display: inline-flex;
+    gap: 4px;
+    padding: 3px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: #fff;
+}
+
+.tabs button {
+    appearance: none;
+    border: 0;
+    background: transparent;
+    color: var(--muted-fg);
+    font: inherit;
+    font-size: 12px;
+    padding: 7px 12px;
+    border-radius: 7px;
+    cursor: pointer;
+    transition: background 0.2s var(--ease), color 0.2s var(--ease);
+}
+
+.tabs button[aria-selected="true"] {
+    background: var(--foreground);
+    color: #fff;
+}
+
+.stage {
+    position: relative;
+    display: grid;
+    grid-template-columns: 1fr;
+    min-height: 680px;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    background: #fff;
+    overflow: hidden;
+    box-shadow: 0 24px 60px -32px rgba(8, 37, 103, 0.35);
+}
+
+/* Подложка: страница /debug, поверх которой живёт панель */
+.page-mock {
+    padding: 26px 30px;
+    color: var(--muted-fg);
+    user-select: none;
+}
+
+.page-mock .row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.page-mock .title {
+    font-family: "Evolventa", Georgia, serif;
+    font-size: 20px;
+    color: var(--foreground);
+}
+
+.page-mock .tabsline {
+    display: flex;
+    gap: 18px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+}
+
+.page-mock .tabsline b {
+    color: var(--foreground);
+    font-weight: 600;
+}
+
+.table { margin-top: 14px; font-size: 12px; }
+
+.table .tr {
+    display: grid;
+    grid-template-columns: 1.6fr 0.9fr 0.7fr 0.9fr;
+    gap: 12px;
+    padding: 10px 8px;
+    border-bottom: 1px solid var(--border);
+}
+
+.table .th {
+    font: 500 10px/1 ui-monospace, Consolas, monospace;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted-fg);
+}
+
+.table .tr span:not(:first-child) { color: var(--muted-fg); }
+
+.table .dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    margin-right: 7px;
+    border-radius: 50%;
+    background: var(--warning);
+    vertical-align: 1px;
+}
+
+/* Панель */
+.panel {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 540px;
+    display: flex;
+    flex-direction: column;
+    background: var(--card);
+    border-left: 1px solid var(--border);
+    box-shadow: -24px 0 48px -36px rgba(8, 37, 103, 0.45);
+    animation: slide-in 0.35s var(--ease) both;
+}
+
+/* Атрибут hidden должен побеждать display: flex выше, иначе все три
+   панели лежат стопкой и верхняя (C) перекрывает остальные. */
+.panel[hidden] {
+    display: none;
+}
+
+@keyframes slide-in {
+    from { transform: translateX(24px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+.panel-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+}
+
+.mark {
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--royal) 10%, transparent);
+    color: var(--royal);
+}
+
+.who { min-width: 0; flex: 1; }
+
+.who .name {
+    font-weight: 600;
+    font-size: 13px;
+    line-height: 1.2;
+}
+
+.who .sub {
+    margin-top: 2px;
+    font: 500 9px/1 ui-monospace, Consolas, monospace;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted-fg);
+}
+
+.icon-btn {
+    appearance: none;
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    border: 0;
+    border-radius: 7px;
+    background: transparent;
+    color: var(--muted-fg);
+    cursor: pointer;
+}
+
+.icon-btn:hover { background: var(--muted); color: var(--foreground); }
+
+.chip {
+    appearance: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    max-width: 190px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: #fff;
+    padding: 5px 9px;
+    font: 500 11px/1 inherit;
+    color: var(--muted-fg);
+    cursor: pointer;
+}
+
+.chip:hover { border-color: color-mix(in srgb, var(--royal) 30%, var(--border)); color: var(--foreground); }
+
+.chip .free {
+    display: inline-block;
+    padding: 2px 5px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--success) 12%, transparent);
+    color: var(--success);
+    font: 600 8px/1 ui-monospace, Consolas, monospace;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+/* Контекстная полоса — вариант A */
+.scope {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 14px;
+    border-bottom: 1px solid var(--border);
+    background: color-mix(in srgb, var(--royal) 3%, #fff);
+    font-size: 11px;
+    color: var(--muted-fg);
+}
+
+.scope b { color: var(--foreground); font-weight: 600; }
+
+.scope .link {
+    margin-left: auto;
+    color: var(--royal);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+/* Тело */
+.panel-body {
+    flex: 1;
+    overflow: auto;
+    padding: 16px 14px;
+}
+
+.empty-title {
+    font-family: "Evolventa", Georgia, serif;
+    font-size: 17px;
+    margin: 4px 0 4px;
+}
+
+.empty-sub {
+    margin: 0 0 14px;
+    color: var(--muted-fg);
+    font-size: 12px;
+}
+
+.tasks { display: grid; gap: 6px; }
+
+.task {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 10px 11px;
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    background: #fff;
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 0.2s var(--ease), background 0.2s var(--ease);
+}
+
+.task:hover {
+    border-color: color-mix(in srgb, var(--royal) 26%, var(--border));
+    background: color-mix(in srgb, var(--royal) 2%, #fff);
+}
+
+.task .ico {
+    display: grid;
+    place-items: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 7px;
+    background: var(--muted);
+    color: var(--muted-fg);
+    flex: none;
+}
+
+.task .txt { flex: 1; min-width: 0; }
+.task .txt b { display: block; font-weight: 550; font-size: 12px; }
+.task .txt small { display: block; color: var(--muted-fg); font-size: 11px; }
+.task .go { color: var(--muted-fg); }
+
+/* Метрики-карточки — вариант B */
+.metrics {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    margin-bottom: 14px;
+}
+
+.metric {
+    padding: 10px;
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    background: #fff;
+    text-align: left;
+    cursor: pointer;
+}
+
+.metric:hover { border-color: color-mix(in srgb, var(--royal) 26%, var(--border)); }
+.metric b { display: block; font-family: "Evolventa", Georgia, serif; font-size: 20px; line-height: 1.1; }
+.metric span { display: block; margin-top: 2px; font-size: 10px; color: var(--muted-fg); }
+
+/* Режимы — вариант B */
+.modes {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 4px;
+    margin: 0 14px 12px;
+    padding: 3px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--muted);
+}
+
+.mode {
+    appearance: none;
+    border: 0;
+    border-radius: 7px;
+    background: transparent;
+    padding: 7px 6px;
+    cursor: pointer;
+    text-align: center;
+    color: var(--muted-fg);
+    transition: background 0.2s var(--ease), color 0.2s var(--ease);
+}
+
+.mode b { display: block; font-size: 11px; font-weight: 600; }
+.mode span { display: block; margin-top: 2px; font: 9px/1 ui-monospace, Consolas, monospace; }
+.mode[aria-pressed="true"] { background: #fff; color: var(--foreground); box-shadow: 0 1px 2px rgba(8,37,103,0.08); }
+
+/* Сообщения */
+.msg { display: flex; gap: 9px; margin-bottom: 12px; }
+.msg .ava {
+    display: grid;
+    place-items: center;
+    width: 26px;
+    height: 26px;
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    flex: none;
+    background: var(--muted);
+    color: var(--royal);
+}
+.msg.user { justify-content: flex-end; }
+.msg.user .ava { background: var(--royal); color: #fff; border-color: transparent; }
+.msg.user .bubble { background: var(--royal); color: #fff; border-color: transparent; }
+.bubble {
+    max-width: 84%;
+    padding: 9px 11px;
+    border: 1px solid color-mix(in srgb, var(--royal) 8%, var(--border));
+    border-radius: 11px;
+    background: color-mix(in srgb, var(--muted) 55%, #fff);
+    font-size: 12.5px;
+}
+.bubble p { margin: 0 0 7px; }
+.bubble p:last-child { margin: 0; }
+.bubble table { width: 100%; border-collapse: collapse; font-size: 11px; margin: 6px 0; }
+.bubble th, .bubble td { border-bottom: 1px solid var(--border); padding: 5px 6px; text-align: left; }
+.bubble th { background: var(--muted); font-weight: 600; }
+
+/* Композер */
+.panel-foot { border-top: 1px solid var(--border); padding: 10px 14px 8px; }
+.composer {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+}
+.composer textarea {
+    flex: 1;
+    min-height: 38px;
+    max-height: 90px;
+    resize: none;
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    padding: 10px 11px;
+    font: inherit;
+    font-size: 12.5px;
+    color: var(--foreground);
+    outline: none;
+    background: #fff;
+}
+.composer textarea:focus { border-color: color-mix(in srgb, var(--royal) 45%, var(--border)); box-shadow: 0 0 0 3px color-mix(in srgb, var(--royal) 8%, transparent); }
+.send {
+    display: grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    border: 0;
+    border-radius: 9px;
+    background: var(--royal);
+    color: #fff;
+    cursor: pointer;
+    flex: none;
+}
+.send:disabled { opacity: 0.4; cursor: default; }
+.foot-meta {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 7px;
+    font: 10px/1 ui-monospace, Consolas, monospace;
+    letter-spacing: 0.03em;
+    color: var(--muted-fg);
+}
+
+/* Поповер моделей */
+.model-pop {
+    position: absolute;
+    top: 44px;
+    right: 14px;
+    z-index: 5;
+    width: 300px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: #fff;
+    box-shadow: 0 18px 40px -20px rgba(8, 37, 103, 0.35);
+    padding: 6px;
+    display: none;
+}
+.model-pop[data-open="true"] { display: block; animation: pop 0.18s var(--ease) both; }
+@keyframes pop { from { transform: translateY(-4px) scale(0.98); opacity: 0; } to { transform: none; opacity: 1; } }
+
+.pop-label {
+    padding: 6px 8px 4px;
+    font: 500 9px/1 ui-monospace, Consolas, monospace;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted-fg);
+}
+
+.opt {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 8px;
+    border: 0;
+    border-radius: 7px;
+    background: transparent;
+    text-align: left;
+    cursor: pointer;
+    font: inherit;
+}
+.opt:hover { background: var(--muted); }
+.opt[aria-checked="true"] { background: color-mix(in srgb, var(--royal) 6%, #fff); }
+.opt .txt { flex: 1; min-width: 0; }
+.opt .txt b { display: block; font-size: 12px; font-weight: 550; }
+.opt .txt small { display: block; color: var(--muted-fg); font-size: 10px; }
+.opt .tick { color: var(--royal); }
+.pop-more {
+    width: 100%;
+    margin-top: 4px;
+    padding: 8px;
+    border: 0;
+    border-top: 1px solid var(--border);
+    background: transparent;
+    color: var(--royal);
+    font: 500 11px/1 inherit;
+    cursor: pointer;
+    text-align: left;
+}
+
+/* Вариант C */
+.pult-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+}
+.pult-title { font-family: "Evolventa", Georgia, serif; font-size: 14px; margin-right: auto; }
+.pult-log { flex: 1; overflow: auto; padding: 14px; font-size: 12.5px; }
+.cli { color: var(--muted-fg); font: 12px/1.5 ui-monospace, Consolas, monospace; margin-bottom: 10px; }
+.cli b { color: var(--royal); }
+.answer { margin-bottom: 12px; }
+.answer p { margin: 0 0 8px; }
+.artifact {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    margin: 8px 0;
+}
+.artifact table { width: 100%; border-collapse: collapse; font-size: 11px; }
+.artifact th, .artifact td { padding: 7px 9px; border-bottom: 1px solid var(--border); text-align: left; }
+.artifact th { background: var(--muted); font-weight: 600; font-size: 10px; letter-spacing: 0.04em; text-transform: uppercase; }
+.artifact tr:last-child td { border-bottom: 0; }
+.disclose { border: 0; background: transparent; padding: 4px 0; color: var(--royal); font: 500 11px/1 inherit; cursor: pointer; }
+.cmd {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-top: 1px solid var(--border);
+    padding: 10px 14px;
+}
+.cmd .prompt { color: var(--royal); font: 600 14px/1 ui-monospace, Consolas, monospace; }
+.cmd input {
+    flex: 1;
+    border: 0;
+    outline: none;
+    font: 12.5px/1 inherit;
+    background: transparent;
+    color: var(--foreground);
+}
+.kbd {
+    border: 1px solid var(--border);
+    border-bottom-width: 2px;
+    border-radius: 4px;
+    padding: 1px 4px;
+    font: 9px/1.4 ui-monospace, Consolas, monospace;
+    color: var(--muted-fg);
+}
+
+.note {
+    margin: 18px 2px 0;
+    color: var(--muted-fg);
+    font-size: 12px;
+}
+
+@media (max-width: 900px) {
+    .panel { width: 100%; }
+    .page { padding: 20px 14px 40px; }
+    .page-head { flex-direction: column; align-items: stretch; }
+}
+</style>
+</head>
+<body>
+<main class="page">
+    <header class="page-head">
+        <div>
+            <p class="eyebrow">Прототип · ИИ-помощник</p>
+            <h1>Три способа спрашивать расписание</h1>
+            <p class="lede">Один и тот же чат, разная логика входа: от контекста страницы, от режима модели или от команды. Переключайте варианты — панель справа живая.</p>
+        </div>
+        <div class="tabs" role="tablist" aria-label="Варианты дизайна">
+            <button role="tab" aria-selected="true" data-variant="a">A · Инспектор</button>
+            <button role="tab" aria-selected="false" data-variant="b">B · Режимы</button>
+            <button role="tab" aria-selected="false" data-variant="c">C · Пульт</button>
+        </div>
+    </header>
+
+    <section class="stage">
+        <div class="page-mock" aria-hidden="true">
+            <div class="row">
+                <div class="title">Проверка данных расписания</div>
+                <div class="kbd">debug</div>
+            </div>
+            <div class="tabsline"><b>Проверки</b><span>Обзор</span><span>Записи</span><span>Журнал</span></div>
+            <div class="table">
+                <div class="tr th"><span>Проверка</span><span>Статус</span><span>Мест</span><span>Обновлено</span></div>
+                <div class="tr"><span><i class="dot"></i>Заполненность данных</span><span>2 проблемы</span><span>12 149</span><span>сейчас</span></div>
+                <div class="tr"><span>Формат времени</span><span>ок</span><span>—</span><span>сейчас</span></div>
+                <div class="tr"><span><i class="dot"></i>День недели</span><span>2 проблемы</span><span>—</span><span>сейчас</span></div>
+                <div class="tr"><span>Дубликаты</span><span>ок</span><span>—</span><span>сейчас</span></div>
+                <div class="tr"><span>Аудитории</span><span>14 конфликтов</span><span>26</span><span>сейчас</span></div>
+                <div class="tr"><span>Преподаватель в двух аудиториях</span><span>4</span><span>67</span><span>сейчас</span></div>
+                <div class="tr"><span>Окна в расписании</span><span>14</span><span>56</span><span>сейчас</span></div>
+                <div class="tr"><span>Нагрузка</span><span>ок</span><span>—</span><span>сейчас</span></div>
+            </div>
+        </div>
+
+        <!-- ВАРИАНТ A -->
+        <aside class="panel" data-panel="a">
+            <div class="panel-head">
+                <div class="mark">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/></svg>
+                </div>
+                <div class="who">
+                    <div class="name">ИИ-помощник</div>
+                    <div class="sub">Анализ расписания</div>
+                </div>
+                <button class="chip" data-pop="model-a">
+                    dots-3-note
+                    <span class="free">free</span>
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+                </button>
+                <button class="icon-btn" aria-label="Очистить">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>
+                </button>
+                <button class="icon-btn" aria-label="Закрыть">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 6l12 12M18 6 6 18"/></svg>
+                </button>
+
+                <div class="model-pop" data-pop-panel="model-a">
+                    <div class="pop-label">Проверенные · бесплатные</div>
+                    <button class="opt" role="radio" aria-checked="true">
+                        <div class="txt"><b>dots-3-note-preview</b><small>512K · ~10 с · отвечает стабильно</small></div>
+                        <svg class="tick" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m5 13 4 4L19 7"/></svg>
+                    </button>
+                    <button class="opt" role="radio" aria-checked="false">
+                        <div class="txt"><b>nemotron-3.5-lightning</b><small>1M · ~3 с · быстрее, суше</small></div>
+                    </button>
+                    <button class="opt" role="radio" aria-checked="false">
+                        <div class="txt"><b>lfm-2.5-2.6b</b><small>64K · ~10 с · короткие вопросы</small></div>
+                    </button>
+                    <button class="pop-more">Все бесплатные модели →</button>
+                </div>
+            </div>
+
+            <div class="scope">
+                <span>Смотрю: <b>Проверки</b></span>
+                <span>·</span>
+                <span>8 проверок, 2 критичные</span>
+                <a class="link" href="#" onclick="return false">Изменить</a>
+            </div>
+
+            <div class="panel-body">
+                <h2 class="empty-title">Спросите о том, что видите</h2>
+                <p class="empty-sub">Ответ строится по цифрам активной вкладки.</p>
+                <div class="tasks">
+                    <button class="task">
+                        <span class="ico"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 2.6 17a2 2 0 0 0 1.7 3h15.4a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg></span>
+                        <span class="txt"><b>Объясни критичные проверки</b><small>2 проблемы: заполненность и день недели</small></span>
+                        <span class="go">→</span>
+                    </button>
+                    <button class="task">
+                        <span class="ico"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
+                        <span class="txt"><b>Где окна у групп</b><small>14 разрывов · 6 групп</small></span>
+                        <span class="go">→</span>
+                    </button>
+                    <button class="task">
+                        <span class="ico"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 7h16M4 12h10M4 17h7"/></svg></span>
+                        <span class="txt"><b>Покажи конфликты аудиторий</b><small>14 записей · 9 аудиторий</small></span>
+                        <span class="go">→</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="panel-foot">
+                <div class="composer">
+                    <textarea rows="1" placeholder="Вопрос о расписании…"></textarea>
+                    <button class="send" aria-label="Отправить">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M12 19V5M6 11l6-6 6 6"/></svg>
+                    </button>
+                </div>
+                <div class="foot-meta"><span>Контекст 20 237 из 512K</span><span>Запросы 1 из 250</span></div>
+            </div>
+        </aside>
+
+        <!-- ВАРИАНТ B -->
+        <aside class="panel" data-panel="b" hidden>
+            <div class="panel-head">
+                <div class="mark">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/></svg>
+                </div>
+                <div class="who">
+                    <div class="name">ИИ-помощник</div>
+                    <div class="sub">Анализ расписания</div>
+                </div>
+                <button class="icon-btn" aria-label="Очистить">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>
+                </button>
+                <button class="icon-btn" aria-label="Закрыть">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 6l12 12M18 6 6 18"/></svg>
+                </button>
+            </div>
+
+            <div class="modes" role="group" aria-label="Режим ответа">
+                <button class="mode" aria-pressed="true" data-mode="fast"><b>Быстро</b><span>~3 с · 1M</span></button>
+                <button class="mode" aria-pressed="false" data-mode="exact"><b>Точно</b><span>~10 с · 512K</span></button>
+                <button class="mode" aria-pressed="false" data-mode="deep"><b>Глубоко</b><span>~25 с · 1M</span></button>
+            </div>
+
+            <div class="panel-body">
+                <h2 class="empty-title">Что проверить?</h2>
+                <p class="empty-sub">Цифры — из текущего разбора, не из интернета.</p>
+                <div class="metrics">
+                    <button class="metric"><b>2</b><span>критичные</span></button>
+                    <button class="metric"><b>14</b><span>окон</span></button>
+                    <button class="metric"><b>4</b><span>двойных</span></button>
+                </div>
+                <div class="tasks">
+                    <button class="task">
+                        <span class="ico">?</span>
+                        <span class="txt"><b>С чего начать</b><small>Разбор приоритетов на сегодня</small></span>
+                        <span class="go">→</span>
+                    </button>
+                    <button class="task">
+                        <span class="ico">↔</span>
+                        <span class="txt"><b>Кого переставить</b><small>Окна и нагрузка вместе</small></span>
+                        <span class="go">→</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="panel-foot">
+                <div class="composer">
+                    <textarea rows="1" placeholder="Вопрос о расписании…"></textarea>
+                    <button class="send" aria-label="Отправить">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M12 19V5M6 11l6-6 6 6"/></svg>
+                    </button>
+                </div>
+                <div class="foot-meta"><span>dots-3-note · бесплатно</span><span>1 из 250</span></div>
+            </div>
+        </aside>
+
+        <!-- ВАРИАНТ C -->
+        <aside class="panel" data-panel="c" hidden>
+            <div class="pult-head">
+                <div class="pult-title">ИИ</div>
+                <button class="chip" data-pop="model-c">
+                    Авто
+                    <span class="free">free</span>
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+                </button>
+                <span class="kbd">⌘K</span>
+                <button class="icon-btn" aria-label="Закрыть">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 6l12 12M18 6 6 18"/></svg>
+                </button>
+
+                <div class="model-pop" data-pop-panel="model-c" style="top:44px;right:14px">
+                    <div class="pop-label">Автовыбор</div>
+                    <button class="opt" role="radio" aria-checked="true">
+                        <div class="txt"><b>Авто</b><small>Быстрая для коротких, точная для таблиц</small></div>
+                        <svg class="tick" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m5 13 4 4L19 7"/></svg>
+                    </button>
+                    <button class="opt" role="radio" aria-checked="false">
+                        <div class="txt"><b>dots-3-note</b><small>512K · проверена</small></div>
+                    </button>
+                    <button class="opt" role="radio" aria-checked="false">
+                        <div class="txt"><b>nemotron-lightning</b><small>1M · проверена</small></div>
+                    </button>
+                </div>
+            </div>
+
+            <div class="pult-log">
+                <div class="cli"><b>&gt;</b> где окна у групп</div>
+                <div class="answer">
+                    <p>14 окон у 6 групп. Больше всего — у ПСИ-Б-04-Д-2023-2: три разрыва по 2 часа 40 минут.</p>
+                    <div class="artifact">
+                        <table>
+                            <thead><tr><th>Группа</th><th>Дата</th><th>Окно</th></tr></thead>
+                            <tbody>
+                                <tr><td>ПСИ-Б-04-Д-2023-2</td><td>24.10</td><td>2 ч 40 мин</td></tr>
+                                <tr><td>ПСИ-Б-04-В-2025-1</td><td>24.10</td><td>1 ч 30 мин</td></tr>
+                                <tr><td>МЕН-Б-3-Д-2023-1</td><td>25.10</td><td>1 ч 30 мин</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <button class="disclose">Показать все 14 →</button>
+                </div>
+                <div class="cli"><b>&gt;</b> кого можно переставить</div>
+                <div class="answer">
+                    <p>Три пары Кондрашовой в субботу стоят в разных корпусах подряд. Перенос одной снимает два окна и один конфликт аудитории.</p>
+                </div>
+            </div>
+
+            <div class="cmd">
+                <span class="prompt">&gt;</span>
+                <input placeholder="Спросить или /команда" aria-label="Команда" />
+                <span class="kbd">↵</span>
+            </div>
+        </aside>
+    </section>
+
+    <p class="note">Клик по «Модель» открывает список; в варианте B режимы переключаются; в C — командная строка. Данные и цифры условные, для оценки компоновки.</p>
+</main>
+
+<script>
+const tabs = [...document.querySelectorAll(".tabs [role=tab]")];
+const panels = [...document.querySelectorAll(".panel")];
+
+tabs.forEach((tab) => {
+    tab.addEventListener("click", () => {
+        tabs.forEach((t) => t.setAttribute("aria-selected", String(t === tab)));
+        panels.forEach((p) => { p.hidden = p.dataset.panel !== tab.dataset.variant; });
+    });
+});
+
+// Поповеры моделей
+document.querySelectorAll("[data-pop]").forEach((trigger) => {
+    const panel = document.querySelector(`[data-pop-panel="${trigger.dataset.pop}"]`);
+    trigger.addEventListener("click", (event) => {
+        event.stopPropagation();
+        const open = panel.dataset.open === "true";
+        document.querySelectorAll("[data-pop-panel]").forEach((p) => { p.dataset.open = "false"; });
+        panel.dataset.open = String(!open);
+    });
+});
+
+document.addEventListener("click", () => {
+    document.querySelectorAll("[data-pop-panel]").forEach((p) => { p.dataset.open = "false"; });
+});
+
+document.querySelectorAll(".model-pop").forEach((pop) => {
+    pop.addEventListener("click", (event) => event.stopPropagation());
+});
+
+// Режимы в варианте B
+document.querySelectorAll(".mode").forEach((mode) => {
+    mode.addEventListener("click", () => {
+        document.querySelectorAll(".mode").forEach((m) => m.setAttribute("aria-pressed", String(m === mode)));
+    });
+});
+
+// Отправка в композере: показать пару сообщений
+document.querySelectorAll(".composer").forEach((composer) => {
+    const panel = composer.closest(".panel");
+    const body = panel.querySelector(".panel-body");
+    const input = composer.querySelector("textarea");
+    const send = composer.querySelector(".send");
+
+    const submit = () => {
+        const text = input.value.trim();
+        if (!text) return;
+        body.innerHTML = "";
+        const user = document.createElement("div");
+        user.className = "msg user";
+        user.innerHTML = `<div class="bubble"></div><div class="ava">Я</div>`;
+        user.querySelector(".bubble").textContent = text;
+        const ai = document.createElement("div");
+        ai.className = "msg";
+        ai.innerHTML = `<div class="ava">✦</div><div class="bubble"><p>Смотрю цифры текущего разбора… В прототипе ответ условный: 2 критичные проверки, 14 окон, 4 двойных назначения.</p></div>`;
+        body.append(user, ai);
+        input.value = "";
+    };
+
+    send.addEventListener("click", submit);
+    input.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" && !event.shiftKey) {
+            event.preventDefault();
+            submit();
+        }
+    });
+});
+
+// Примеры-задачи подставляют текст в композер
+document.querySelectorAll(".task").forEach((task) => {
+    task.addEventListener("click", () => {
+        const panel = task.closest(".panel");
+        const input = panel.querySelector("textarea");
+        const label = task.querySelector(".txt b");
+        if (input && label) {
+            input.value = label.textContent;
+            input.focus();
+        }
+    });
+});
+</script>
+</body>
+</html>

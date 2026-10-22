@@ -85,8 +85,13 @@ VAPID_PUBLIC_KEY=your_vapid_public_key
 VAPID_PRIVATE_KEY=your_vapid_private_key
 NEXT_PUBLIC_VAPID_PUBLIC_KEY=your_vapid_public_key
 
-# Gemini AI
-GEMINI_API_KEY=your_gemini_api_key
+# ИИ-чат отладки (OpenAI-совместимый API)
+AI_PROVIDER=openrouter
+OPENROUTER_API_KEY=your_openrouter_api_key
+AI_MODEL=dots-studio/dots-3-note-preview:free
+# Белый список для переключателя моделей в чате: provider/model через запятую.
+# Пусто — переключателя нет, работает только AI_MODEL.
+AI_ALLOWED_MODELS=openrouter/dots-studio/dots-3-note-preview:free,openrouter/nvidia/nemotron-3.5-lightning:free
 ```
 
 > **Важно**: Для многострочных значений (например, `GOOGLE_PRIVATE_KEY`) вставьте значение с переносами строк как есть.
@@ -161,32 +166,28 @@ Vercel поддерживает Cron Jobs через Vercel Cron:
 
 Vercel автоматически настроит SSL сертификат.
 
-### Vercel Analytics (Опционально)
+### Аналитика Plausible
 
-1. Перейдите в **Analytics**
-2. Нажмите **Enable Analytics**
-3. Установите пакет:
+Vercel Analytics работает только на Vercel — на Cloudflare Pages и Netlify
+его endpoint `/_vercel/insights` отдаёт 404, и данные не собираются.
+Поэтому в проекте используется Plausible: без cookie, без IP, работает на
+любом хостинге.
 
-```bash
-npm install @vercel/analytics
+1. Создайте сайт в Plausible (облако) или поднимите свой инстанс —
+   см. [PLAUSIBLE_SELF_HOST.md](./PLAUSIBLE_SELF_HOST.md)
+2. Задайте переменные окружения:
+
+```env
+# Домен сайта — ровно как он указан в настройках Plausible
+NEXT_PUBLIC_PLAUSIBLE_DOMAIN=your-domain.com
+
+# Свой инстанс (необязательно, по умолчанию идёт в облако plausible.io)
+NEXT_PUBLIC_PLAUSIBLE_ENDPOINT=https://analytics.your-domain.com/api/event
 ```
 
-4. Добавьте в `app/layout.tsx`:
-
-```typescript
-import { Analytics } from '@vercel/analytics/react';
-
-export default function RootLayout({ children }) {
-  return (
-    <html>
-      <body>
-        {children}
-        <Analytics />
-      </body>
-    </html>
-  );
-}
-```
+3. Пакет `@plausible-analytics/tracker` и компонент `components/analytics.tsx`
+   уже подключены в `app/layout.tsx` — дополнительных действий не нужно.
+   Без `NEXT_PUBLIC_PLAUSIBLE_DOMAIN` счётчик не подключается вовсе.
 
 ---
 
@@ -228,8 +229,8 @@ npm run build
 
 ### Сайт работает медленно
 
-- Включите Vercel Analytics для диагностики
 - Проверьте размер бандла в логах сборки
+- Обратите внимание на консоль браузера
 - Оптимизируйте изображения и компоненты
 
 ---
@@ -245,6 +246,13 @@ npm run build
 
 - Перейдите в **Deployments** → выберите деплой → **Functions**
 - Просмотрите логи выполнения serverless функций
+
+### Не приходят данные аналитики
+
+- Проверьте, что задан `NEXT_PUBLIC_PLAUSIBLE_DOMAIN` и он совпадает с доменом в настройках Plausible
+- Без этой переменной счётчик не подключается вовсе — это нормальное поведение
+- В DevTools → Network должен уходить `POST .../api/event`
+- Подробности: [PLAUSIBLE_SELF_HOST.md](./PLAUSIBLE_SELF_HOST.md)
 
 ### Real-time Logs
 
@@ -293,7 +301,7 @@ vercel logs
 1. ✅ Обновите `NEXT_PUBLIC_SITE_URL` на актуальный URL
 2. ✅ Настройте cron job для `/api/push/check`
 3. ✅ (Опционально) Подключите кастомный домен
-4. ✅ (Опционально) Включите Vercel Analytics
+4. ✅ (Опционально) Подключите аналитику Plausible
 5. ✅ Проверьте все функции приложения
 
 ---

@@ -2,15 +2,14 @@
 
 import useSWR from "swr";
 import { useEffect, useRef, useState } from "react";
-import { ScheduleItem } from "@/types/schedule";
+import { ScheduleItem, ScheduleMeta } from "@/types/schedule";
 import { ScheduleTabs } from "@/components/schedule-tabs";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Skeleton } from "@/components/ui/skeleton";
-import { motion, AnimatePresence } from "framer-motion";
+import { ScheduleError } from "@/components/schedule-error";
+import { motion, useReducedMotion } from "framer-motion";
+import { MOTION_DURATION, motionTransition } from "@/lib/motion";
 import { showScheduleToast, showToast } from "@/components/ui/sonner";
-import { AlertCircle, RefreshCcw } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { API_ENDPOINTS, REFRESH_INTERVAL, STORAGE_KEYS } from "@/lib/constants";
+import { metaFetcher, scheduleFetcher } from "@/lib/api";
 import { compareScheduleData, ChangeDetails } from "@/lib/schedule-utils";
 import {
   Dialog,
@@ -23,7 +22,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { BrandLogo } from "@/components/logo/brand-logo";
 
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
+const fetcher = scheduleFetcher;
 
 
 
@@ -46,7 +45,7 @@ const showChangeNotifications = (changes: ChangeDetails, onViewDetails: (changes
     count++;
   }
 
-  // Удалённые  
+  // Удалённые 
   for (const item of changes.removed) {
     if (count >= maxToasts) break;
     showScheduleToast({
@@ -99,25 +98,99 @@ interface DynamicScheduleProps {
   initialTeacher?: string;
 }
 
+/**
+ * Выбор группы или преподавателя живёт здесь, а не внутри ScheduleView:
+ * от него зависит ключ SWR — расписание фильтруется на сервере, и клиенту
+ * нужны только строки своей группы.
+ */
 export default function Home({ initialGroup, initialTeacher }: DynamicScheduleProps) {
+  const reduceMotion = useReducedMotion();
   const [changesDialogOpen, setChangesDialogOpen] = useState(false);
   const [changesList, setChangesList] = useState<ChangeDetails | null>(null);
+
+  // Начальное значение берём только из адреса: localStorage читаем после
+  // монтирования, иначе сервер и клиент отрисовали бы разное.
+  const [selectedGroup, setSelectedGroup] = useState<string>(initialGroup ?? "all");
+  const [selectedTeacher, setSelectedTeacher] = useState<string>(initialTeacher ?? "all");
+  const [isMounted, setIsMounted] = useState(false);
 
   const handleViewDetails = (changes: ChangeDetails) => {
     setChangesList(changes);
     setChangesDialogOpen(true);
   };
+
+  // Сохранённый выбор подхватываем после монтирования: на сервере
+  // localStorage недоступен, и иначе разметка сервера и клиента разошлась бы.
+  // Значения из адреса запоминаем при первом рендере — дальше они меняются
+  // вместе с историей браузера, и восстановление из памяти началось бы заново.
+  const initialSelectionRef = useRef({ group: initialGroup, teacher: initialTeacher });
+
+  useEffect(() => {
+    setIsMounted(true);
+
+    const { group, teacher } = initialSelectionRef.current;
+
+    if (!group || group === "all") {
+      const saved = localStorage.getItem(STORAGE_KEYS.SELECTED_GROUP);
+      if (saved && saved !== "all") setSelectedGroup(saved);
+    }
+
+    if (!teacher || teacher === "all") {
+      const saved = localStorage.getItem(STORAGE_KEYS.SELECTED_TEACHER);
+      if (saved && saved !== "all") setSelectedTeacher(saved);
+    }
+  }, []);
+
+  // Ключ зависит от выбранной группы/преподавателя: сервер отдаёт только
+  // нужные строки. Без фильтра — всё расписание (3,9 МБ).
+  //
+  // Если не выбрано ни то, ни другое, показывается приветственный экран —
+  // расписание в этом состоянии не нужно вовсе, поэтому и не качаем его:
+  // хватает списка групп и преподавателей из мета-ручки.
+  const scheduleKey = (() => {
+    const params = new URLSearchParams();
+    if (selectedGroup && selectedGroup !== "all") params.set("group", selectedGroup);
+    if (selectedTeacher && selectedTeacher !== "all") params.set("teacher", selectedTeacher);
+    const query = params.toString();
+    return query ? `${API_ENDPOINTS.SCHEDULE}?${query}` : null;
+  })();
+
   const {
     data: schedule,
     error,
     isLoading,
+ isValidating,
     mutate,
-  } = useSWR<ScheduleItem[]>(API_ENDPOINTS.SCHEDULE, fetcher, {
+  } = useSWR<ScheduleItem[]>(scheduleKey, fetcher, {
     refreshInterval: REFRESH_INTERVAL, // Обновляем каждую минуту
   });
 
+  // Списки групп и преподавателей — отдельная лёгкая ручка: расписание уже
+  // отфильтровано, а списки нужны всегда (приветственный экран, меню).
+  const { data: meta, error: metaError, mutate: mutateMeta } = useSWR<ScheduleMeta>(
+    API_ENDPOINTS.SCHEDULE_META,
+    metaFetcher,
+    {
+      refreshInterval: REFRESH_INTERVAL,
+    }
+  );
+
   const previousDataRef = useRef<ScheduleItem[] | null>(null);
   const isFirstLoadRef = useRef(true);
+  // Хоть раз получили расписание: после этого смена группы показывается
+  // скелетонами, а не заставкой на весь экран.
+  const hasLoadedRef = useRef(false);
+
+  useEffect(() => {
+    if (schedule) hasLoadedRef.current = true;
+  }, [schedule]);
+
+  // Сменился фильтр — набор строк другой, сравнивать его с предыдущим
+  // бессмысленно: получили бы «изменения» из-за смены группы.
+  useEffect(() => {
+    previousDataRef.current = null;
+    isFirstLoadRef.current = true;
+  }, [scheduleKey]);
 
   // Отслеживаем изменения в расписании
   useEffect(() => {
@@ -151,18 +224,14 @@ export default function Home({ initialGroup, initialTeacher }: DynamicSchedulePr
             console.error('Failed to log schedule changes', e);
           }
 
-          const selectedGroup = localStorage.getItem(STORAGE_KEYS.SELECTED_GROUP);
-          const selectedTeacher = localStorage.getItem(STORAGE_KEYS.SELECTED_TEACHER);
-
+          // Расписание приходит уже отфильтрованным по выбранной группе
+          // или преподавателю, поэтому все пришедшие изменения относятся к
+          // тому, что пользователь сейчас смотрит. Если фильтр не выбран,
+          // данные — весь вуз, и оповещать о каждой правке не нужно.
           const isRelevant = (item: ScheduleItem) => {
-            const groupMatch = selectedGroup && selectedGroup !== 'all' && item.group === selectedGroup;
-            const teacherMatch = selectedTeacher && selectedTeacher !== 'all' && item.teacher === selectedTeacher;
-            // Если ничего не выбрано (или выбрано "все"), показываем всё. 
-            // Иначе - только то, что совпадает.
-            if ((!selectedGroup || selectedGroup === 'all') && (!selectedTeacher || selectedTeacher === 'all')) {
-              return false;
-            }
-            return groupMatch || teacherMatch;
+            if (selectedGroup !== "all" && item.group === selectedGroup) return true;
+            if (selectedTeacher !== "all" && item.teacher === selectedTeacher) return true;
+            return false;
           };
 
           filteredChanges = {
@@ -184,72 +253,56 @@ export default function Home({ initialGroup, initialTeacher }: DynamicSchedulePr
   }, [schedule]);
 
   // Отображаем ошибку, если есть
-  if (error || (schedule && !Array.isArray(schedule))) {
+  if (error || metaError || (schedule && !Array.isArray(schedule))) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-background p-4">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="w-full max-w-md"
-        >
-          <Alert variant="destructive" className="flex flex-col items-center text-center p-6 space-y-4 border-2">
-            <div className="p-3 bg-destructive/10 rounded-full">
-              <AlertCircle className="h-10 w-10 text-destructive" />
-            </div>
-            <div className="space-y-2">
-              <AlertTitle className="text-xl font-bold tracking-tight">
-                Ошибка загрузки расписания
-              </AlertTitle>
-              <AlertDescription className="text-sm opacity-90 leading-relaxed">
-                {(schedule as any)?.error || "Не удалось загрузить данные. Проверьте подключение к интернету или попробуйте позже."}
-              </AlertDescription>
-            </div>
-            <Button
-              variant="outline"
-              size="lg"
-              className="mt-4 w-full sm:w-auto gap-2 border-destructive/20 hover:bg-destructive/10 hover:text-destructive transition-all active:scale-95"
-              onClick={() => mutate()}
-            >
-              <RefreshCcw className="h-4 w-4" />
-              Попробовать снова
-            </Button>
-          </Alert>
-        </motion.div>
-      </div>
+      <ScheduleError
+        error={error ?? metaError ?? new Error((schedule as any)?.error || "Некорректный ответ сервера")}
+        onRetry={() => {
+          if (metaError) void mutateMeta();
+          else void mutate();
+        }}
+        isRetrying={isValidating}
+      />
     );
   }
 
-  // Состояние загрузки с анимацией и информативными сообщениями
-  if (isLoading || !schedule) {
+  // Состояние загрузки с анимацией и информативными сообщениями.
+  // Пока не смонтировались — заставка: иначе приветственный экран мелькнул бы
+  // перед восстановлением группы из памяти. Дальше заставка только на первой
+  // загрузке расписания: смена группы показывается скелетонами.
+  const showSplash = !isMounted
+    ? true
+    : !meta
+      ? true
+      : scheduleKey !== null && !hasLoadedRef.current && (isLoading || !schedule);
+
+  if (showSplash) {
     return (
-      <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-background">
-        <div className="absolute inset-0 bg-gradient-to-tr from-blue-50/50 via-transparent to-indigo-50/50 dark:from-blue-900/10 dark:to-indigo-900/10" />
+      <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center overflow-hidden bg-brand-gradient">
+        {/* Мягкий свет сверху — объём фона */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_80%_at_50%_-10%,rgba(255,255,255,0.16),transparent_60%)]"
+        />
+        {/* Виньетка — композиция собирается к центру */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(85%_70%_at_50%_45%,transparent_45%,rgba(2,6,20,0.32)_100%)]"
+        />
 
         <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{
-            opacity: 1,
-            scale: 1,
-            filter: [
-              "drop-shadow(0 0 0px rgba(34, 50, 96, 0))",
-              "drop-shadow(0 0 40px rgba(34, 50, 96, 0.6))",
-              "drop-shadow(0 0 0px rgba(34, 50, 96, 0))"
-            ]
-          }}
-          transition={{
-            opacity: { duration: 0.4 },
-            scale: { duration: 0.4 },
-            filter: {
-              duration: 2.5,
-              ease: "easeInOut",
-              repeat: Infinity,
-              repeatType: "loop"
-            }
-          }}
-          className="relative z-10 flex items-center justify-center"
+          initial={reduceMotion ? false : { opacity: 0, scale: 0.94, y: 10 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={motionTransition(reduceMotion, { duration: MOTION_DURATION.slow })}
+          className="relative z-10"
         >
-          <BrandLogo className="w-64 h-64" />
+          <BrandLogo
+            className="h-40 w-auto sm:h-56 text-white"
+            // Одна мягкая тень: знак парит над градиентом, но не пачкает его
+            style={{ filter: "drop-shadow(0 20px 36px rgba(2, 6, 20, 0.32))" }}
+          />
         </motion.div>
+
       </div>
     );
   }
@@ -257,7 +310,17 @@ export default function Home({ initialGroup, initialTeacher }: DynamicSchedulePr
   return (
     <div>
       {/* Отображаем расписание с вкладками и таблицей */}
-      <ScheduleTabs scheduleData={Array.isArray(schedule) ? schedule : []} isLoading={isLoading} initialGroup={initialGroup} initialTeacher={initialTeacher} />
+      <ScheduleTabs
+        scheduleData={Array.isArray(schedule) ? schedule : []}
+        isLoading={isLoading}
+        initialGroup={initialGroup}
+        initialTeacher={initialTeacher}
+        meta={meta}
+        selectedGroup={selectedGroup}
+        selectedTeacher={selectedTeacher}
+        onGroupChange={setSelectedGroup}
+        onTeacherChange={setSelectedTeacher}
+      />
 
       {/* Диалог со списком изменений */}
       <Dialog open={changesDialogOpen} onOpenChange={setChangesDialogOpen}>
@@ -275,106 +338,106 @@ export default function Home({ initialGroup, initialTeacher }: DynamicSchedulePr
                 <>
                   {changesList.added.length > 0 && (
                     <div className="space-y-3">
-                      <h3 className="font-medium flex items-center gap-2 text-green-600 dark:text-green-400">
-                        <div className="h-2 w-2 rounded-full bg-green-500" />
+                      <h3 className="font-medium flex items-center gap-2 text-success">
+                        <div className="h-2 w-2 rounded-full bg-success" />
                         Добавлено ({changesList.added.length})
                       </h3>
                       <div className="grid gap-2">
                         {changesList.added.map((item, i) => (
-                          <div key={i} className="p-3 rounded-lg border bg-card text-card-foreground shadow-sm text-sm">
+                          <div key={i} className="p-3 rounded-lg border bg-card text-card-foreground shadow-xs text-sm">
                             <div className="font-semibold">{item.subject}</div>
                             <div className="text-muted-foreground flex gap-2 mt-1">
                               <Badge variant="outline">{item.date}</Badge>
                               <Badge variant="outline">{item.time}</Badge>
                               <Badge variant="outline">{item.group}</Badge>
-                            </div>
-                          </div>
+            </div>
+      </div>
                         ))}
-                      </div>
-                    </div>
+      </div>
+                            </div>
                   )}
 
                   {changesList.modified.length > 0 && (
                     <div className="space-y-3">
-                      <h3 className="font-medium flex items-center gap-2 text-amber-600 dark:text-amber-400">
-                        <div className="h-2 w-2 rounded-full bg-amber-500" />
+                      <h3 className="font-medium flex items-center gap-2 text-warning">
+                        <div className="h-2 w-2 rounded-full bg-warning" />
                         Изменено ({changesList.modified.length})
                       </h3>
                       <div className="grid gap-2">
                         {changesList.modified.map(({ old, new: cur }, i) => (
-                          <div key={i} className="p-3 rounded-lg border bg-card text-card-foreground shadow-sm text-sm">
+                          <div key={i} className="p-3 rounded-lg border bg-card text-card-foreground shadow-xs text-sm">
                             <div className="font-semibold">{cur.subject}</div>
                             <div className="text-muted-foreground flex gap-2 mt-1 mb-2">
                               <Badge variant="outline">{cur.date}</Badge>
                               <Badge variant="outline">{cur.time}</Badge>
                               <Badge variant="outline">{cur.group}</Badge>
-                            </div>
+                          </div>
                             <div className="text-xs space-y-1 bg-muted/50 p-2 rounded">
                               {old.teacher !== cur.teacher && (
                                 <div>
                                   <span className="text-muted-foreground">Преподаватель:</span>{" "}
-                                  <span className="line-through text-red-500 opacity-70">{old.teacher}</span>{" "}
+                                  <span className="line-through text-destructive opacity-70">{old.teacher}</span>{" "}
                                   <span>→</span>{" "}
-                                  <span className="font-bold text-green-600 dark:text-green-400">{cur.teacher}</span>
-                                </div>
+                                  <span className="font-bold text-success">{cur.teacher}</span>
+                      </div>
                               )}
                               {old.classroom !== cur.classroom && (
                                 <div>
                                   <span className="text-muted-foreground">Аудитория:</span>{" "}
-                                  <span className="line-through text-red-500 opacity-70">{old.classroom}</span>{" "}
+                                  <span className="line-through text-destructive opacity-70">{old.classroom}</span>{" "}
                                   <span>→</span>{" "}
-                                  <span className="font-bold text-green-600 dark:text-green-400">{cur.classroom}</span>
-                                </div>
+                                  <span className="font-bold text-success">{cur.classroom}</span>
+                    </div>
                               )}
                               {old.lessonType !== cur.lessonType && (
                                 <div>
                                   <span className="text-muted-foreground">Тип:</span>{" "}
-                                  <span className="line-through text-red-500 opacity-70">{old.lessonType}</span>{" "}
+                                  <span className="line-through text-destructive opacity-70">{old.lessonType}</span>{" "}
                                   <span>→</span>{" "}
-                                  <span className="font-bold text-green-600 dark:text-green-400">{cur.lessonType}</span>
-                                </div>
+                                  <span className="font-bold text-success">{cur.lessonType}</span>
+                            </div>
                               )}
                               {old.subject !== cur.subject && (
                                 <div>
                                   <span className="text-muted-foreground">Дисциплина:</span>{" "}
-                                  <span className="line-through text-red-500 opacity-70">{old.subject}</span>{" "}
+                                  <span className="line-through text-destructive opacity-70">{old.subject}</span>{" "}
                                   <span>→</span>{" "}
-                                  <span className="font-bold text-green-600 dark:text-green-400">{cur.subject}</span>
+                                  <span className="font-bold text-success">{cur.subject}</span>
                                 </div>
                               )}
-                            </div>
-                          </div>
+                                </div>
+                                </div>
                         ))}
-                      </div>
-                    </div>
+                                </div>
+                            </div>
                   )}
 
                   {changesList.removed.length > 0 && (
                     <div className="space-y-3">
-                      <h3 className="font-medium flex items-center gap-2 text-red-600 dark:text-red-400">
-                        <div className="h-2 w-2 rounded-full bg-red-500" />
+                      <h3 className="font-medium flex items-center gap-2 text-destructive">
+                        <div className="h-2 w-2 rounded-full bg-destructive" />
                         Удалено ({changesList.removed.length})
                       </h3>
                       <div className="grid gap-2">
                         {changesList.removed.map((item, i) => (
-                          <div key={i} className="p-3 rounded-lg border bg-card text-card-foreground shadow-sm text-sm opacity-80 decoration-slate-500">
+                          <div key={i} className="p-3 rounded-lg border bg-card text-card-foreground shadow-xs text-sm opacity-80 decoration-slate-500">
                             <div className="font-semibold line-through">{item.subject}</div>
                             <div className="text-muted-foreground flex gap-2 mt-1">
                               <Badge variant="outline">{item.date}</Badge>
                               <Badge variant="outline">{item.time}</Badge>
                               <Badge variant="outline">{item.group}</Badge>
-                            </div>
                           </div>
-                        ))}
                       </div>
+                        ))}
                     </div>
+                            </div>
                   )}
                 </>
               )}
-            </div>
+                          </div>
           </ScrollArea>
         </DialogContent>
       </Dialog>
-    </div>
+                      </div>
   );
 }

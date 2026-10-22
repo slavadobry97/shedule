@@ -62,8 +62,23 @@ GOOGLE_PRIVATE_KEY=...
 VAPID_PUBLIC_KEY=...
 VAPID_PRIVATE_KEY=...
 NEXT_PUBLIC_VAPID_PUBLIC_KEY=...
-GEMINI_API_KEY=...
+AI_PROVIDER=openrouter
+OPENROUTER_API_KEY=...
+AI_MODEL=dots-studio/dots-3-note-preview:free
+AI_ALLOWED_MODELS=openrouter/dots-studio/dots-3-note-preview:free,openrouter/nvidia/nemotron-3.5-lightning:free
+NEXT_PUBLIC_PLAUSIBLE_DOMAIN=your-domain.pages.dev
 ```
+
+> **Про ИИ-чат отладки.** Провайдер выбирается через `AI_PROVIDER` (`openrouter` |
+> `groq` | `opencode` | `custom`) — используется OpenAI-совместимый API, поэтому
+> подходит любой сервис с таким форматом. Gemini намеренно не используется:
+> Google AI Studio и Gemini API недоступны в Беларуси, и ключ из этой страны
+> работать не будет.
+>
+> `AI_ALLOWED_MODELS` — белый список моделей для переключателя в чате, формат
+> `провайдер/модель` через запятую. Пусто — переключателя нет, работает только
+> `AI_MODEL`. Клиент присылает лишь идентификаторы: адреса и ключи остаются
+> на сервере, а модель вне списка отклоняется.
 
 ### 4️⃣ Деплой!
 
@@ -76,6 +91,8 @@ GEMINI_API_KEY=...
 ## 📚 Дополнительная документация
 
 - [CLOUDFLARE_DEPLOYMENT.md](./CLOUDFLARE_DEPLOYMENT.md) - Полное руководство по Cloudflare
+- [NGINX_DEPLOYMENT.md](./NGINX_DEPLOYMENT.md) - Свой nginx: проксирование, gzip и общий кэш расписания
+- [PLAUSIBLE_SELF_HOST.md](./PLAUSIBLE_SELF_HOST.md) - Аналитика Plausible: облако или свой инстанс
 - [old-netlify-config/NETLIFY_DEPLOYMENT.md](./old-netlify-config/NETLIFY_DEPLOYMENT.md) - Полное руководство по Netlify
 - [README.md](./README.md) - Основная документация проекта
 - [CHANGELOG.md](./CHANGELOG.md) - История изменений

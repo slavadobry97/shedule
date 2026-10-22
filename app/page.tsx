@@ -13,7 +13,7 @@ export async function generateMetadata(
   const teacher = typeof params.teacher === 'string' ? params.teacher : undefined;
 
   let title = "Расписание занятий РГСУ | Филиал в Минске";
-  let description = "Актуальное расписание занятий Филиала РГСУ в г. Минске на 2025-2026 учебный год. Поиск по группам, преподавателям и датам.";
+  let description = "Актуальное расписание занятий Филиала РГСУ в г. Минске на 2026-2027 учебный год. Поиск по группам, преподавателям и датам.";
 
   if (group) {
     title = `Расписание ${group} | РГСУ Минск`;
@@ -56,7 +56,7 @@ export default async function HomePage({ searchParams }: Props) {
   const teacher = typeof params.teacher === 'string' ? params.teacher : undefined;
 
   return (
-    <main className="min-h-screen bg-background">
+    <main className="min-h-screen bg-canvas">
       <DynamicSchedule initialGroup={group} initialTeacher={teacher} />
     </main>
   );

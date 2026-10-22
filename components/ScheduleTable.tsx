@@ -8,7 +8,7 @@ import {
   DEFAULT_PAGE_SIZE,
   TABLE_COLUMNS
 } from "@/lib/constants";
-import { FileDown, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, SearchX, Check, ChevronsUpDown } from "lucide-react";
+import { ArrowDownIcon, ArrowUpDownIcon, ArrowUpIcon, CheckIcon, ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon, ChevronsLeftIcon, ChevronsRightIcon, FileDownloadIcon, SearchXIcon } from "@/components/icons";
 import {
   Table,
   TableBody,
@@ -38,7 +38,7 @@ import {
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { cn } from "@/lib/utils";
+import { cn } from "cn";
 
 interface ScheduleTableProps {
   scheduleData: ScheduleItem[];
@@ -187,12 +187,12 @@ export default function ScheduleTable({ scheduleData, isLoading = false }: Sched
 
   const getSortIcon = useCallback((field: SortField) => {
     if (sortField !== field) {
-      return <ArrowUpDown className="h-4 w-4 ml-1 opacity-50 shrink-0" />;
+      return <ArrowUpDownIcon className="h-4 w-4 ml-1 opacity-50 shrink-0" />;
     }
     if (sortDirection === "asc") {
-      return <ArrowUp className="h-4 w-4 ml-1 shrink-0" />;
+      return <ArrowUpIcon className="h-4 w-4 ml-1 shrink-0" />;
     }
-    return <ArrowDown className="h-4 w-4 ml-1 shrink-0" />;
+    return <ArrowDownIcon className="h-4 w-4 ml-1 shrink-0" />;
   }, [sortField, sortDirection]);
 
   const handleResetFilter = useCallback(() => {
@@ -324,7 +324,7 @@ export default function ScheduleTable({ scheduleData, isLoading = false }: Sched
                   ? filterOptions.find((opt) => opt.value === filter)?.label || filter
                   : `Поиск по ${getFilterPlaceholder()}...`}
               </span>
-              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+              <ChevronDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-60" />
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-64 p-0">
@@ -341,7 +341,7 @@ export default function ScheduleTable({ scheduleData, isLoading = false }: Sched
                       setComboboxOpen(false);
                     }}
                   >
-                    <Check
+                    <CheckIcon
                       className={cn(
                         "mr-2 h-4 w-4",
                         filter === option.value ? "opacity-100" : "opacity-0"
@@ -358,9 +358,9 @@ export default function ScheduleTable({ scheduleData, isLoading = false }: Sched
           variant="outline"
           onClick={downloadPDF}
           className="order-2 sm:order-last ml-auto"
-          aria-label="Скачать расписание в формате PDF"
+          aria-label="Скачать расписание в  формате PDF"
         >
-          <FileDown />
+          <FileDownloadIcon />
           Скачать PDF
         </Button>
       </div>
@@ -377,12 +377,12 @@ export default function ScheduleTable({ scheduleData, isLoading = false }: Sched
       {/* Таблица */}
       <div className="rounded-lg border overflow-hidden">
         <Table>
-          <TableHeader className="text-center bg-slate-100 dark:bg-gray-900">
+          <TableHeader className="text-center bg-muted">
             <TableRow className="text-center">
               {TABLE_COLUMNS.map((col, idx) => (
                 <TableHead
                   key={col.key}
-                  className={`${idx < TABLE_COLUMNS.length - 1 ? "border-r" : ""} text-center cursor-pointer hover:bg-slate-200 dark:hover:bg-gray-800 transition-colors select-none`}
+                  className={`${idx < TABLE_COLUMNS.length - 1 ? "border-r" : ""} text-center cursor-pointer hover:bg-foreground/5 transition-colors select-none`}
                   onClick={() => handleSort(col.key)}
                 >
                   <div className="flex items-center justify-center">
@@ -410,7 +410,7 @@ export default function ScheduleTable({ scheduleData, isLoading = false }: Sched
               ))
             ) : paginatedData.length > 0 ? (
               paginatedData.map((item, index) => (
-                <TableRow key={index} className="hover:bg-slate-50 dark:hover:bg-gray-900/50">
+                <TableRow key={index} className="hover:bg-muted/50">
                   <TableCell className="border-r w-40">{item.group}</TableCell>
                   <TableCell className="border-r text-center">{item.dayOfWeek}</TableCell>
                   <TableCell className="border-r text-center">{item.date}</TableCell>
@@ -425,7 +425,7 @@ export default function ScheduleTable({ scheduleData, isLoading = false }: Sched
               <TableRow>
                 <TableCell colSpan={TABLE_COLUMNS.length} className="h-48">
                   <div className="flex flex-col items-center justify-center gap-4 text-muted-foreground">
-                    <SearchX className="h-12 w-12 opacity-50" />
+                    <SearchXIcon className="h-12 w-12 opacity-50" />
                     <div className="text-center">
                       <p className="font-medium text-lg">Ничего не найдено</p>
                       <p className="text-sm">По вашему запросу &quot;{filter}&quot; не найдено записей</p>
@@ -476,7 +476,7 @@ export default function ScheduleTable({ scheduleData, isLoading = false }: Sched
               className="hidden sm:flex"
               aria-label="Перейти на первую страницу"
             >
-              <ChevronsLeft className="h-4 w-4" />
+              <ChevronsLeftIcon className="h-4 w-4" />
             </Button>
             {/* Назад */}
             <Button
@@ -486,7 +486,7 @@ export default function ScheduleTable({ scheduleData, isLoading = false }: Sched
               disabled={currentPage === 1}
               aria-label="Предыдущая страница"
             >
-              <ChevronLeft className="h-4 w-4" />
+              <ChevronLeftIcon className="h-4 w-4" />
               <span className="hidden sm:inline">Назад</span>
             </Button>
             {/* Номера страниц */}
@@ -526,7 +526,7 @@ export default function ScheduleTable({ scheduleData, isLoading = false }: Sched
               aria-label="Следующая страница"
             >
               <span className="hidden sm:inline">Вперёд</span>
-              <ChevronRight className="h-4 w-4" />
+              <ChevronRightIcon className="h-4 w-4" />
             </Button>
             {/* В конец */}
             <Button
@@ -537,7 +537,7 @@ export default function ScheduleTable({ scheduleData, isLoading = false }: Sched
               className="hidden sm:flex"
               aria-label="Перейти на последнюю страницу"
             >
-              <ChevronsRight className="h-4 w-4" />
+              <ChevronsRightIcon className="h-4 w-4" />
             </Button>
           </div>
         )}

@@ -8,7 +8,7 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { MapPin, Info } from "lucide-react";
+import { InfoIcon, Location01Icon } from "@/components/icons";
 import { getDeclension } from "@/lib/utils";
 
 
@@ -29,26 +29,26 @@ export function ClassroomHeatmap({ data }: ClassroomHeatmapProps) {
 
     // Helper to determine color based on utilization
     const getColor = (percent: number) => {
-        if (percent < 10) return "bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800";
-        if (percent < 25) return "bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800";
-        return "bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800";
+        if (percent < 10) return "bg-destructive/10 dark:bg-destructive/40 text-destructive dark:text-destructive border-destructive/30 dark:border-destructive/40";
+        if (percent < 25) return "bg-warning/10 dark:bg-warning/40 text-warning dark:text-warning border-warning/30 dark:border-warning/40";
+        return "bg-success/10 dark:bg-success/40 text-success dark:text-success border-success/30 dark:border-success/40";
     };
 
     const getHoverColor = (percent: number) => {
-        if (percent < 10) return "hover:bg-red-200 dark:hover:bg-red-900/60";
-        if (percent < 25) return "hover:bg-amber-200 dark:hover:bg-amber-900/60";
-        return "hover:bg-green-200 dark:hover:bg-green-900/60";
+        if (percent < 10) return "hover:bg-destructive/20 dark:hover:bg-destructive/60";
+        if (percent < 25) return "hover:bg-warning/20 dark:hover:bg-warning/60";
+        return "hover:bg-success/20 dark:hover:bg-success/60";
     }
 
     return (
         <div className="space-y-4">
             <div className="flex flex-col gap-1">
                 <h4 className="text-sm font-semibold flex items-center gap-2">
-                    <MapPin className="h-4 w-4" />
+                    <Location01Icon className="h-4 w-4" />
                     Загруженность аудиторий (Heatmap)
                 </h4>
                 <p className="text-xs text-muted-foreground">
-                    Наведите на ячейку для деталей. <span className="text-red-500">Красный</span> &lt; 10%, <span className="text-amber-500">Желтый</span> 10-25%, <span className="text-green-500">Зеленый</span> &gt; 25%.
+                    Наведите на ячейку для деталей. <span className="text-destructive">Красный</span> &lt; 10%, <span className="text-warning">Желтый</span> 10-25%, <span className="text-success">Зеленый</span> &gt; 25%.
                 </p>
             </div>
 
@@ -65,10 +65,10 @@ export function ClassroomHeatmap({ data }: ClassroomHeatmapProps) {
                   `}
                                 >
                                     <span className="font-bold text-sm">{item.classroom}</span>
-                                    <span className="text-[10px] opacity-80">{item.utilizationPercent.toFixed(0)}%</span>
+                                    <span className="text-xxs opacity-80">{item.utilizationPercent.toFixed(0)}%</span>
                                 </div>
                             </TooltipTrigger>
-                            <TooltipContent side="top" className="p-4 max-w-[220px] bg-white dark:bg-zinc-950 text-zinc-950 dark:text-zinc-50 shadow-xl border border-zinc-200 dark:border-zinc-800">
+                            <TooltipContent side="top" className="p-4 max-w-[220px] bg-card dark:bg-muted/95 text-foreground dark:text-muted-foreground shadow-xl border border-border dark:border-border">
                                 <div className="space-y-3">
                                     <div className="flex items-center justify-between gap-4">
                                         <span className="font-bold text-base">Ауд. {item.classroom}</span>
@@ -78,7 +78,7 @@ export function ClassroomHeatmap({ data }: ClassroomHeatmapProps) {
                                     </div>
 
                                     <div className="space-y-2">
-                                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Активность по дням</p>
+                                        <p className="text-xxs text-muted-foreground uppercase tracking-wider font-semibold">Активность по дням</p>
                                         <div className="flex justify-between gap-1">
                                             {item.dailyPattern.map((isActive, idx) => (
                                                 <div key={idx} className="flex flex-col items-center gap-1">
@@ -86,7 +86,7 @@ export function ClassroomHeatmap({ data }: ClassroomHeatmapProps) {
                                                         className={`w-5 h-8 rounded-sm border transition-colors ${isActive ? 'bg-primary border-primary' : 'bg-muted/50 border-border'}`}
                                                         title={DAYS[idx]}
                                                     />
-                                                    <span className="text-[9px] text-muted-foreground font-medium">{DAYS[idx]}</span>
+                                                    <span className="text-xxs text-muted-foreground font-medium">{DAYS[idx]}</span>
                                                 </div>
                                             ))}
                                         </div>
@@ -94,8 +94,8 @@ export function ClassroomHeatmap({ data }: ClassroomHeatmapProps) {
 
                                     <div className="pt-2 border-t flex items-center justify-between">
                                         <span className="text-xs text-muted-foreground">Загрузка:</span>
-                                        <span className={`font-bold text-sm ${item.utilizationPercent < 10 ? 'text-red-600' :
-                                            item.utilizationPercent < 25 ? 'text-amber-600' : 'text-green-600'
+                                        <span className={`font-bold text-sm ${item.utilizationPercent < 10 ? 'text-destructive' :
+                                            item.utilizationPercent < 25 ? 'text-warning' : 'text-success'
                                             }`}>
                                             {item.utilizationPercent.toFixed(1)}%
                                         </span>

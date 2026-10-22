@@ -2,11 +2,12 @@
 
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { cn, getDeclension } from "@/lib/utils";
+import { cn } from "cn";
+import { getDeclension } from "@/lib/utils";
 import { ScheduleItem } from "@/types/schedule";
 import { isLessonActive, isToday } from "@/lib/time-utils";
 import { TIME_SLOTS } from "@/lib/constants";
-import { CalendarDays, Clock, FileText, MapPin, User, Users } from "lucide-react";
+import { CalendarDaysIcon, ClockIcon, FileTextIcon, Location01Icon, UserIcon, UsersIcon } from "@/components/icons";
 import { isWithinInterval, parse } from "date-fns";
 import { useMemo } from "react";
 
@@ -28,7 +29,7 @@ export function DesktopScheduleView({
     return (
         <div className="hidden sm:block space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-[repeat(7,minmax(200px,1fr))] gap-4">
-                <div className="flex flex-col items-center justify-center border bg-slate-100 dark:bg-gray-900 p-4 rounded-xl">
+                <div className="flex flex-col items-center justify-center border bg-muted p-4 rounded-xl">
                     <h2 className="text-sm sm:text-lg font-semibold">Время</h2>
                 </div>
                 {daysWithDates.map((day) => (
@@ -37,8 +38,8 @@ export function DesktopScheduleView({
                         className={cn(
                             "flex flex-col items-center justify-center border p-4 rounded-xl transition-colors",
                             isToday(day.fullDate)
-                                ? "bg-primary text-primary-foreground border-primary shadow-md transform scale-[1.02]"
-                                : "bg-slate-100 dark:bg-gray-900"
+                                ? "bg-primary text-primary-foreground border-primary shadow-md scale-[1.02]"
+                                : "bg-muted"
                         )}
                     >
                         <h2 className="text-sm sm:text-lg font-semibold">{day.label}</h2>
@@ -53,7 +54,7 @@ export function DesktopScheduleView({
                         key={timeSlot}
                         className="grid grid-cols-1 md:grid-cols-[repeat(7,minmax(200px,1fr))] gap-4"
                     >
-                        <div className="flex items-center justify-center border text-slate-500 dark:text-slate-50 bg-slate-100 dark:bg-gray-900 p-4 rounded-xl font-black text-sm sm:text-2xl">
+                        <div className="flex items-center justify-center border text-muted-foreground dark:text-foreground bg-muted p-4 rounded-xl font-black text-sm sm:text-2xl">
                             {timeSlot}
                         </div>
 
@@ -77,8 +78,8 @@ export function DesktopScheduleView({
                                     <DialogTrigger asChild>
                                         <div
                                             className={cn(
-                                                "p-3 border rounded-xl flex flex-col justify-between h-full cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring transition-all hover:bg-muted/50 relative overflow-hidden",
-                                                isActive && "border-green-500 ring-1 ring-green-500/10 shadow-sm bg-green-50/50 dark:bg-green-900/10 z-10 scale-[1.02]"
+                                                "bg-card p-3 border rounded-xl flex flex-col justify-between h-full cursor-pointer focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring transition-[color,background-color,border-color,box-shadow,transform] hover:bg-muted/50 relative overflow-hidden",
+                                                isActive && "border-green-500 ring-1 ring-green-500/10 shadow-xs bg-green-50/50 dark:bg-green-900/10 z-10 scale-[1.02]"
                                             )}
                                             onClick={() => onLessonClick(lessons[0])}
                                             role="button"
@@ -94,7 +95,7 @@ export function DesktopScheduleView({
                                                 <div className="font-semibold text-sm pr-4 relative">
                                                     <span className="flex-1">{lessons[0].subject}</span>
                                                     {lessons.length > 1 && (
-                                                        <span className="absolute -top-1 -right-1 text-xxs font-medium text-primary bg-background/90 px-1.5 py-0.5 rounded-lg border shadow-sm pointer-events-none">
+                                                        <span className="absolute -top-1 -right-1 text-xxs font-medium text-primary bg-background/90 px-1.5 py-0.5 rounded-lg border shadow-xs pointer-events-none">
                                                             +{lessons.length - 1}{" "}
                                                             {getDeclension(lessons.length - 1, [
                                                                 "занятие",
@@ -118,20 +119,20 @@ export function DesktopScheduleView({
                                                     </span>
                                                 </div>
                                                 <div className="flex items-center justify-end space-x-2">
-                                                    <MapPin className="h-4 w-4" />
+ <Location01Icon className="h-4 w-4" />
                                                     <span className="text-xs text-right">
                                                         ауд. {lessons[0].classroom}
                                                     </span>
                                                 </div>
                                                 {isActive && (
                                                     <div className="absolute bottom-2 left-2">
-                                                        <Badge key="desktop-badge-bottom" variant="default" className="animate-pulse bg-green-600 hover:bg-green-700 text-white border-none px-1.5 py-0 text-[10px] h-5">Сейчас</Badge>
+                                                        <Badge key="desktop-badge-bottom" variant="default" className="animate-pulse bg-green-600 hover:bg-green-700 text-white border-none px-1.5 py-0 text-xxs h-5">Сейчас</Badge>
                                                     </div>
                                                 )}
                                             </div>
                                         </div>
                                     </DialogTrigger>
-                                    <DialogContent className="p-6 rounded-xl shadow-lg animate-fade-in">
+ <DialogContent className="p-6 rounded-xl shadow-lg">
                                         <div className="overflow-y-auto max-h-[calc(95vh-5rem)] flex flex-col gap-4 items-center">
                                             <DialogHeader>
                                                 <DialogTitle className="text-center text-base font-semibold mt-6">
@@ -153,32 +154,32 @@ export function DesktopScheduleView({
                                                     )}
                                                     {[
                                                         {
-                                                            icon: <FileText className="w-5 h-5" />,
+ icon: <FileTextIcon className="w-5 h-5" />,
                                                             label: "Тип занятия",
                                                             value: lesson.lessonType,
                                                         },
                                                         {
-                                                            icon: <User className="w-5 h-5" />,
+ icon: <UserIcon className="w-5 h-5" />,
                                                             label: "Преподаватель",
                                                             value: lesson.teacher,
                                                         },
                                                         {
-                                                            icon: <Users className="w-5 h-5" />,
+ icon: <UsersIcon className="w-5 h-5" />,
                                                             label: "Группа",
                                                             value: lesson.group,
                                                         },
                                                         {
-                                                            icon: <MapPin className="w-5 h-5" />,
+ icon: <Location01Icon className="w-5 h-5" />,
                                                             label: "Аудитория",
                                                             value: lesson.classroom,
                                                         },
                                                         {
-                                                            icon: <CalendarDays className="w-5 h-5" />,
+ icon: <CalendarDaysIcon className="w-5 h-5" />,
                                                             label: "Дата",
                                                             value: lesson.date,
                                                         },
                                                         {
-                                                            icon: <Clock className="w-5 h-5" />,
+ icon: <ClockIcon className="w-5 h-5" />,
                                                             label: "Время",
                                                             value: lesson.time,
                                                         },
@@ -193,9 +194,12 @@ export function DesktopScheduleView({
                                                             </div>
                                                             <Badge
                                                                 variant="outline"
-                                                                className="px-3 py-1 rounded-full"
+                                                                className="px-3 py-0.5 rounded-full"
                                                             >
-                                                                {label}
+                                                                {/* Оптический центр: строка центрируется по боксy, а «р», «у», «д»
+                                                                    уходят вниз — без сдвига подпись с выносными визуально
+                                                                    провисает на 1–2 px. Сдвиг 0.75 px выверен по пикселям. */}
+                                                                <span className="relative top-[-0.75px]">{label}</span>
                                                             </Badge>
                                                         </div>
                                                     ))}
@@ -207,7 +211,7 @@ export function DesktopScheduleView({
                             ) : (
                                 <div
                                     key={`${day.id}-${timeSlot}`}
-                                    className="flex items-center justify-center p-4 border text-inherit bg-slate-50 dark:bg-gray-950 rounded-xl border-dashed"
+                                    className="bg-card flex items-center justify-center p-4 border text-muted-foreground rounded-xl border-dashed"
                                 >
                                     Нет занятий
                                 </div>

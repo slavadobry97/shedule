@@ -3,7 +3,8 @@ import Link from "next/link";
 import { ThemeProvider } from "next-themes";
 import { Toaster } from "@/components/ui/sonner";
 import { Header } from "@/components/Header";
-import { Analytics } from "@vercel/analytics/react";
+import { PlausibleAnalytics } from "@/components/analytics";
+import { PwaDevCleanup } from "@/components/pwa-dev-cleanup";
 
 import localFont from "next/font/local";
 import "./globals.css";
@@ -31,9 +32,9 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   title: "Расписание занятий РГСУ | Филиал в Минске",
-  description: "Актуальное расписание занятий Филиала РГСУ в г. Минске на 2025-2026 учебный год. Поиск по группам, преподавателям и датам. Экспорт в PDF.",
+  description: "Актуальное расписание занятий Филиала РГСУ в  г. Минске на 2026-2027 у чебный год. Поиск по группам, преподавателям и датам. Экспорт в  PDF.",
   keywords: ["расписание", "РГСУ", "Минск", "занятия", "университет", "студенты", "преподаватели"],
-  authors: [{ name: "Филиал РГСУ в г. Минске" }],
+  authors: [{ name: "Филиал РГСУ в  г. Минске" }],
   robots: {
     index: true,
     follow: true,
@@ -48,8 +49,8 @@ export const metadata: Metadata = {
     telephone: false,
   },
   metadataBase: new URL(
-    (process.env.NEXT_PUBLIC_SITE_URL ?? "https://rgsu-schedule.vercel.app").startsWith("http")
-      ? process.env.NEXT_PUBLIC_SITE_URL ?? "https://rgsu-schedule.vercel.app"
+    (process.env.NEXT_PUBLIC_SITE_URL ?? "https://shedule.rgsu.by").startsWith("http")
+      ? process.env.NEXT_PUBLIC_SITE_URL ?? "https://shedule.rgsu.by"
       : `https://${process.env.NEXT_PUBLIC_SITE_URL}`
   ),
   alternates: {
@@ -57,7 +58,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: "Расписание занятий РГСУ | Филиал в Минске",
-    description: "Актуальное расписание занятий Филиала РГСУ в г. Минске на 2025-2026 учебный год",
+    description: "Актуальное расписание занятий Филиала РГСУ в г. Минске на 2026-2027 учебный год",
     type: 'website',
     locale: 'ru_RU',
     siteName: 'Расписание РГСУ',
@@ -88,12 +89,20 @@ export default function RootLayout({
     <html lang="en" className={`${evolventaSans.variable} ${evolventaBold.variable}`} suppressHydrationWarning>
 
       <body>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+        <ThemeProvider
+                attribute="class"
+                defaultTheme="system"
+                enableSystem
+                // Без этого переходы цвета/фона/тени срабатывают разом при
+                // смене темы и страница «размазывается» вместо мгновенной смены
+                disableTransitionOnChange
+            >
           <Header />
           {children}
           <Toaster richColors position="top-center" />
         </ThemeProvider>
-        <Analytics />
+        <PlausibleAnalytics />
+        <PwaDevCleanup />
       </body>
     </html>
   );

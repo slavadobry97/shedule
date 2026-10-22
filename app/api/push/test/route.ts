@@ -25,8 +25,8 @@ export async function GET() {
 
         // Формируем тестовое уведомление
         const payload = JSON.stringify({
-            title: '🔔 Тестовое уведомление',
-            body: 'Если вы видите это — push-уведомления работают!',
+            title: 'Тестовое уведомление',
+            body: 'Если вы видите это — push-уведомления работают',
             icon: '/favicon.png',
             badge: '/favicon.png',
             tag: 'test-notification',

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { HeaderActions } from "./header-actions";
-import { ChevronRight, User, Users } from "lucide-react";
+import { ChevronRightIcon, UserIcon, UsersIcon } from "@/components/icons";
 import { Suspense } from "react";
 import { IconLogo } from "@/components/logo/icon-logo";
 import { APP_INFO } from "@/lib/constants";
@@ -32,11 +32,11 @@ function HeaderContent() {
 
                 {badgeLabel && (
                     <>
-                        <ChevronRight className="h-4 w-4 text-muted-foreground/50 shrink-0" />
+ <ChevronRightIcon className="h-4 w-4 text-muted-foreground/50 shrink-0" />
 
                         <div className="flex items-center gap-1.5 overflow-hidden pl-0.5 pr-2 py-0.5 rounded-full bg-muted/50 border border-border/50">
-                            <div className="flex h-5 w-5 items-center justify-center rounded-full bg-background shadow-sm text-primary shrink-0">
-                                {isGroup ? <Users className="h-3 w-3" /> : <User className="h-3 w-3" />}
+                            <div className="flex h-5 w-5 items-center justify-center rounded-full bg-background shadow-xs text-primary shrink-0">
+ {isGroup ? <UsersIcon className="h-3 w-3" /> : <UserIcon className="h-3 w-3" />}
                             </div>
                             <span className="font-medium text-xs sm:text-sm truncate max-w-[120px] sm:max-w-[200px]">
                                 {badgeLabel}
@@ -54,7 +54,7 @@ function HeaderContent() {
 
 export function Header() {
     return (
-        <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <header className="sticky top-0 z-50 w-full border-b bg-canvas supports-[backdrop-filter]:bg-canvas/80 backdrop-blur-[20px] backdrop-saturate-180">
             <Suspense fallback={<div className="h-14" />}>
                 <HeaderContent />
             </Suspense>

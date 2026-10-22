@@ -73,8 +73,29 @@ export const STORAGE_KEYS = {
 } as const;
 
 export const API_ENDPOINTS = {
-    SCHEDULE: "/api/schedule/",
+    // Без слеша в конце: со слешем Next отдаёт 308 на каждый запрос
+    SCHEDULE: "/api/schedule",
+    SCHEDULE_META: "/api/schedule/meta",
     CALENDAR: "/api/calendar/",
+} as const;
+
+/** Внешние сервисы, на которые ведут ссылки из приложения */
+export const EXTERNAL_LINKS = {
+    SPRAVKA: "https://spravka.rgsu.by",
+    MAIN: "https://rgsu.by",
+} as const;
+
+/**
+ * Аналитика Plausible.
+ *
+ * Без NEXT_PUBLIC_PLAUSIBLE_DOMAIN счётчик не подключается вовсе —
+ * ни одного запроса на сторонние сервера.
+ * ENDPOINT можно не задавать (тогда идёт в облако plausible.io)
+ * или указать свой инстанс/прокси: https://analytics.example.com/api/event
+ */
+export const ANALYTICS = {
+    DOMAIN: process.env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN,
+    ENDPOINT: process.env.NEXT_PUBLIC_PLAUSIBLE_ENDPOINT,
 } as const;
 
 export const REFRESH_INTERVAL = 60000;

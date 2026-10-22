@@ -1,5 +1,6 @@
 import { google } from "googleapis";
 import { ScheduleItem } from "@/types/schedule";
+import { stripEmoji } from "@/lib/sanitize";
 
 export const loadSchedule = async (): Promise<ScheduleItem[]> => {
   try {
@@ -48,16 +49,17 @@ export const loadSchedule = async (): Promise<ScheduleItem[]> => {
 
     console.log(`Получено ${rows.length} строк данных`);
 
+    // Эмодзи в текстовых полях ломают поиск и сортировку — вычищаем на входе
     return rows.map((row, index) => ({
       id: `${index + 1}`,
-      group: row[0] || "",
-      dayOfWeek: row[1] || "",
-      date: row[2] || "",
-      time: row[3] || "",
-      subject: row[4] || "",
-      lessonType: row[5] || "",
-      teacher: row[6] || "",
-      classroom: row[7] || "",
+      group: stripEmoji(row[0] || ""),
+      dayOfWeek: stripEmoji(row[1] || ""),
+      date: stripEmoji(row[2] || ""),
+      time: stripEmoji(row[3] || ""),
+      subject: stripEmoji(row[4] || ""),
+      lessonType: stripEmoji(row[5] || ""),
+      teacher: stripEmoji(row[6] || ""),
+      classroom: stripEmoji(row[7] || ""),
     }));
   } catch (error) {
     console.error("Ошибка загрузки данных из Google Sheets:", error);

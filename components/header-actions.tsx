@@ -1,38 +1,25 @@
 "use client";
 
 import useSWR from "swr";
-import { useMemo } from "react";
 import ThemeSwitcher from "@/components/ThemeSwitcher";
 import { NotificationSettings } from "@/components/NotificationSettings";
 import { API_ENDPOINTS } from "@/lib/constants";
-import { ScheduleItem } from "@/types/schedule";
+import { metaFetcher } from "@/lib/api";
+import { ScheduleMeta } from "@/types/schedule";
 
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
+const fetcher = metaFetcher;
 
 export function HeaderActions() {
-    // Используем SWR с тем же ключом, что и в основном компоненте, 
-    // чтобы использовать общий кэш и не дублировать запросы
-    const { data: scheduleData } = useSWR<ScheduleItem[]>(API_ENDPOINTS.SCHEDULE, fetcher, {
+    // Списки групп и преподавателей приходят отдельной лёгкой ручкой:
+    // тянуть ради них всё расписание (3,9 МБ) незачем.
+    const { data: meta } = useSWR<ScheduleMeta>(API_ENDPOINTS.SCHEDULE_META, fetcher, {
         revalidateIfStale: false,
         revalidateOnFocus: false,
         revalidateOnReconnect: false
     });
 
-    const { uniqueGroups, uniqueTeachers } = useMemo(() => {
-        const groups = new Set<string>();
-        const teachers = new Set<string>();
-        const data = Array.isArray(scheduleData) ? scheduleData : [];
-
-        data.forEach(item => {
-            if (item.group) groups.add(item.group);
-            if (item.teacher) teachers.add(item.teacher);
-        });
-
-        return {
-            uniqueGroups: Array.from(groups).sort(),
-            uniqueTeachers: Array.from(teachers).sort()
-        };
-    }, [scheduleData]);
+    const uniqueGroups = meta?.groups ?? [];
+    const uniqueTeachers = meta?.teachers ?? [];
 
     return (
         <div className="flex items-center gap-1">

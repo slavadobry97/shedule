@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { readFileSync } from 'fs';
 import { join } from 'path';
+import { stripEmoji } from '@/lib/sanitize';
 
 export async function GET() {
     try {

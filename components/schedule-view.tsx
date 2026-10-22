@@ -15,34 +15,39 @@ import {
   STORAGE_KEYS,
   BREAKPOINTS,
 } from "@/lib/constants";
-import { ScheduleItem } from "@/types/schedule";
+import { ScheduleItem, ScheduleMeta } from "@/types/schedule";
 import { ScheduleFilters } from "./schedule-filters";
 import { DesktopScheduleView } from "./desktop-schedule-view";
 import { MobileScheduleView } from "./mobile-schedule-view";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeftIcon, ChevronRightIcon } from "@/components/icons";
+import { haptic } from "@/lib/haptics";
 import { WelcomeScreen } from "./WelcomeScreen";
 
 type ScheduleViewProps = {
   scheduleData: ScheduleItem[];
   initialGroup?: string;
   initialTeacher?: string;
+  meta?: ScheduleMeta;
+  selectedGroup: string;
+  selectedTeacher: string;
+  onGroupChange: (group: string) => void;
+  onTeacherChange: (teacher: string) => void;
 };
 
-export function ScheduleView({ scheduleData, initialGroup, initialTeacher }: ScheduleViewProps) {
+export function ScheduleView({
+  scheduleData,
+  initialGroup,
+  initialTeacher,
+  meta,
+  selectedGroup,
+  selectedTeacher,
+  onGroupChange,
+  onTeacherChange
+}: ScheduleViewProps) {
   const router = useRouter();
 
-  const getInitialState = (key: string, propValue?: string) => {
-    if (propValue && propValue !== "all") return propValue;
-    if (typeof window !== "undefined") {
-      return localStorage.getItem(key) || "all";
-    }
-    return "all";
-  };
-
   const [date, setDate] = useState<Date>(new Date());
-  const [selectedGroup, setSelectedGroup] = useState<string>(() => getInitialState(STORAGE_KEYS.SELECTED_GROUP, initialGroup));
-  const [selectedTeacher, setSelectedTeacher] = useState<string>(() => getInitialState(STORAGE_KEYS.SELECTED_TEACHER, initialTeacher));
   const [searchTerm] = useState<string>("");
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -90,10 +95,7 @@ export function ScheduleView({ scheduleData, initialGroup, initialTeacher }: Sch
   }, [selectedGroup, selectedTeacher, router]);
 
   const triggerHaptic = (type: 'light' | 'medium' | 'heavy' = 'light') => {
-    if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
-      const duration = type === 'light' ? 10 : type === 'medium' ? 20 : 30;
-      navigator.vibrate(duration);
-    }
+    haptic(type);
   };
 
   const [, setNow] = useState(new Date());
@@ -115,9 +117,10 @@ export function ScheduleView({ scheduleData, initialGroup, initialTeacher }: Sch
     if (typeof window !== "undefined") {
       localStorage.setItem(STORAGE_KEYS.SELECTED_GROUP, selectedGroup);
       localStorage.setItem(STORAGE_KEYS.SELECTED_TEACHER, "all");
-      setSelectedTeacher("all");
+      onTeacherChange("all");
+      haptic('success');
       showToast({
-        title: `Группа "${selectedGroup}" сохранена!`,
+        title: `Группа "${selectedGroup}" сохранена`,
         message: "Теперь это ваша группа по умолчанию",
         variant: 'success',
       });
@@ -128,9 +131,10 @@ export function ScheduleView({ scheduleData, initialGroup, initialTeacher }: Sch
     if (typeof window !== "undefined") {
       localStorage.setItem(STORAGE_KEYS.SELECTED_TEACHER, selectedTeacher);
       localStorage.setItem(STORAGE_KEYS.SELECTED_GROUP, "all");
-      setSelectedGroup("all");
+      onGroupChange("all");
+      haptic('success');
       showToast({
-        title: `Преподаватель "${selectedTeacher}" сохранён!`,
+        title: `Преподаватель "${selectedTeacher}" сохранён`,
         message: "Теперь это ваш профиль по умолчанию",
         variant: 'success',
       });
@@ -172,35 +176,32 @@ export function ScheduleView({ scheduleData, initialGroup, initialTeacher }: Sch
     });
   }, [scheduleData, selectedGroup, selectedTeacher, date, searchTerm]);
 
-  const uniqueGroups = useMemo(() => Array.from(
-    new Set(scheduleData.map((item) => item.group))
-  ).sort((a, b) => a.localeCompare(b, "ru", { numeric: true })), [scheduleData]);
-
-  const uniqueTeachers = useMemo(() => Array.from(
-    new Set(scheduleData.map((item) => item.teacher))
-  ).sort((a, b) => a.localeCompare(b, "ru", { numeric: true })), [scheduleData]);
+  // Списки приходят отдельной лёгкой ручкой: само расписание уже отфильтровано
+  // по выбранной группе, и считать списки из него нельзя.
+  const uniqueGroups = useMemo(() => meta?.groups ?? [], [meta]);
+  const uniqueTeachers = useMemo(() => meta?.teachers ?? [], [meta]);
 
   useEffect(() => {
-    if (initialGroup && initialGroup !== "all") setSelectedGroup(initialGroup);
-    if (initialTeacher && initialTeacher !== "all") setSelectedTeacher(initialTeacher);
+    if (initialGroup && initialGroup !== "all") onGroupChange(initialGroup);
+    if (initialTeacher && initialTeacher !== "all") onTeacherChange(initialTeacher);
   }, [initialGroup, initialTeacher]);
 
   // Show Welcome Screen if no selection made
   if (selectedGroup === "all" && selectedTeacher === "all") {
     return (
-      <div className="fixed inset-0 z-50 bg-background">
+      <div className="fixed inset-0 z-50 bg-canvas">
         <WelcomeScreen
           groups={uniqueGroups}
           teachers={uniqueTeachers}
           onGroupSelect={(g) => {
-            setSelectedGroup(g);
+            onGroupChange(g);
             if (typeof window !== "undefined") {
               localStorage.setItem(STORAGE_KEYS.SELECTED_GROUP, g);
               localStorage.setItem(STORAGE_KEYS.SELECTED_TEACHER, "all");
             }
           }}
           onTeacherSelect={(t) => {
-            setSelectedTeacher(t);
+            onTeacherChange(t);
             if (typeof window !== "undefined") {
               localStorage.setItem(STORAGE_KEYS.SELECTED_TEACHER, t);
               localStorage.setItem(STORAGE_KEYS.SELECTED_GROUP, "all");
@@ -212,16 +213,16 @@ export function ScheduleView({ scheduleData, initialGroup, initialTeacher }: Sch
   }
 
   const handleGroupChange = (newGroup: string) => {
-    setSelectedGroup(newGroup);
+    onGroupChange(newGroup);
     if (newGroup !== "all") {
-      setSelectedTeacher("all");
+      onTeacherChange("all");
     }
   };
 
   const handleTeacherChange = (newTeacher: string) => {
-    setSelectedTeacher(newTeacher);
+    onTeacherChange(newTeacher);
     if (newTeacher !== "all") {
-      setSelectedGroup("all");
+      onGroupChange("all");
     }
   };
 
@@ -248,7 +249,7 @@ export function ScheduleView({ scheduleData, initialGroup, initialTeacher }: Sch
             }}
             className="h-9 px-3 rounded-full flex items-center gap-1 shrink-0"
           >
-            <ChevronLeft className="h-4 w-4" />
+            <ChevronLeftIcon className="h-4 w-4" />
             <span className="hidden sm:inline text-xs sm:text-sm font-medium">Пред. неделя</span>
             <span className="inline sm:hidden text-xs font-medium">Пред.</span>
           </Button>
@@ -274,7 +275,7 @@ export function ScheduleView({ scheduleData, initialGroup, initialTeacher }: Sch
           >
             <span className="hidden sm:inline text-xs sm:text-sm font-medium">След. неделя</span>
             <span className="inline sm:hidden text-xs font-medium">След.</span>
-            <ChevronRight className="h-4 w-4" />
+            <ChevronRightIcon className="h-4 w-4" />
           </Button>
         </div>
 

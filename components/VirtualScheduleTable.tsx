@@ -1,12 +1,15 @@
 "use client";
 
 import { useState, useMemo, useRef, useCallback, useEffect } from "react";
+import useSWR from "swr";
 import { ScheduleItem } from "@/types/schedule";
 import {
+    API_ENDPOINTS,
     DAYS_ORDER,
     TABLE_COLUMNS
 } from "@/lib/constants";
-import { FileDown, ArrowUpDown, ArrowUp, ArrowDown, SearchX, Check, ChevronsUpDown, Search, X } from "lucide-react";
+import { scheduleFetcher } from "@/lib/api";
+import { ArrowDownIcon, ArrowUpDownIcon, ArrowUpIcon, CheckIcon, ChevronDownIcon, CloseIcon, FileDownloadIcon, SearchIcon, SearchXIcon } from "@/components/icons";
 import {
     Select,
     SelectContent,
@@ -28,11 +31,10 @@ import {
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { cn } from "@/lib/utils";
+import { cn } from "cn";
 import { useVirtualizer } from "@tanstack/react-virtual";
 
 interface VirtualScheduleTableProps {
-    scheduleData: ScheduleItem[];
     isLoading?: boolean;
 }
 
@@ -42,7 +44,29 @@ type SortDirection = "asc" | "desc" | null;
 // Фиксированная высота строки и заголовка для virtualization
 const ROW_HEIGHT = 50;
 
-export default function VirtualScheduleTable({ scheduleData, isLoading = false }: VirtualScheduleTableProps) {
+// Как часто обновлять снимок всего расписания: столько же живёт копия
+// в service worker'е. Обновлять чаще незачем — таблица и так грузится
+// отдельным запросом, а не вместе с календарём.
+const TABLE_REFRESH_INTERVAL = 300_000;
+
+export default function VirtualScheduleTable({ isLoading: isLoadingProp = false }: VirtualScheduleTableProps) {
+    // Таблица фильтрует по любой группе и любому преподавателю, поэтому
+    // ей нужен весь список, а не отфильтрованный кусок из календаря.
+    // Вкладка монтируется только по клику — большой ответ уходит лишь тем,
+    // кто таблицу открыл.
+    const { data, isLoading: isDataLoading } = useSWR<ScheduleItem[]>(
+        API_ENDPOINTS.SCHEDULE,
+        scheduleFetcher,
+        {
+            refreshInterval: TABLE_REFRESH_INTERVAL,
+            revalidateOnFocus: false,
+            revalidateOnReconnect: false,
+        }
+    );
+
+    const scheduleData = useMemo(() => (Array.isArray(data) ? data : []), [data]);
+    const isLoading = isLoadingProp || isDataLoading;
+
     const [filter, setFilter] = useState("");
     const [debouncedFilter, setDebouncedFilter] = useState("");
     const [filterType, setFilterType] = useState("teacher");
@@ -192,12 +216,12 @@ export default function VirtualScheduleTable({ scheduleData, isLoading = false }
 
     const getSortIcon = useCallback((field: SortField) => {
         if (sortField !== field) {
-            return <ArrowUpDown className="h-4 w-4 ml-1 opacity-50 shrink-0" />;
+ return <ArrowUpDownIcon className="h-4 w-4 ml-1 opacity-50 shrink-0" />;
         }
         if (sortDirection === "asc") {
-            return <ArrowUp className="h-4 w-4 ml-1 shrink-0" />;
+ return <ArrowUpIcon className="h-4 w-4 ml-1 shrink-0" />;
         }
-        return <ArrowDown className="h-4 w-4 ml-1 shrink-0" />;
+ return <ArrowDownIcon className="h-4 w-4 ml-1 shrink-0" />;
     }, [sortField, sortDirection]);
 
     const handleResetFilter = useCallback(() => {
@@ -331,7 +355,7 @@ export default function VirtualScheduleTable({ scheduleData, isLoading = false }
                                         ? filterOptions.find((opt) => opt.value === filter)?.label || filter
                                         : `Поиск по ${getFilterPlaceholder()}...`}
                                 </span>
-                                {!filter && <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />}
+ {!filter && <ChevronDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-60" />}
                             </Button>
                         </PopoverTrigger>
                         <PopoverContent className="w-64 p-0">
@@ -348,7 +372,7 @@ export default function VirtualScheduleTable({ scheduleData, isLoading = false }
                                                 setComboboxOpen(false);
                                             }}
                                         >
-                                            <Check
+ <CheckIcon
                                                 className={cn(
                                                     "mr-2 h-4 w-4",
                                                     filter === option.value ? "opacity-100" : "opacity-0"
@@ -372,7 +396,7 @@ export default function VirtualScheduleTable({ scheduleData, isLoading = false }
                                 handleResetFilter();
                             }}
                         >
-                            <X className="h-4 w-4" />
+ <CloseIcon className="h-4 w-4" />
                         </Button>
                     )}
                 </div>
@@ -382,7 +406,7 @@ export default function VirtualScheduleTable({ scheduleData, isLoading = false }
                     className="order-2 sm:order-last ml-auto"
                     aria-label="Скачать расписание в формате PDF"
                 >
-                    <FileDown />
+ <FileDownloadIcon />
                     Скачать PDF
                 </Button>
             </div>
@@ -394,12 +418,12 @@ export default function VirtualScheduleTable({ scheduleData, isLoading = false }
                     className="flex-1 overflow-auto"
                 >
                     {/* Header (Sticky inside scroll container to fix alignment) */}
-                    <div className="sticky top-0 z-10 flex border-b bg-slate-100 dark:bg-gray-900 font-medium text-muted-foreground text-sm shrink-0 min-w-max sm:min-w-full">
+                    <div className="sticky top-0 z-10 flex border-b bg-muted font-medium text-muted-foreground text-sm shrink-0 min-w-max sm:min-w-full">
                         {TABLE_COLUMNS.map((col, idx) => (
                             <div
                                 key={col.key}
                                 className={cn(
-                                    "p-3 flex items-center justify-center cursor-pointer hover:bg-slate-200 dark:hover:bg-gray-800 transition-colors select-none",
+                                    "p-3 flex items-center justify-center cursor-pointer hover:bg-foreground/5 transition-colors select-none",
                                     idx < TABLE_COLUMNS.length - 1 ? "border-r" : "",
                                     // Ширины колонок соответствуют данным
                                     col.key === 'group' && "w-40 shrink-0",
@@ -440,10 +464,10 @@ export default function VirtualScheduleTable({ scheduleData, isLoading = false }
                                 return (
                                     <div
                                         key={virtualRow.index}
-                                        className="flex border-b hover:bg-slate-50 dark:hover:bg-gray-900/50 absolute top-0 left-0 w-full text-sm items-center min-w-max sm:min-w-full"
+                                        className="flex border-b hover:bg-muted/50 absolute top-0 left-0 w-full text-sm items-center min-w-max sm:min-w-full"
                                         style={{
                                             height: `${virtualRow.size}px`,
-                                            transform: `translateY(${virtualRow.start}px)`,
+    transform: `translateY(${virtualRow.start}px)`,
                                         }}
                                     >
                                         <div className="w-40 shrink-0 p-2 border-r truncate">{item.group}</div>
@@ -462,7 +486,7 @@ export default function VirtualScheduleTable({ scheduleData, isLoading = false }
                         <div className="flex flex-col items-center justify-center gap-4 text-muted-foreground h-full min-h-[300px]">
                             {filter ? (
                                 <>
-                                    <SearchX className="h-12 w-12 opacity-50" />
+ <SearchXIcon className="h-12 w-12 opacity-50" />
                                     <div className="text-center">
                                         <p className="font-medium text-lg">Ничего не найдено</p>
                                         <p className="text-sm">По вашему запросу &quot;{filter}&quot; не найдено записей</p>
@@ -473,7 +497,7 @@ export default function VirtualScheduleTable({ scheduleData, isLoading = false }
                                 </>
                             ) : (
                                 <>
-                                    <Search className="h-12 w-12 opacity-50" />
+ <SearchIcon className="h-12 w-12 opacity-50" />
                                     <div className="text-center">
                                         <p className="font-medium text-lg">Выберите фильтр</p>
                                         <p className="text-sm">Выберите преподавателя, группу или другой параметр поиска для отображения расписания</p>

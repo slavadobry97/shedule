@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useEffect, useMemo, useCallback, memo } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { User, Users, Check, Loader2, GraduationCap, type LucideIcon } from "lucide-react";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
+import { MOTION_DURATION, motionTransition } from "@/lib/motion";
+import { type IconComponent, CheckIcon, GraduationCapIcon, LoadingIcon, UserIcon, UsersIcon } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { ResponsiveComboBox } from "./responsive-combobox";
-import { cn } from "@/lib/utils";
+import { cn } from "cn";
 import { FullLogo } from "@/components/logo/full-logo";
 
 interface WelcomeScreenProps {
@@ -20,7 +21,7 @@ type Role = "student" | "teacher";
 interface RoleCardProps {
     active: boolean;
     onClick: () => void;
-    icon: LucideIcon;
+    icon: IconComponent;
     title: string;
     description: string;
 }
@@ -31,6 +32,7 @@ export function WelcomeScreen({
     onGroupSelect,
     onTeacherSelect,
 }: WelcomeScreenProps) {
+    const reduceMotion = useReducedMotion();
     const [role, setRole] = useState<Role | null>(null);
     const [selectedValue, setSelectedValue] = useState<string>("");
     const [isLoading, setIsLoading] = useState(false);
@@ -84,7 +86,7 @@ export function WelcomeScreen({
     const isButtonDisabled = !role || !selectedValue || isLoading;
 
     return (
-        <div className="fixed inset-0 bg-background overflow-hidden">
+        <div className="fixed inset-0 bg-canvas overflow-hidden">
             {/* Фоновые элементы */}
             <div className="absolute inset-0 z-0 pointer-events-none">
                 <div className="absolute -top-[10%] -left-[10%] w-[80%] h-[80%] rounded-full bg-primary/5 blur-[80px]" />
@@ -98,7 +100,7 @@ export function WelcomeScreen({
                     <motion.div
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        transition={{ duration: 0.3 }}
+                        transition={motionTransition(reduceMotion, { duration: MOTION_DURATION.fast })}
                         className="flex flex-col items-center text-center"
                     >
                         <div className="w-72 h-auto mb-3">
@@ -115,14 +117,14 @@ export function WelcomeScreen({
                             <RoleCard
                                 active={role === "student"}
                                 onClick={() => handleRoleSelect("student")}
-                                icon={User}
+                                icon={UserIcon}
                                 title="Студент"
                                 description="Моё расписание"
                             />
                             <RoleCard
                                 active={role === "teacher"}
                                 onClick={() => handleRoleSelect("teacher")}
-                                icon={GraduationCap}
+                                icon={GraduationCapIcon}
                                 title="Преподаватель"
                                 description="Мои пары"
                             />
@@ -165,15 +167,15 @@ export function WelcomeScreen({
                         size="lg"
                         disabled={isButtonDisabled}
                         className={cn(
-                            "w-full h-14 rounded-2xl text-lg font-bold shadow-xl shadow-primary/20 transition-all duration-300",
-                            "hover:scale-[1.02] active:scale-[0.98]",
+                            "w-full h-14 rounded-2xl text-lg font-bold shadow-xl shadow-primary/20 transition-[color,background-color,box-shadow,transform] duration-300",
+                            "hover:scale-[1.02] active:scale-[0.96]",
                             isButtonDisabled && "opacity-50"
                         )}
                         onClick={handleContinue}
                     >
                         {isLoading ? (
                             <>
-                                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                                <LoadingIcon className="mr-2 h-5 w-5 animate-spin" />
                                 Загрузка...
                             </>
                         ) : (
@@ -194,12 +196,13 @@ const RoleCard = memo<RoleCardProps>(function RoleCard({
     title,
     description,
 }) {
+    const reduceMotion = useReducedMotion();
     return (
         <Button
             variant="outline"
             onClick={onClick}
             className={cn(
-                "relative flex flex-col gap-0 items-center justify-center p-4 h-40 rounded-3xl border transition-all duration-300 group hover:bg-accent/50 overflow-hidden",
+                "relative flex flex-col gap-0 items-center justify-center p-4 h-40 rounded-3xl border transition-[color,background-color,border-color,box-shadow,transform] duration-300 group hover:bg-accent/50 overflow-hidden",
                 active
                     ? "border-primary shadow-lg scale-[1.02]"
                     : "border-border hover:border-primary/30"
@@ -209,9 +212,10 @@ const RoleCard = memo<RoleCardProps>(function RoleCard({
                 <motion.div
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
+                    transition={motionTransition(reduceMotion, { duration: MOTION_DURATION.fast })}
                     className="absolute top-3 right-3 bg-primary text-primary-foreground rounded-full p-1 z-10"
                 >
-                    <Check className="w-3 h-3" strokeWidth={3} />
+                    <CheckIcon className="w-3 h-3" strokeWidth={3} />
                 </motion.div>
             )}
 

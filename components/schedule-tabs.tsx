@@ -1,19 +1,39 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ScheduleView } from './schedule-view'
 import VirtualScheduleTable from '@/components/VirtualScheduleTable'
-import { ScheduleItem } from '../types/schedule'
+import { ScheduleItem, ScheduleMeta } from '../types/schedule'
 import { Skeleton } from "@/components/ui/skeleton"
+import { haptic } from "@/lib/haptics"
 
 interface ScheduleTabsProps {
   scheduleData: ScheduleItem[],
   isLoading: boolean,
   initialGroup?: string,
-  initialTeacher?: string
+  initialTeacher?: string,
+  meta?: ScheduleMeta,
+  selectedGroup: string,
+  selectedTeacher: string,
+  onGroupChange: (group: string) => void,
+  onTeacherChange: (teacher: string) => void
 }
 
-export function ScheduleTabs({ scheduleData, isLoading, initialGroup, initialTeacher }: ScheduleTabsProps) {
+export function ScheduleTabs({
+  scheduleData,
+  isLoading,
+  initialGroup,
+  initialTeacher,
+  meta,
+  selectedGroup,
+  selectedTeacher,
+  onGroupChange,
+  onTeacherChange
+}: ScheduleTabsProps) {
   return (
-    <Tabs defaultValue="calendar" className="container mx-auto">
+    <Tabs
+      defaultValue="calendar"
+      onValueChange={() => haptic('light')}
+      className="container mx-auto"
+    >
       <div className="flex items-center justify-center gap-2 my-10">
         <TabsList className="grid max-w-xs sm:max-w-sm grid-cols-2">
           {isLoading ? (
@@ -41,12 +61,21 @@ export function ScheduleTabs({ scheduleData, isLoading, initialGroup, initialTea
             ))}
           </div>
         ) : (
-          <ScheduleView scheduleData={scheduleData} initialGroup={initialGroup} initialTeacher={initialTeacher} />
+          <ScheduleView
+            scheduleData={scheduleData}
+            initialGroup={initialGroup}
+            initialTeacher={initialTeacher}
+            meta={meta}
+            selectedGroup={selectedGroup}
+            selectedTeacher={selectedTeacher}
+            onGroupChange={onGroupChange}
+            onTeacherChange={onTeacherChange}
+          />
         )}
       </TabsContent>
 
       <TabsContent value="table" className="h-[calc(100vh-220px)] min-h-[500px]">
-        <VirtualScheduleTable scheduleData={scheduleData} isLoading={isLoading} />
+        <VirtualScheduleTable isLoading={isLoading} />
       </TabsContent>
     </Tabs>
   )

@@ -5,22 +5,24 @@ import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle, Dr
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { cn, getDeclension } from "@/lib/utils";
+import { cn } from "cn";
+import { getDeclension } from "@/lib/utils";
 import { ScheduleItem } from "@/types/schedule";
 import { isLessonActive, isLessonPast } from "@/lib/time-utils";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
+import { MOTION_DURATION, MOTION_EASE, MOTION_SPRING } from "@/lib/motion";
 import { DATE_FORMATS, getPairNumber } from "@/lib/constants";
 import {
-    CalendarDays,
-    Clock,
-    FileText,
-    MapPin,
-    Search,
-    User,
-    Users,
-    ChevronLeft,
-    ChevronRight,
-} from "lucide-react";
+ CalendarDaysIcon,
+ ChevronLeftIcon,
+ ChevronRightIcon,
+ ClockIcon,
+ FileTextIcon,
+ Location01Icon,
+ SearchIcon,
+ UserIcon,
+ UsersIcon,
+} from "@/components/icons";
 import { addDays, format, isSameDay, parse, startOfWeek, getDay } from "date-fns";
 import { ru } from "date-fns/locale";
 import { MobileWeekView } from "./mobile-week-view";
@@ -45,6 +47,7 @@ export function MobileScheduleView({
     onLessonClick,
     triggerHaptic
 }: MobileScheduleViewProps) {
+    const reduceMotion = useReducedMotion();
 
     // Helper wrapper for setDate to handle function updates if needed, though simpler here
     const handleSetDate = (newDate: Date | ((prev: Date) => Date)) => {
@@ -118,7 +121,7 @@ export function MobileScheduleView({
 
     const variants = {
         enter: (direction: number) => ({
-            x: direction > 0 ? 50 : -50,
+            x: reduceMotion ? 0 : direction > 0 ? 50 : -50,
             opacity: 0,
             zIndex: 0
         }),
@@ -129,7 +132,7 @@ export function MobileScheduleView({
         },
         exit: (direction: number) => ({
             zIndex: 0,
-            x: direction < 0 ? 50 : -50,
+            x: reduceMotion ? 0 : direction < 0 ? 50 : -50,
             opacity: 0,
             position: "absolute" as const,
             width: "100%"
@@ -141,7 +144,7 @@ export function MobileScheduleView({
             {selectedGroup === "all" && selectedTeacher === "all" ? (
                 <div className="flex flex-col items-center justify-center min-h-[calc(100vh-220px)] text-center p-8 space-y-4 text-muted-foreground animate-in fade-in duration-500">
                     <div className="bg-muted p-4 rounded-full">
-                        <Search className="h-8 w-8 opacity-50" />
+ <SearchIcon className="h-8 w-8 opacity-50" />
                     </div>
                     <div className="space-y-1">
                         <h3 className="font-semibold text-foreground">Расписание не выбрано</h3>
@@ -163,7 +166,7 @@ export function MobileScheduleView({
                                 setDate(addDays(currentMonday, -7));
                             }}
                         >
-                            <ChevronLeft className="h-5 w-5" />
+ <ChevronLeftIcon className="h-5 w-5" />
                             <span>Пред. неделя</span>
                         </Button>
 
@@ -177,7 +180,7 @@ export function MobileScheduleView({
                             }}
                         >
                             <span>След. неделя</span>
-                            <ChevronRight className="h-5 w-5" />
+ <ChevronRightIcon className="h-5 w-5" />
                         </Button>
                     </div>
 
@@ -218,7 +221,14 @@ export function MobileScheduleView({
                             onTouchStart={onTouchStart}
                             onTouchMove={onTouchMove}
                             onTouchEnd={onTouchEnd}
-                            transition={{ x: { type: "spring", stiffness: 300, damping: 30 }, opacity: { duration: 0.2 } }}
+                            transition={
+                                reduceMotion
+                                    ? { duration: 0 }
+                                    : {
+                                          x: MOTION_SPRING,
+                                          opacity: { duration: MOTION_DURATION.fast, ease: MOTION_EASE },
+                                      }
+                            }
                             className="space-y-3 min-h-[50vh] w-full"
                         >
                             {(() => {
@@ -248,7 +258,7 @@ export function MobileScheduleView({
                                 if (sortedGroupKeys.length === 0) {
                                     return (
                                         <div className="flex flex-col items-center justify-center min-h-[50vh] text-muted-foreground/50">
-                                            <CalendarDays strokeWidth={1} className="h-24 w-24 mb-6 opacity-20" />
+ <CalendarDaysIcon strokeWidth={1} className="h-24 w-24 mb-6 opacity-20" />
                                             <p className="text-xl font-normal">Нет занятий в этот день</p>
                                         </div>
                                     );
@@ -267,7 +277,7 @@ export function MobileScheduleView({
                                             <DrawerTrigger asChild>
                                                 <Card
                                                     className={cn(
-                                                        "rounded-xl shadow-sm relative overflow-hidden active:scale-[0.98] transition-all cursor-pointer border",
+                                                        "rounded-xl relative overflow-hidden active:scale-[0.98] transition-[color,background-color,border-color,box-shadow,transform] cursor-pointer border",
                                                         isActive
                                                             ? "border-green-500 shadow-md bg-green-50/50 dark:bg-green-900/10"
                                                             : isPast
@@ -278,7 +288,7 @@ export function MobileScheduleView({
                                                 >
                                                     {isGrouped && (
                                                         <div className={cn(
-                                                            "absolute right-3 px-2.5 py-1 rounded-full text-xs font-semibold shadow-sm z-10",
+                                                            "absolute right-3 px-2.5 py-1 rounded-full text-xs font-semibold shadow-xs z-10",
                                                             isActive ? "top-9 bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300 border-green-200/50" : "top-3 bg-primary/5 text-primary dark:bg-blue-900/30 dark:text-blue-300 border border-blue-200"
                                                         )}>
                                                             {groupLessons.length} {getDeclension(groupLessons.length, ['группа', 'группы', 'групп'])}
@@ -286,7 +296,7 @@ export function MobileScheduleView({
                                                     )}
 
                                                     {isActive && (
-                                                        <div className="absolute top-0 right-0 px-3 py-1 bg-green-500 text-white text-xxs uppercase tracking-wider font-bold rounded-bl-xl z-20 shadow-sm">
+                                                        <div className="absolute top-0 right-0 px-3 py-1 bg-green-500 text-white text-xxs uppercase tracking-wider font-bold rounded-bl-xl z-20 shadow-xs">
                                                             Сейчас
                                                         </div>
                                                     )}
@@ -310,21 +320,21 @@ export function MobileScheduleView({
                                                                     {primaryLesson.subject}
                                                                 </h3>
                                                                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                                                                    <FileText className="h-3 w-3 shrink-0" />
+ <FileTextIcon className="h-3 w-3 shrink-0" />
                                                                     <span className="truncate">{primaryLesson.lessonType}</span>
                                                                 </div>
                                                             </div>
 
                                                             <div className="flex items-center justify-between text-xs text-muted-foreground mt-auto">
                                                                 <div className="flex items-center gap-1.5 font-medium shrink-0">
-                                                                    <MapPin className="h-3.5 w-3.5 shrink-0" />
+ <Location01Icon className="h-3.5 w-3.5 shrink-0" />
                                                                     <span className="truncate">ауд. {primaryLesson.classroom}</span>
                                                                 </div>
 
                                                                 <div className="flex items-center gap-1.5 max-w-[45%] justify-end ml-2">
                                                                     {selectedTeacher !== "all" ? (
                                                                         <>
-                                                                            <Users className="h-3.5 w-3.5 shrink-0" />
+ <UsersIcon className="h-3.5 w-3.5 shrink-0" />
                                                                             <span className="text-right font-medium truncate">
                                                                                 {groupLessons.length > 1
                                                                                     ? `${groupLessons[0].group} +${groupLessons.length - 1}`
@@ -333,7 +343,7 @@ export function MobileScheduleView({
                                                                         </>
                                                                     ) : (
                                                                         <>
-                                                                            <User className="h-3.5 w-3.5 shrink-0" />
+ <UserIcon className="h-3.5 w-3.5 shrink-0" />
                                                                             <span className="text-right font-medium truncate">{primaryLesson.teacher}</span>
                                                                         </>
                                                                     )}
@@ -360,7 +370,7 @@ export function MobileScheduleView({
                                                                 <CardContent className="p-4 space-y-4">
                                                                     <div className="flex items-center gap-4">
                                                                         <div className="h-10 w-10 rounded-xl bg-blue-100 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400 flex items-center justify-center shrink-0">
-                                                                            <User className="h-5 w-5" />
+ <UserIcon className="h-5 w-5" />
                                                                         </div>
                                                                         <div className="space-y-0.5">
                                                                             <div className="text-xs text-muted-foreground">Преподаватель</div>
@@ -370,7 +380,7 @@ export function MobileScheduleView({
 
                                                                     <div className="flex items-center gap-4">
                                                                         <div className="h-10 w-10 rounded-xl bg-green-100 text-green-600 dark:bg-green-500/20 dark:text-green-400 flex items-center justify-center shrink-0">
-                                                                            <Users className="h-5 w-5" />
+ <UsersIcon className="h-5 w-5" />
                                                                         </div>
                                                                         <div className="space-y-0.5">
                                                                             <div className="text-xs text-muted-foreground">Группа</div>
@@ -380,8 +390,8 @@ export function MobileScheduleView({
 
                                                                     <div className="flex items-center justify-between gap-4">
                                                                         <div className="flex items-center gap-4">
-                                                                            <div className="h-10 w-10 rounded-xl bg-orange-100 text-orange-600 dark:bg-orange-500/20 dark:text-orange-400 flex items-center justify-center shrink-0">
-                                                                                <Clock className="h-5 w-5" />
+                                                                            <div className="h-10 w-10 rounded-xl bg-info/10 text-info flex items-center justify-center shrink-0">
+ <ClockIcon className="h-5 w-5" />
                                                                             </div>
                                                                             <div className="space-y-0.5">
                                                                                 <div className="text-xs text-muted-foreground">Время</div>
@@ -391,7 +401,7 @@ export function MobileScheduleView({
 
                                                                         <div className="flex items-center gap-4 flex-row-reverse text-right">
                                                                             <div className="h-10 w-10 rounded-xl bg-violet-100 text-violet-600 dark:bg-violet-500/20 dark:text-violet-400 flex items-center justify-center shrink-0">
-                                                                                <MapPin className="h-5 w-5" />
+ <Location01Icon className="h-5 w-5" />
                                                                             </div>
                                                                             <div className="space-y-0.5">
                                                                                 <div className="text-xs text-muted-foreground">Аудитория</div>

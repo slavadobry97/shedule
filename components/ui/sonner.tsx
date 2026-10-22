@@ -6,18 +6,18 @@ import {
   toast as sonnerToast,
 } from 'sonner';
 import {
-  CheckCircle,
-  AlertCircle,
-  Info,
-  AlertTriangle,
-  X,
-  Clock,
-  CalendarDays,
-  FileText,
-  MapPin,
-  Users,
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
+ AlertCircleIcon,
+ AlertTriangleIcon,
+ CalendarDaysIcon,
+ CheckCircleIcon,
+ ClockIcon,
+ CloseIcon,
+ FileTextIcon,
+ InfoIcon,
+ Location01Icon,
+ UsersIcon,
+} from "@/components/icons";
+import { cn } from "cn";
 
 type Variant = 'success' | 'error' | 'warning' | 'info';
 
@@ -39,31 +39,31 @@ interface ScheduleToastProps {
 }
 
 const variantStyles: Record<Variant, string> = {
-  success: 'border-green-500',
-  error: 'border-red-500',
-  warning: 'border-amber-500',
-  info: 'border-blue-500',
+  success: 'border-success',
+  error: 'border-destructive',
+  warning: 'border-warning',
+  info: 'border-info',
 };
 
 const titleColor: Record<Variant, string> = {
-  success: 'text-green-600 dark:text-green-400',
-  error: 'text-red-600 dark:text-red-400',
-  warning: 'text-amber-600 dark:text-amber-400',
-  info: 'text-blue-600 dark:text-blue-400',
+  success: 'text-success',
+  error: 'text-destructive',
+  warning: 'text-warning',
+  info: 'text-info',
 };
 
 const iconColor: Record<Variant, string> = {
-  success: 'text-green-500',
-  error: 'text-red-500',
-  warning: 'text-amber-500',
-  info: 'text-blue-500',
+  success: 'text-success',
+  error: 'text-destructive',
+  warning: 'text-warning',
+  info: 'text-info',
 };
 
 const variantIcons: Record<Variant, React.ComponentType<{ className?: string }>> = {
-  success: CheckCircle,
-  error: AlertCircle,
-  warning: AlertTriangle,
-  info: Info,
+ success: CheckCircleIcon,
+ error: AlertCircleIcon,
+ warning: AlertTriangleIcon,
+ info: InfoIcon,
 };
 
 const actionLabels: Record<Variant, string> = {
@@ -118,32 +118,32 @@ export const showScheduleToast = ({
         {/* Заголовок с иконкой */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Icon className={cn('h-5 w-5 flex-shrink-0', iconColor[variant])} />
+            <Icon className={cn('h-5 w-5 shrink-0', iconColor[variant])} />
             <p className={cn('text-base font-semibold leading-none', titleColor[variant])}>
               {label}
             </p>
           </div>
           <button
             onClick={() => sonnerToast.dismiss(toastId)}
-            className="rounded-full p-1 hover:bg-muted/50 transition-colors flex-shrink-0"
+            className="rounded-full p-1 hover:bg-muted/50 transition-colors shrink-0"
             aria-label="Закрыть"
           >
-            <X className="h-4 w-4 text-muted-foreground" />
+ <CloseIcon className="h-4 w-4 text-muted-foreground" />
           </button>
         </div>
 
         {/* Детали с иконками */}
         <div className="space-y-1.5 text-xs text-foreground font-medium pl-7">
           <div className="flex items-center gap-2">
-            <Users className="h-3.5 w-3.5 flex-shrink-0 text-muted-foreground" />
+ <UsersIcon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
             <span>{group}</span>
           </div>
           <div className="flex items-center gap-2">
-            <CalendarDays className="h-3.5 w-3.5 flex-shrink-0 text-muted-foreground" />
+ <CalendarDaysIcon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
             <span>{date}</span>
           </div>
           <div className="flex items-center gap-2">
-            <Clock className="h-3.5 w-3.5 flex-shrink-0 text-muted-foreground" />
+ <ClockIcon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
             <span>{time}</span>
           </div>
 
@@ -162,12 +162,12 @@ export const showScheduleToast = ({
           ) : (
             <>
               <div className="flex items-center gap-2">
-                <FileText className="h-3.5 w-3.5 flex-shrink-0 text-muted-foreground" />
+ <FileTextIcon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                 <span className="truncate">{subject}</span>
               </div>
               {classroom && (
                 <div className="flex items-center gap-2">
-                  <MapPin className="h-3.5 w-3.5 flex-shrink-0 text-muted-foreground" />
+ <Location01Icon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                   <span>Ауд. {classroom}</span>
                 </div>
               )}
@@ -204,7 +204,7 @@ export const showToast = ({
           variantStyles[variant]
         )}
       >
-        <Icon className={cn('h-5 w-5 mt-0.5 flex-shrink-0', iconColor[variant])} />
+        <Icon className={cn('h-5 w-5 mt-0.5 shrink-0', iconColor[variant])} />
         <div className="flex-1 space-y-1">
           <p className={cn('text-sm font-semibold leading-none', titleColor[variant])}>
             {title}
@@ -224,10 +224,10 @@ export const showToast = ({
         </div>
         <button
           onClick={() => sonnerToast.dismiss(toastId)}
-          className="rounded-full p-1 hover:bg-muted/50 transition-colors flex-shrink-0"
+          className="rounded-full p-1 hover:bg-muted/50 transition-colors shrink-0"
           aria-label="Закрыть"
         >
-          <X className="h-4 w-4 text-muted-foreground" />
+ <CloseIcon className="h-4 w-4 text-muted-foreground" />
         </button>
       </div>
     ),

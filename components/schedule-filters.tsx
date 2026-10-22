@@ -1,16 +1,72 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Badge } from "@/components/ui/badge";
 import { ResponsiveComboBox } from "./responsive-combobox";
+import { CalendarSubscribeHelp } from "@/components/calendar-subscribe-help";
 import {
-    CalendarSync,
-    Copy,
-    Plus,
-} from "lucide-react";
+  CalendarSyncIcon,
+  CheckIcon,
+  CopyIcon,
+  PlusIcon,
+} from "@/components/icons";
 import { API_ENDPOINTS } from "@/lib/constants";
 import { showToast } from "@/components/ui/sonner";
+import { MOTION_ICON_SPRING } from "@/lib/motion";
+
+/**
+ * Кнопка копирования ссылки: иконка меняется по контексту (copy → check).
+ * Меняем иконку через opacity, scale и blur — не переключаем видимость,
+ * иначе она «перескакивает». Первая отрисовка без анимации (initial={false}).
+ */
+function CopyButton({ text, label }: { text: string; label: string }) {
+    const reduceMotion = useReducedMotion();
+    const [copied, setCopied] = useState(false);
+    const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    useEffect(() => () => {
+        if (timer.current) clearTimeout(timer.current);
+    }, []);
+
+    const handleCopy = async () => {
+        try {
+            await navigator.clipboard.writeText(text);
+        } catch {
+            showToast({ title: "Не удалось скопировать", message: "Скопируйте ссылку вручную", variant: "error" });
+            return;
+        }
+
+        setCopied(true);
+        if (timer.current) clearTimeout(timer.current);
+        timer.current = setTimeout(() => setCopied(false), 2000);
+    };
+
+    return (
+        <Button
+            size="icon"
+            variant="outline"
+            onClick={handleCopy}
+            aria-label={label}
+            title={label}
+            className="relative"
+        >
+            <AnimatePresence mode="popLayout" initial={false}>
+                <motion.span
+                    key={copied ? "done" : "copy"}
+                    className="flex items-center justify-center"
+                    initial={{ opacity: 0, scale: 0.25, filter: "blur(4px)" }}
+                    animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
+                    exit={{ opacity: 0, scale: 0.25, filter: "blur(4px)" }}
+                    transition={reduceMotion ? { duration: 0 } : MOTION_ICON_SPRING}
+                >
+                    {copied ? <CheckIcon className="h-4 w-4 text-success" /> : <CopyIcon className="h-4 w-4" />}
+                </motion.span>
+            </AnimatePresence>
+        </Button>
+    );
+}
 
 interface ScheduleFiltersProps {
     groups: string[];
@@ -33,13 +89,6 @@ export function ScheduleFilters({
     onSaveGroup,
     onSaveTeacher
 }: ScheduleFiltersProps) {
-
-    const copyToClipboard = (text: string) => {
-        if (typeof navigator !== 'undefined') {
-            navigator.clipboard.writeText(text);
-            showToast({ title: "Готово!", message: "Ссылка скопирована в буфер обмена", variant: "success" });
-        }
-    };
 
     const getCalendarUrl = (encodedValue: string, isTeacher: boolean = false) => {
         if (typeof window === 'undefined') return '';
@@ -69,7 +118,7 @@ export function ScheduleFilters({
                     <Popover modal={false}>
                         <PopoverTrigger asChild>
                             <Button variant="outline" className="w-full">
-                                <CalendarSync className="h-4 w-4" />
+                                <CalendarSyncIcon className="h-4 w-4" />
                                 Подписаться на календарь
                             </Button>
                         </PopoverTrigger>
@@ -80,20 +129,12 @@ export function ScheduleFilters({
                                     <code className="flex-1 text-xs bg-muted p-2 rounded truncate">
                                         {getCalendarUrl(encodeURIComponent(selectedGroup))}
                                     </code>
-                                    <Button
-                                        size="icon"
-                                        variant="outline"
-                                        onClick={() => copyToClipboard(getCalendarUrl(encodeURIComponent(selectedGroup)))}
-                                    >
-                                        <Copy className="h-4 w-4" />
-                                    </Button>
+                                    <CopyButton
+                                        text={getCalendarUrl(encodeURIComponent(selectedGroup))}
+                                        label="Скопировать ссылку на календарь"
+                                    />
                                 </div>
-                                <div className="text-xs text-muted-foreground space-y-1">
-                                    <div className="font-medium">iPhone (iOS):</div>
-                                    <div>Настройки → Календарь → Учётные записи → Добавить → Другое → Подписка</div>
-                                    <div className="font-medium mt-2">Google Calendar:</div>
-                                    <div className="flex items-center gap-1 flex-wrap">Другие календари → <Badge variant="outline" className="h-4 w-4 p-0 inline-flex items-center justify-center rounded-full"><Plus className="h-2.5 w-2.5 text-muted-foreground" strokeWidth={3} /></Badge> → По URL</div>
-                                </div>
+                                <CalendarSubscribeHelp />
                             </div>
                         </PopoverContent>
                     </Popover>
@@ -120,7 +161,7 @@ export function ScheduleFilters({
                         <Popover modal={false}>
                             <PopoverTrigger asChild>
                                 <Button variant="outline" className="w-full">
-                                    <CalendarSync className="h-4 w-4" />
+                                    <CalendarSyncIcon className="h-4 w-4" />
                                     Подписаться на календарь
                                 </Button>
                             </PopoverTrigger>
@@ -131,20 +172,12 @@ export function ScheduleFilters({
                                         <code className="flex-1 text-xs bg-muted p-2 rounded truncate">
                                             {getCalendarUrl(encodeURIComponent(selectedTeacher), true)}
                                         </code>
-                                        <Button
-                                            size="icon"
-                                            variant="outline"
-                                            onClick={() => copyToClipboard(getCalendarUrl(encodeURIComponent(selectedTeacher), true))}
-                                        >
-                                            <Copy className="h-4 w-4" />
-                                        </Button>
+                                        <CopyButton
+                                            text={getCalendarUrl(encodeURIComponent(selectedTeacher), true)}
+                                            label="Скопировать ссылку на календарь"
+                                        />
                                     </div>
-                                    <div className="text-xs text-muted-foreground space-y-1">
-                                        <div className="font-medium">iPhone (iOS):</div>
-                                        <div>Настройки → Календарь → Учётные записи → Добавить → Другое → Подписка</div>
-                                        <div className="font-medium mt-2">Google Calendar:</div>
-                                        <div className="flex items-center gap-1 flex-wrap">Другие календари → <Badge variant="outline" className="h-4 w-4 p-0 inline-flex items-center justify-center rounded-full"><Plus className="h-2.5 w-2.5 text-muted-foreground" strokeWidth={3} /></Badge> → По URL</div>
-                                    </div>
+                                    <CalendarSubscribeHelp />
                                 </div>
                             </PopoverContent>
                         </Popover>

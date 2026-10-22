@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Bell, BellOff, Loader2, Check } from "lucide-react";
+import { BellIcon, BellOffIcon, CheckIcon, LoadingIcon } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import {
     Drawer,
@@ -11,11 +11,18 @@ import {
     DrawerFooter,
     DrawerHeader,
     DrawerTitle,
-    DrawerTrigger,
 } from "@/components/ui/drawer";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { Badge } from "@/components/ui/badge";
+import {
+    Sheet,
+    SheetClose,
+    SheetContent,
+    SheetDescription,
+    SheetFooter,
+    SheetHeader,
+    SheetTitle,
+} from "@/components/ui/sheet";
+import { NotificationsPanel } from "@/components/notifications-panel";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { showToast } from "@/components/ui/sonner";
 import { STORAGE_KEYS } from "@/lib/constants";
 
@@ -51,6 +58,7 @@ export function NotificationSettings({ groups, teachers }: NotificationSettingsP
     const [selectedGroup, setSelectedGroup] = useState<string>('');
     const [selectedTeacher, setSelectedTeacher] = useState<string>('');
     const [isOpen, setIsOpen] = useState(false);
+    const isMobile = useIsMobile();
 
     // Проверяем поддержку и текущее состояние подписки
     useEffect(() => {
@@ -229,26 +237,78 @@ export function NotificationSettings({ groups, teachers }: NotificationSettingsP
         return null; // Скрываем кнопку если уведомления не поддерживаются
     }
 
-    return (
-        <Drawer open={isOpen} onOpenChange={setIsOpen}>
-            <DrawerTrigger asChild>
+    const panel = (
+        <NotificationsPanel
+            isSubscribed={isSubscribed}
+            isLoading={isLoading}
+            permission={permission}
+            selectedGroup={selectedGroup}
+            selectedTeacher={selectedTeacher}
+            groups={groups}
+            teachers={teachers}
+            onGroupChange={(value) => {
+                setSelectedGroup(value);
+                if (value) {
+                    setSelectedTeacher(""); // сбрасываем преподавателя
+                                    }
+                            }}
+            onTeacherChange={(value) => {
+                setSelectedTeacher(value);
+                if (value) {
+                    setSelectedGroup(""); // сбрасываем группу
+                                }
+                                }}
+            onToggle={(checked) => {
+                                if (checked) {
+                                    if (selectedGroup || selectedTeacher) {
+                                        handleSubscribe();
+                                    }
+                                } else {
+                                    handleUnsubscribe();
+                                    }
+                                }}
+                        />
+    );
+
+    const saveButton = isSubscribed && (
                 <Button
+                            onClick={handleUpdateFilters}
+                            disabled={isLoading || (!selectedGroup && !selectedTeacher)}
+                            className="w-full"
+                >
+                            {isLoading ? (
+                <LoadingIcon className="h-4 w-4 animate-spin mr-2" />
+                    ) : (
+                <CheckIcon className="h-4 w-4 mr-2" />
+                    )}
+                            Сохранить изменения
+                </Button>
+    );
+
+    return (
+        <>
+                        <Button
+                onClick={() => setIsOpen(true)}
+                aria-haspopup="dialog"
+                aria-expanded={isOpen}
                     variant="outline"
                     size="icon"
                     className="relative rounded-xl"
                     title="Настройки уведомлений"
-                >
+                            >
                     {isSubscribed ? (
-                        <Bell className="h-5 w-5" />
-                    ) : (
-                        <BellOff className="h-5 w-5 text-muted-foreground" />
+                    <BellIcon className="h-5 w-5" />
+                            ) : (
+                    <BellOffIcon className="h-5 w-5 text-muted-foreground" />
                     )}
                     {isSubscribed && (
                         <span className="absolute -top-0.5 -right-0.5 size-2 rounded-xl bg-green-500" />
                     )}
-                </Button>
-            </DrawerTrigger>
+                        </Button>
 
+            {/* Мобильные: выезжает снизу свайпом. Десктоп: боковая панель. */}
+            {isMobile ? (
+        <Drawer open={isOpen} onOpenChange={setIsOpen}>
             <DrawerContent>
                 <DrawerHeader>
                     <DrawerTitle>Уведомления об изменениях</DrawerTitle>
@@ -257,132 +317,40 @@ export function NotificationSettings({ groups, teachers }: NotificationSettingsP
                     </DrawerDescription>
                 </DrawerHeader>
 
-                <div className="px-4 py-2 space-y-6">
-                    {/* Переключатель уведомлений */}
-                    <div className="flex items-center justify-between">
-                        <div className="space-y-0.5">
-                            <Label htmlFor="notifications-switch" className="text-base font-medium">
-                                Push-уведомления
-                            </Label>
-                            <p className="text-sm text-muted-foreground">
-                                {isSubscribed
-                                    ? 'Уведомления включены'
-                                    : permission === 'denied'
-                                        ? 'Заблокированы в браузере'
-                                        : 'Выберите группу/преподавателя'}
-                            </p>
-                        </div>
-                        <Switch
-                            id="notifications-switch"
-                            checked={isSubscribed}
-                            onCheckedChange={(checked: boolean) => {
-                                if (checked) {
-                                    if (selectedGroup || selectedTeacher) {
-                                        handleSubscribe();
-                                    }
-                                } else {
-                                    handleUnsubscribe();
-                                }
-                            }}
-                            disabled={isLoading || permission === 'denied' || (!isSubscribed && !selectedGroup && !selectedTeacher)}
-                        />
-                    </div>
-
-                    {/* iOS Notice */}
-                    {/iPhone|iPad|iPod/.test(navigator.userAgent) && !isSubscribed && (
-                        <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-sm">
-                            <p className="font-medium text-amber-600 dark:text-amber-400">
-                                Для iOS: добавьте приложение на главный экран
-                            </p>
-                            <p className="text-muted-foreground mt-1">
-                                Safari → Поделиться → На экран «Домой»
-                            </p>
-                        </div>
-                    )}
-
-                    {/* Выбор фильтра — одна группа ИЛИ один преподаватель */}
-                    <div className="space-y-4">
-                        <p className="text-sm text-muted-foreground">
-                            Выберите <strong>группу</strong> или <strong>преподавателя</strong> для отслеживания:
-                        </p>
-
-                        {/* Выбор группы */}
-                        <div className="space-y-2">
-                            <Label className="text-sm font-medium">Группа</Label>
-                            <select
-                                className="w-full p-2 border rounded-md text-sm bg-background"
-                                value={selectedGroup}
-                                onChange={(e) => {
-                                    setSelectedGroup(e.target.value);
-                                    if (e.target.value) {
-                                        setSelectedTeacher(''); // сбрасываем преподавателя
-                                    }
-                                }}
-                            >
-                                <option value="">Выберите группу...</option>
-                                {groups.map((group: string) => (
-                                    <option key={group} value={group}>{group}</option>
-                                ))}
-                            </select>
-                        </div>
-
-                        {/* Разделитель ИЛИ */}
-                        <div className="flex items-center gap-4">
-                            <div className="flex-1 h-px bg-border" />
-                            <span className="text-xs text-muted-foreground uppercase">или</span>
-                            <div className="flex-1 h-px bg-border" />
-                        </div>
-
-                        {/* Выбор преподавателя */}
-                        <div className="space-y-2">
-                            <Label className="text-sm font-medium">Преподаватель</Label>
-                            <select
-                                className="w-full p-2 border rounded-md text-sm bg-background"
-                                value={selectedTeacher}
-                                onChange={(e) => {
-                                    setSelectedTeacher(e.target.value);
-                                    if (e.target.value) {
-                                        setSelectedGroup(''); // сбрасываем группу
-                                    }
-                                }}
-                            >
-                                <option value="">Выберите преподавателя...</option>
-                                {teachers.map((teacher: string) => (
-                                    <option key={teacher} value={teacher}>{teacher}</option>
-                                ))}
-                            </select>
-                        </div>
-
-                        {/* Подсказка */}
-                        {!selectedGroup && !selectedTeacher && !isSubscribed && (
-                            <p className="text-xs text-amber-600 dark:text-amber-400">
-                                Выберите группу или преподавателя для включения уведомлений
-                            </p>
-                        )}
-                    </div>
-                </div>
+                        {panel}
 
                 <DrawerFooter>
-                    {/* Кнопка сохранения — если уже подписан и нужно изменить фильтр */}
-                    {isSubscribed && (
-                        <Button
-                            onClick={handleUpdateFilters}
-                            disabled={isLoading || (!selectedGroup && !selectedTeacher)}
-                            className="w-full"
-                        >
-                            {isLoading ? (
-                                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                            ) : (
-                                <Check className="h-4 w-4 mr-2" />
-                            )}
-                            Сохранить изменения
-                        </Button>
-                    )}
+                            {saveButton}
                     <DrawerClose asChild>
                         <Button variant="outline">Закрыть</Button>
                     </DrawerClose>
                 </DrawerFooter>
             </DrawerContent>
         </Drawer>
+            ) : (
+                <Sheet open={isOpen} onOpenChange={setIsOpen}>
+                    <SheetContent
+                        side="right"
+                        className="flex w-full flex-col overflow-y-auto p-0 sm:max-w-md"
+                            >
+                        <SheetHeader className="p-6 pb-2 text-left">
+                            <SheetTitle>Уведомления об изменениях</SheetTitle>
+                            <SheetDescription>
+                                Получайте push-уведомления когда расписание изменяется
+                            </SheetDescription>
+                        </SheetHeader>
+
+                        {panel}
+
+                        <SheetFooter className="mt-auto flex flex-col gap-2 p-6 pt-2 sm:flex-col">
+                            {saveButton}
+                            <SheetClose asChild>
+                                <Button variant="outline">Закрыть</Button>
+                            </SheetClose>
+                        </SheetFooter>
+                    </SheetContent>
+                </Sheet>
+                        )}
+        </>
     );
 }
