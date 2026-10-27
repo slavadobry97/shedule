@@ -64,3 +64,30 @@ export const compareScheduleData = (
 
     return { added, removed, modified };
 };
+
+// Одна пара, идущая нескольким группам (одинаковые время/предмет/аудитория),
+// склеивается в одну запись со списком групп. Без склейки одна пара
+// преподавателя дублируется строками в списке дня (№117).
+// Результат отсортирован по времени начала пары: источник (Google Sheets)
+// не отсортирован, порядок нужен в каждом списке дня (отзыв 27.10).
+export interface MergedLesson extends ScheduleItem {
+    groups: string[];
+}
+
+export const mergeGroupLessons = (items: ScheduleItem[]): MergedLesson[] => {
+    const merged = new Map<string, MergedLesson>();
+    for (const item of items) {
+        const mergeKey = `${item.time}|${item.subject}|${item.classroom}`;
+        const existing = merged.get(mergeKey);
+        if (existing) {
+            if (!existing.groups.includes(item.group)) {
+                existing.groups.push(item.group);
+            }
+        } else {
+            merged.set(mergeKey, { ...item, groups: [item.group] });
+        }
+    }
+    return Array.from(merged.values()).sort((a, b) =>
+        a.time.split(" - ")[0].localeCompare(b.time.split(" - ")[0])
+    );
+};

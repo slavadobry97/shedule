@@ -59,7 +59,7 @@ export function ClassroomHeatmap({ data }: ClassroomHeatmapProps) {
                             <TooltipTrigger asChild>
                                 <div
                                     className={`
-                    w-16 h-16 rounded-md border flex flex-col items-center justify-center cursor-pointer transition-colors
+                    w-16 h-16 rounded-3xl border flex flex-col items-center justify-center cursor-pointer transition-colors
                     ${getColor(item.utilizationPercent)}
                     ${getHoverColor(item.utilizationPercent)}
                   `}
@@ -83,7 +83,7 @@ export function ClassroomHeatmap({ data }: ClassroomHeatmapProps) {
                                             {item.dailyPattern.map((isActive, idx) => (
                                                 <div key={idx} className="flex flex-col items-center gap-1">
                                                     <div
-                                                        className={`w-5 h-8 rounded-sm border transition-colors ${isActive ? 'bg-primary border-primary' : 'bg-muted/50 border-border'}`}
+                                                        className={`w-5 h-8 rounded-2xl border transition-colors ${isActive ? 'bg-primary border-primary' : 'bg-muted/50 border-border'}`}
                                                         title={DAYS[idx]}
                                                     />
                                                     <span className="text-xxs text-muted-foreground font-medium">{DAYS[idx]}</span>

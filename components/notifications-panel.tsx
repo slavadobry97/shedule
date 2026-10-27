@@ -2,7 +2,13 @@
 
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { ResponsiveComboBox } from "@/components/responsive-combobox";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 
 interface NotificationsPanelProps {
     isSubscribed: boolean;
@@ -17,9 +23,17 @@ interface NotificationsPanelProps {
     onToggle: (checked: boolean) => void;
 }
 
+/** Сентинел пустого выбора: Radix Select запрещает пустой value у Item. */
+const NONE = "none";
+
 /**
- * Содержимое панели уведомлений.
- * Общее для мобильного bottom-drawer и десктопного бокового sheet.
+ * Содержимое панели уведомлений. Общее для мобильного bottom-drawer и
+ * десктопного бокового sheet.
+ *
+ * Выбор — Radix Select, а не ResponsiveComboBox: панель живёт в модальном
+ * Sheet, и вложенный портал комбобокса (popover/drawer) оказывается вне
+ * scroll-шарда шторки — клики в нём блокируются (№131). Select с modal
+ * создаёт собственный верхний слой блокировки и кликается корректно.
  */
 export function NotificationsPanel({
     isSubscribed,
@@ -48,7 +62,7 @@ export function NotificationsPanel({
                         {isSubscribed
                             ? "Уведомления включены"
                             : permission === "denied"
-                                ? "Заблокированы в  браузере"
+                                ? "Заблокированы в  браузере"
                                 : "Выберите группу/преподавателя"}
                     </p>
                 </div>
@@ -66,7 +80,7 @@ export function NotificationsPanel({
 
             {/* iOS Notice */}
             {isAppleDevice && !isSubscribed && (
-                <div className="p-3 rounded-lg bg-info/10 border border-info/20 text-sm">
+                <div className="p-3 rounded-3xl bg-info/10 border border-info/20 text-sm">
                     <p className="font-medium text-info">
                         Для iOS: добавьте приложение на главный экран
                     </p>
@@ -86,18 +100,23 @@ export function NotificationsPanel({
                 {/* Выбор группы */}
                 <div className="space-y-2">
                     <Label className="text-sm font-medium">Группа</Label>
-                    <ResponsiveComboBox
-                        id="notifications-group"
-                        items={[
-                            { value: "", label: "Выберите группу…" },
-                            ...groups.map((group: string) => ({ value: group, label: group })),
-                        ]}
-                        value={selectedGroup}
-                        onValueChange={onGroupChange}
-                        placeholder="Выберите группу…"
-                        searchPlaceholder="Поиск группы…"
-                        emptyText="Группа не найдена"
-                    />
+                    <Select
+                        modal
+                        value={selectedGroup || NONE}
+                        onValueChange={(value: string) => onGroupChange(value === NONE ? "" : value)}
+                    >
+                        <SelectTrigger id="notifications-group" className="w-full">
+                            <SelectValue placeholder="Выберите группу…" />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-72">
+                            <SelectItem value={NONE}>Выберите группу…</SelectItem>
+                            {groups.map((group: string) => (
+                                <SelectItem key={group} value={group}>
+                                    {group}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
                 </div>
 
                 {/* Разделитель ИЛИ */}
@@ -110,18 +129,23 @@ export function NotificationsPanel({
                 {/* Выбор преподавателя */}
                 <div className="space-y-2">
                     <Label className="text-sm font-medium">Преподаватель</Label>
-                    <ResponsiveComboBox
-                        id="notifications-teacher"
-                        items={[
-                            { value: "", label: "Выберите преподавателя…" },
-                            ...teachers.map((teacher: string) => ({ value: teacher, label: teacher })),
-                        ]}
-                        value={selectedTeacher}
-                        onValueChange={onTeacherChange}
-                        placeholder="Выберите преподавателя…"
-                        searchPlaceholder="Поиск преподавателя…"
-                        emptyText="Преподаватель не найден"
-                    />
+                    <Select
+                        modal
+                        value={selectedTeacher || NONE}
+                        onValueChange={(value: string) => onTeacherChange(value === NONE ? "" : value)}
+                    >
+                        <SelectTrigger id="notifications-teacher" className="w-full">
+                            <SelectValue placeholder="Выберите преподавателя…" />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-72">
+                            <SelectItem value={NONE}>Выберите преподавателя…</SelectItem>
+                            {teachers.map((teacher: string) => (
+                                <SelectItem key={teacher} value={teacher}>
+                                    {teacher}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
                 </div>
 
                 {/* Подсказка */}

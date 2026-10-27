@@ -111,7 +111,7 @@ export const showScheduleToast = ({
     (toastId) => (
       <div
         className={cn(
-          'flex flex-col gap-2 w-full max-w-sm p-4 rounded-xl border-l-4 bg-card border border-border shadow-md',
+          'flex flex-col gap-2 w-full max-w-sm p-4 rounded-3xl border-l-4 bg-card border border-border shadow-md',
           variantStyles[variant]
         )}
       >
@@ -153,7 +153,7 @@ export const showScheduleToast = ({
               {changes.map((change, idx) => (
                 <div key={idx} className="text-xs">
                   <span className="text-muted-foreground">{change.field}: </span>
-                  <span className="line-through text-red-500/70">{change.from}</span>
+                  <span className="line-through text-destructive/70">{change.from}</span>
                   <span className="mx-1">→</span>
                   <span className="text-green-600 dark:text-green-400">{change.to}</span>
                 </div>
@@ -200,7 +200,7 @@ export const showToast = ({
     (toastId) => (
       <div
         className={cn(
-          'flex items-start gap-3 w-full max-w-sm p-4 rounded-xl border-l-4 bg-card border border-border shadow-md',
+          'flex items-start gap-3 w-full max-w-sm p-4 rounded-3xl border-l-4 bg-card border border-border shadow-md',
           variantStyles[variant]
         )}
       >
@@ -216,7 +216,7 @@ export const showToast = ({
                 onAction();
                 sonnerToast.dismiss(toastId);
               }}
-              className="mt-2 text-xs font-medium bg-primary text-primary-foreground px-3 py-1.5 rounded-md hover:bg-primary/90 transition-colors"
+              className="mt-2 text-xs font-medium bg-primary text-primary-foreground px-3 py-1.5 rounded-3xl hover:bg-primary/90 transition-colors"
             >
               {actionLabel}
             </button>

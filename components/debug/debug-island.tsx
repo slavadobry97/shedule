@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
+import { Button } from "@/components/ui/button";
 import { cn } from "cn";
 import { ChevronDownIcon } from "@/components/icons";
 
@@ -30,7 +31,7 @@ export function Island({ children, className }: { children: ReactNode; className
     return (
         <div
             className={cn(
-                "overflow-hidden rounded-lg border border-border/70 bg-card divide-y divide-border/60",
+                "overflow-hidden rounded-3xl border border-border/70 bg-card divide-y divide-border/60",
                 className
             )}
         >
@@ -69,7 +70,7 @@ export function IslandRow({
             <div className="flex items-start gap-3 sm:gap-4">
                 <span
                     className={cn(
-                        "flex h-9 w-9 shrink-0 items-center justify-center rounded-md border",
+                        "flex h-9 w-9 shrink-0 items-center justify-center rounded-3xl border",
                         TILE[tone]
                     )}
                 >
@@ -93,17 +94,18 @@ export function IslandRow({
                 {action}
 
                 {hasDetails && (
-                    <button
-                        type="button"
+                    <Button
+                        variant="outline"
+                        size="sm"
                         onClick={() => setOpen((value) => !value)}
                         aria-expanded={open}
-                        className="inline-flex shrink-0 items-center gap-1 rounded-md border border-border/70 px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring"
+                        className="h-auto shrink-0 gap-1 rounded-3xl border-border/70 px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted/60 hover:text-foreground"
                     >
                         {open ? "Скрыть" : "Показать"}
                         <ChevronDownIcon
                             className={cn("h-3.5 w-3.5 transition-transform", open && "rotate-180")}
                         />
-                    </button>
+                    </Button>
                 )}
             </div>
 
@@ -128,7 +130,7 @@ export function IslandMetric({
 }) {
     return (
         <div className="flex items-center gap-3 px-4 py-3 sm:gap-4 sm:px-5">
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-border bg-muted/40 text-muted-foreground">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-3xl border border-border bg-muted/40 text-muted-foreground">
                 {icon}
             </span>
             <div className="min-w-0 flex-1">

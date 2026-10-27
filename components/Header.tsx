@@ -26,7 +26,7 @@ function HeaderContent() {
                     </div>
                     <div className="hidden sm:flex flex-col leading-none">
                         <span className="font-bold whitespace-nowrap text-base leading-none">{APP_INFO.TITLE}</span>
-                        <span className="text-xs font-medium opacity-70 whitespace-nowrap tracking-wider leading-none">{APP_INFO.SUBTITLE}</span>
+                        <span className="text-xs font-medium whitespace-nowrap tracking-wider leading-none">{APP_INFO.SUBTITLE}</span>
                     </div>
                 </Link>
 

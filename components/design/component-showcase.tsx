@@ -131,7 +131,7 @@ export function ComponentShowcase() {
                 </Block>
 
                 <Block title="Списки и команды">
-                    <Command className="rounded-lg border border-border/70">
+                    <Command className="rounded-3xl border border-border/70">
                         <CommandInput placeholder="Найти группу…" />
                         <CommandList>
                             <CommandEmpty>Ничего не найдено.</CommandEmpty>
@@ -145,7 +145,7 @@ export function ComponentShowcase() {
                         </CommandList>
                     </Command>
 
-                    <ScrollArea className="mt-4 h-32 rounded-md border border-border/70">
+                    <ScrollArea className="mt-4 h-32 rounded-3xl border border-border/70">
                         <div className="p-3 text-sm text-muted-foreground">
                             Прокручиваемая область — нативный скролл, без кастомных
                             полос. Lorem ipsum dolor sit amet, consectetur
@@ -282,7 +282,7 @@ export function ComponentShowcase() {
 
             {/* Таблица */}
             <Block title="Таблица">
-                <div className="rounded-lg border border-border/70">
+                <div className="rounded-3xl border border-border/70">
                     <Table>
                         <TableHeader>
                             <TableRow>
@@ -320,7 +320,7 @@ function Block({
     children: React.ReactNode;
 }) {
     return (
-        <section className="rounded-lg border border-border/70 bg-card p-5">
+        <section className="rounded-3xl border border-border/70 bg-card p-5">
             <div className="flex items-baseline justify-between gap-4">
                 <h3 className="text-sm font-semibold tracking-[-0.01em]">{title}</h3>
                 {hint && (

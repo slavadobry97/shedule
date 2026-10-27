@@ -20,11 +20,11 @@ const TYPE_SCALE = [
 ];
 
 const RADII = [
-    { name: "rounded-sm", value: "calc(--radius - 4px)" },
-    { name: "rounded-md", value: "calc(--radius - 2px)" },
-    { name: "rounded-lg", value: "var(--radius)" },
-    { name: "rounded-xl", value: "0.75rem" },
-    { name: "rounded-2xl", value: "1rem" },
+    { name: "rounded-2xl", value: "calc(--radius - 4px)" },
+    { name: "rounded-3xl", value: "calc(--radius - 2px)" },
+    { name: "rounded-3xl", value: "var(--radius)" },
+    { name: "rounded-3xl", value: "0.75rem" },
+    { name: "rounded-3xl", value: "1rem" },
     { name: "rounded-full", value: "9999px" },
 ];
 

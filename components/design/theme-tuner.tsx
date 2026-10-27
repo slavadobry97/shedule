@@ -49,7 +49,7 @@ export function ThemeTuner() {
     return (
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
             {/* Управление */}
-            <div className="rounded-lg border border-border/70 bg-card p-5">
+            <div className="rounded-3xl border border-border/70 bg-card p-5">
                 <div className="flex flex-wrap items-center gap-2">
                     <span className="font-mono text-xxs uppercase tracking-[0.2em] text-muted-foreground">
                         Тюнер темы
@@ -144,7 +144,7 @@ export function ThemeTuner() {
             </div>
 
             {/* Превью */}
-            <div className="rounded-lg border border-border/70 bg-background p-5" style={style}>
+            <div className="rounded-3xl border border-border/70 bg-background p-5" style={style}>
                 <p className="font-mono text-xxs uppercase tracking-[0.2em] text-muted-foreground">
                     Превью
                 </p>
@@ -172,7 +172,7 @@ export function ThemeTuner() {
 
                     <div className="grid gap-3 sm:grid-cols-2">
                         <Input placeholder="Группа или преподаватель" />
-                        <div className="flex h-9 items-center rounded-md border border-input bg-transparent px-3 text-sm text-muted-foreground">
+                        <div className="flex h-9 items-center rounded-3xl border border-input bg-transparent px-3 text-sm text-muted-foreground">
                             Значение поля
                         </div>
                     </div>

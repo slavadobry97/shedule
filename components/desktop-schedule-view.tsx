@@ -3,19 +3,26 @@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "cn";
+import { getLessonTypeColor } from "@/lib/lesson-type-colors";
 import { getDeclension } from "@/lib/utils";
 import { ScheduleItem } from "@/types/schedule";
 import { isLessonActive, isToday } from "@/lib/time-utils";
 import { TIME_SLOTS } from "@/lib/constants";
 import { CalendarDaysIcon, ClockIcon, FileTextIcon, Location01Icon, UserIcon, UsersIcon } from "@/components/icons";
 import { isWithinInterval, parse } from "date-fns";
-import { useMemo } from "react";
+
+/** Одна сетка на шапку и все строки: колонки не «прыгают» между сменами недели. */
+const GRID = "grid grid-cols-[3.75rem_repeat(6,minmax(5.5rem,1fr))] gap-2";
 
 interface DesktopScheduleViewProps {
     daysWithDates: { id: string; label: string; date: string; fullDate: string }[];
     filteredData: ScheduleItem[];
     weekStart: Date;
     weekEnd: Date;
+    /** Группа уже выбрана — не дублируем её в каждой карточке. */
+    showGroup?: boolean;
+    /** Преподаватель уже выбран — не дублируем его в каждой карточке. */
+    showTeacher?: boolean;
     onLessonClick: (lesson: ScheduleItem) => void;
 }
 
@@ -24,41 +31,50 @@ export function DesktopScheduleView({
     filteredData,
     weekStart,
     weekEnd,
+    showGroup = true,
+    showTeacher = true,
     onLessonClick
 }: DesktopScheduleViewProps) {
     return (
-        <div className="hidden sm:block space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-[repeat(7,minmax(200px,1fr))] gap-4">
-                <div className="flex flex-col items-center justify-center border bg-muted p-4 rounded-xl">
-                    <h2 className="text-sm sm:text-lg font-semibold">Время</h2>
+        <div className="hidden sm:block space-y-2 overflow-x-auto">
+            <div className={GRID}>
+                <div className="flex items-center justify-center rounded-3xl border bg-muted px-2 py-1 text-xs font-semibold text-muted-foreground">
+                    Время
                 </div>
                 {daysWithDates.map((day) => (
                     <div
                         key={day.id}
                         className={cn(
-                            "flex flex-col items-center justify-center border p-4 rounded-xl transition-colors",
+                            "flex flex-col items-center justify-center rounded-3xl border px-2 py-1 leading-tight transition-colors",
                             isToday(day.fullDate)
-                                ? "bg-primary text-primary-foreground border-primary shadow-md scale-[1.02]"
+                                ? "bg-primary text-primary-foreground border-primary shadow-md"
                                 : "bg-muted"
                         )}
                     >
-                        <h2 className="text-sm sm:text-lg font-semibold">{day.label}</h2>
-                        <h2 className="text-xs sm:text-sm">{day.date}</h2>
+                        <span className="text-xs font-semibold sm:text-sm">{day.label}</span>
+                        <span
+                            className={cn(
+                                "text-xs tabular-nums",
+                                isToday(day.fullDate) ? "text-primary-foreground/80" : "text-muted-foreground"
+                            )}
+                        >
+                            {day.date}
+                        </span>
                     </div>
                 ))}
             </div>
 
-            {
-                TIME_SLOTS.map((timeSlot) => (
-                    <div
-                        key={timeSlot}
-                        className="grid grid-cols-1 md:grid-cols-[repeat(7,minmax(200px,1fr))] gap-4"
-                    >
-                        <div className="flex items-center justify-center border text-muted-foreground dark:text-foreground bg-muted p-4 rounded-xl font-black text-sm sm:text-2xl">
-                            {timeSlot}
+            {TIME_SLOTS.map((timeSlot) => {
+                const [startTime, endTime] = timeSlot.split(" - ");
+
+                return (
+                    <div key={timeSlot} className={GRID}>
+                        <div className="flex flex-col items-center justify-center rounded-3xl border bg-muted px-1 py-1.5 text-center font-mono text-xs leading-tight text-muted-foreground dark:text-foreground">
+                            <span className="font-bold">{startTime}</span>
+                            <span>{endTime}</span>
                         </div>
 
-                        {daysWithDates.map((day, index) => {
+                        {daysWithDates.map((day) => {
                             const lessons = filteredData.filter(
                                 (item) =>
                                     item.time === timeSlot &&
@@ -78,12 +94,14 @@ export function DesktopScheduleView({
                                     <DialogTrigger asChild>
                                         <div
                                             className={cn(
-                                                "bg-card p-3 border rounded-xl flex flex-col justify-between h-full cursor-pointer focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring transition-[color,background-color,border-color,box-shadow,transform] hover:bg-muted/50 relative overflow-hidden",
-                                                isActive && "border-green-500 ring-1 ring-green-500/10 shadow-xs bg-green-50/50 dark:bg-green-900/10 z-10 scale-[1.02]"
+                                                "bg-card p-2.5 border rounded-3xl flex h-full flex-col gap-1 cursor-pointer focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring transition-[color,background-color,border-color,box-shadow,transform] hover:bg-muted/50 hover:shadow-sm relative overflow-hidden",
+                                                isActive && "border-success bg-success/5 ring-1 ring-success/20 z-10"
                                             )}
-                                            onClick={() => onLessonClick(lessons[0])}
                                             role="button"
                                             tabIndex={0}
+                                            aria-label={`${lessons[0].subject}, ${lessons[0].time}`}
+                                            title={`${lessons[0].subject}\n${lessons[0].teacher}\nауд. ${lessons[0].classroom}`}
+                                            onClick={() => onLessonClick(lessons[0])}
                                             onKeyDown={(e) => {
                                                 if (e.key === 'Enter' || e.key === ' ') {
                                                     e.preventDefault();
@@ -91,48 +109,51 @@ export function DesktopScheduleView({
                                                 }
                                             }}
                                         >
-                                            <div className="space-y-1 leading-relaxed">
-                                                <div className="font-semibold text-sm pr-4 relative">
-                                                    <span className="flex-1">{lessons[0].subject}</span>
-                                                    {lessons.length > 1 && (
-                                                        <span className="absolute -top-1 -right-1 text-xxs font-medium text-primary bg-background/90 px-1.5 py-0.5 rounded-lg border shadow-xs pointer-events-none">
-                                                            +{lessons.length - 1}{" "}
-                                                            {getDeclension(lessons.length - 1, [
-                                                                "занятие",
-                                                                "занятия",
-                                                                "занятий",
-                                                            ])}
-                                                        </span>
-                                                    )}
-                                                </div>
-                                                <div className="text-xs">{lessons[0].lessonType}</div>
-                                            </div>
-                                            <div className="mt-4 space-y-1">
-                                                <div className="flex items-center justify-end space-x-2">
-                                                    <span className="text-xs text-right font-bold text-muted-foreground">
-                                                        {lessons[0].group}
+                                            <div className="flex items-start justify-between gap-1">
+                                                <span className="line-clamp-2 text-xs font-semibold leading-tight">
+                                                    {lessons[0].subject}
+                                                </span>
+                                                {lessons.length > 1 && (
+                                                    <span className="shrink-0 rounded-xl border bg-background px-1 text-xs font-medium text-primary">
+                                                        +{lessons.length - 1}
                                                     </span>
-                                                </div>
-                                                <div className="flex items-center justify-end space-x-2">
-                                                    <span className="text-xs text-right">
-                                                        {lessons[0].teacher}
-                                                    </span>
-                                                </div>
-                                                <div className="flex items-center justify-end space-x-2">
- <Location01Icon className="h-4 w-4" />
-                                                    <span className="text-xs text-right">
-                                                        ауд. {lessons[0].classroom}
-                                                    </span>
-                                                </div>
-                                                {isActive && (
-                                                    <div className="absolute bottom-2 left-2">
-                                                        <Badge key="desktop-badge-bottom" variant="default" className="animate-pulse bg-green-600 hover:bg-green-700 text-white border-none px-1.5 py-0 text-xxs h-5">Сейчас</Badge>
-                                                    </div>
                                                 )}
                                             </div>
+
+                                            <span className="flex items-center gap-1 line-clamp-1 text-xs text-muted-foreground">
+                                                <span className={cn("inline-block h-1.5 w-1.5 rounded-full shrink-0", getLessonTypeColor(lessons[0].lessonType).dot)} />
+                                                {lessons[0].lessonType}
+                                            </span>
+
+                                            <div className="mt-auto space-y-0.5 text-xs leading-tight text-muted-foreground">
+                                                {showTeacher && (
+                                                    <div className="truncate">{lessons[0].teacher}</div>
+                                                )}
+                                                <div className="flex items-center justify-between gap-1">
+                                                    <span className="flex min-w-0 items-center gap-1">
+                                                        <Location01Icon className="h-3 w-3 shrink-0" />
+                                                        <span className="truncate">ауд. {lessons[0].classroom}</span>
+                                                    </span>
+                                                    {showGroup && (
+                                                        <span className="truncate font-medium">{lessons[0].group}</span>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            {isActive && (
+                                                <Badge
+                                                    key="desktop-badge-bottom"
+                                                    variant="outline"
+                                                    /* Концентрические радиусы: br повторяет угол ячейки (rounded-3xl),
+                                                       tl — внутренний скруг. */
+                                                    className="animate-pulse absolute bottom-0 right-0 flex h-4 items-center rounded-br-3xl rounded-tl-lg border-none px-1.5 text-xs leading-none bg-success text-success-foreground"
+                                                >
+                                                    Сейчас
+                                                </Badge>
+                                            )}
                                         </div>
                                     </DialogTrigger>
- <DialogContent className="p-6 rounded-xl shadow-lg">
+                                    <DialogContent className="p-6 rounded-3xl shadow-lg">
                                         <div className="overflow-y-auto max-h-[calc(95vh-5rem)] flex flex-col gap-4 items-center">
                                             <DialogHeader>
                                                 <DialogTitle className="text-center text-base font-semibold mt-6">
@@ -145,7 +166,7 @@ export function DesktopScheduleView({
                                             {lessons.map((lesson, lessonIndex) => (
                                                 <div
                                                     key={`${lesson.date}-${lesson.time}-${lesson.subject}-${lessonIndex}`}
-                                                    className="w-full max-w-lg rounded-md px-5 py-3 divide-y divide-dashed"
+                                                    className="w-full max-w-lg rounded-3xl px-5 py-3 divide-y divide-dashed"
                                                 >
                                                     {lessonIndex > 0 && (
                                                         <div className="text-center font-semibold my-4">
@@ -154,32 +175,32 @@ export function DesktopScheduleView({
                                                     )}
                                                     {[
                                                         {
- icon: <FileTextIcon className="w-5 h-5" />,
+                                                            icon: <FileTextIcon className="w-5 h-5" />,
                                                             label: "Тип занятия",
                                                             value: lesson.lessonType,
                                                         },
                                                         {
- icon: <UserIcon className="w-5 h-5" />,
+                                                            icon: <UserIcon className="w-5 h-5" />,
                                                             label: "Преподаватель",
                                                             value: lesson.teacher,
                                                         },
                                                         {
- icon: <UsersIcon className="w-5 h-5" />,
+                                                            icon: <UsersIcon className="w-5 h-5" />,
                                                             label: "Группа",
                                                             value: lesson.group,
                                                         },
                                                         {
- icon: <Location01Icon className="w-5 h-5" />,
+                                                            icon: <Location01Icon className="w-5 h-5" />,
                                                             label: "Аудитория",
                                                             value: lesson.classroom,
                                                         },
                                                         {
- icon: <CalendarDaysIcon className="w-5 h-5" />,
+                                                            icon: <CalendarDaysIcon className="w-5 h-5" />,
                                                             label: "Дата",
                                                             value: lesson.date,
                                                         },
                                                         {
- icon: <ClockIcon className="w-5 h-5" />,
+                                                            icon: <ClockIcon className="w-5 h-5" />,
                                                             label: "Время",
                                                             value: lesson.time,
                                                         },
@@ -211,15 +232,15 @@ export function DesktopScheduleView({
                             ) : (
                                 <div
                                     key={`${day.id}-${timeSlot}`}
-                                    className="bg-card flex items-center justify-center p-4 border text-muted-foreground rounded-xl border-dashed"
+                                    className="flex items-center justify-center rounded-3xl border border-dashed border-border px-1 py-1.5 text-xs text-muted-foreground/30"
                                 >
-                                    Нет занятий
+                                    —
                                 </div>
                             );
                         })}
                     </div>
-                ))
-            }
+                );
+            })}
         </div >
     );
 }

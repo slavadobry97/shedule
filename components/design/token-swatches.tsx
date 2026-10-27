@@ -52,7 +52,7 @@ function TokenSwatch({ name, label }: { name: string; label: string }) {
         <div className="flex items-center gap-3 border-b border-border/60 py-3 last:border-b-0">
             <span
                 ref={ref}
-                className="h-9 w-9 shrink-0 rounded-md border border-border/60"
+                className="h-9 w-9 shrink-0 rounded-3xl border border-border/60"
                 // Имя токена подставляется в runtime — Tailwind такой класс не
                 // генерирует, поэтому цвет задаём инлайном.
                 style={{ backgroundColor: `var(--${name})` }}

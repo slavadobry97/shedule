@@ -101,6 +101,6 @@ export const ANALYTICS = {
 export const REFRESH_INTERVAL = 60000;
 
 export const APP_INFO = {
-    TITLE: "Расписание РГСУ",
-    SUBTITLE: "Филиал в г. Минске",
+    TITLE: "Расписание занятий",
+    SUBTITLE: "Филиал РГСУ в г. Минске",
 } as const;

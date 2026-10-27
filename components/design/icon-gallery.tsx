@@ -50,7 +50,7 @@ export function IconGallery() {
                 {filtered.map((icon) => (
                     <div
                         key={icon.name}
-                        className="flex flex-col items-center gap-2 rounded-md border border-border/60 bg-card p-3"
+                        className="flex flex-col items-center gap-2 rounded-3xl border border-border/60 bg-card p-3"
                     >
                         <icon.Component className="h-6 w-6" />
                         <span className="w-full truncate text-center font-mono text-xxs text-muted-foreground">

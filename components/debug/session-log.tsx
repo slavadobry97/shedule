@@ -41,7 +41,7 @@ export function SessionLog() {
                     <CardDescription>История изменений расписания за текущую сессию</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <div className="flex flex-col items-center justify-center p-8 text-muted-foreground border-2 border-dashed rounded-lg">
+                    <div className="flex flex-col items-center justify-center p-8 text-muted-foreground border-2 border-dashed rounded-3xl">
                         <HistoryIcon className="h-8 w-8 mb-2 opacity-50" />
                         <p>Лог пуст. Изменений пока не было.</p>
                     </div>
@@ -64,7 +64,7 @@ export function SessionLog() {
             </CardHeader>
             <CardContent className="space-y-4">
                 {log.map((entry, idx) => (
-                    <div key={idx} className="border rounded-lg p-4 space-y-3">
+                    <div key={idx} className="border rounded-3xl p-4 space-y-3">
                         <div className="flex items-center justify-between">
                             <Badge variant="outline" className="font-mono">
                                 {new Date(entry.timestamp).toLocaleTimeString()}
@@ -141,7 +141,7 @@ export function SessionLog() {
                                             return (
                                                 <div
                                                     key={i}
-                                                    className="p-3 rounded-lg border bg-card text-card-foreground shadow-xs text-sm"
+                                                    className="p-3 rounded-3xl border bg-card text-card-foreground shadow-xs text-sm"
                                                 >
                                                     <div className="font-semibold">{cur.subject}</div>
                                                     <div className="text-muted-foreground flex flex-wrap gap-2 mt-1 mb-2 text-xs">
@@ -154,7 +154,7 @@ export function SessionLog() {
                                                     </div>
 
                                                     {changes.length > 0 ? (
-                                                        <div className="space-y-1 bg-muted/50 p-2 rounded text-xs">
+                                                        <div className="space-y-1 bg-muted/50 p-2 rounded-xl text-xs">
                                                             {changes.map((change, idx) => (
                                                                 <div key={idx}>
                                                                     <span className="text-muted-foreground">

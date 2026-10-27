@@ -42,6 +42,7 @@ import { DebugChecks, ChecksSummary } from "@/components/debug/debug-checks";
 import { DebugOverview } from "@/components/debug/debug-overview";
 import { SessionLog } from "@/components/debug/session-log";
 import { ChangelogContent } from "@/components/debug/changelog-content";
+import VirtualScheduleTable from "@/components/VirtualScheduleTable";
 import {
     SortField,
     VisibilityFilter,
@@ -49,6 +50,7 @@ import {
 } from "@/components/debug/records-table";
 import { DebugAIChat, type DebugTab } from "@/components/debug/ai-chat";
 import {
+    Grid2x2Icon,
     HistoryIcon,
     LayoutDashboardIcon,
     LoadingIcon,
@@ -185,7 +187,7 @@ export default function DebugClient() {
                 <div>
                     <div className="flex items-center gap-2 font-mono text-tiny uppercase tracking-[0.2em] text-muted-foreground">
                         Служебный раздел
-                        <Badge variant="outline" className="h-4 rounded-sm px-1 font-mono text-xxs">
+                        <Badge variant="outline" className="h-4 rounded-2xl px-1 font-mono text-xxs">
                             Debug
                         </Badge>
                     </div>
@@ -227,7 +229,7 @@ export default function DebugClient() {
                 onValueChange={(value) => setActiveTab(value as DebugTab)}
                 className="space-y-6"
             >
-                <TabsList className="h-auto w-full justify-start gap-1 overflow-x-auto rounded-lg border border-border/60 bg-accent p-1 shadow-xs">
+                <TabsList className="h-auto w-full justify-start gap-1 overflow-x-auto rounded-3xl border border-border/60 bg-accent p-1 shadow-xs">
                     <TabsTrigger value="checks" className="flex items-center gap-1.5 whitespace-nowrap">
                         <ShieldCheckIcon className="h-3.5 w-3.5" />
                         Проверки
@@ -239,6 +241,10 @@ export default function DebugClient() {
                     <TabsTrigger value="records" className="flex items-center gap-1.5 whitespace-nowrap">
                         <TableIcon className="h-3.5 w-3.5" />
                         Записи
+                    </TabsTrigger>
+                    <TabsTrigger value="table" className="flex items-center gap-1.5 whitespace-nowrap">
+                        <Grid2x2Icon className="h-3.5 w-3.5" />
+                        Таблица
                     </TabsTrigger>
                     <TabsTrigger value="journal" className="flex items-center gap-1.5 whitespace-nowrap">
                         <TrashIcon className="h-3.5 w-3.5" />
@@ -319,6 +325,12 @@ export default function DebugClient() {
                     </Card>
                 </TabsContent>
 
+                <TabsContent value="table" className="space-y-6">
+                    {/* Служебная таблица рассылки: самодостаточный компонент,
+                        сам тянет полный массив через SWR и монтируется лениво. */}
+                    <VirtualScheduleTable isLoading={isLoading} />
+                </TabsContent>
+
                 <TabsContent value="journal">
                     <SessionLog />
                 </TabsContent>
@@ -368,7 +380,7 @@ export default function DebugClient() {
                                     <DebugAIChat
                                         stats={analysis}
                                         activeTab={activeTab}
-                                        className="h-full rounded-none border-0 shadow-none"
+                                        className="h-full rounded-xl-none border-0 shadow-none"
                                         onClose={() => setChatOpen(false)}
                                     />
                                 </SheetContent>
@@ -397,7 +409,7 @@ export default function DebugClient() {
                                         <DebugAIChat
                                             stats={analysis}
                                             activeTab={activeTab}
-                                            className="h-full border-none shadow-none rounded-none"
+                                            className="h-full border-none shadow-none rounded-xl-none"
                                             onClose={() => setChatOpen(false)}
                                         />
                                     </div>

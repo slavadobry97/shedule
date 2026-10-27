@@ -12,7 +12,7 @@ export async function generateMetadata(
   const group = typeof params.group === 'string' ? params.group : undefined;
   const teacher = typeof params.teacher === 'string' ? params.teacher : undefined;
 
-  let title = "Расписание занятий РГСУ | Филиал в Минске";
+  let title = "Расписание занятий | Филиал РГСУ в Минске";
   let description = "Актуальное расписание занятий Филиала РГСУ в г. Минске на 2026-2027 учебный год. Поиск по группам, преподавателям и датам.";
 
   if (group) {

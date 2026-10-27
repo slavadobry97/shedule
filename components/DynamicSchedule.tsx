@@ -3,7 +3,7 @@
 import useSWR from "swr";
 import { useEffect, useRef, useState } from "react";
 import { ScheduleItem, ScheduleMeta } from "@/types/schedule";
-import { ScheduleTabs } from "@/components/schedule-tabs";
+import { ScheduleView } from "@/components/schedule-view";
 import { ScheduleError } from "@/components/schedule-error";
 import { motion, useReducedMotion } from "framer-motion";
 import { MOTION_DURATION, motionTransition } from "@/lib/motion";
@@ -130,14 +130,24 @@ export default function Home({ initialGroup, initialTeacher }: DynamicSchedulePr
 
     const { group, teacher } = initialSelectionRef.current;
 
-    if (!group || group === "all") {
-      const saved = localStorage.getItem(STORAGE_KEYS.SELECTED_GROUP);
-      if (saved && saved !== "all") setSelectedGroup(saved);
-    }
+    const savedGroup = localStorage.getItem(STORAGE_KEYS.SELECTED_GROUP);
+    const savedTeacher = localStorage.getItem(STORAGE_KEYS.SELECTED_TEACHER);
+    const hasSavedGroup = !!savedGroup && savedGroup !== "all";
+    const hasSavedTeacher = !!savedTeacher && savedTeacher !== "all";
 
-    if (!teacher || teacher === "all") {
-      const saved = localStorage.getItem(STORAGE_KEYS.SELECTED_TEACHER);
-      if (saved && saved !== "all") setSelectedTeacher(saved);
+    // Группа и преподаватель взаимоисключающие: восстанавливаем только один.
+    // Если в адресе уже задан фильтр, противоположный не трогаем.
+    if (group && group !== "all") {
+      // Адрес задаёт группу — очищаем сохранённого преподавателя.
+      localStorage.setItem(STORAGE_KEYS.SELECTED_TEACHER, "all");
+    } else if (teacher && teacher !== "all") {
+      localStorage.setItem(STORAGE_KEYS.SELECTED_GROUP, "all");
+    } else if (hasSavedGroup) {
+      setSelectedGroup(savedGroup!);
+      localStorage.setItem(STORAGE_KEYS.SELECTED_TEACHER, "all");
+    } else if (hasSavedTeacher) {
+      setSelectedTeacher(savedTeacher!);
+      localStorage.setItem(STORAGE_KEYS.SELECTED_GROUP, "all");
     }
   }, []);
 
@@ -309,18 +319,21 @@ export default function Home({ initialGroup, initialTeacher }: DynamicSchedulePr
 
   return (
     <div>
-      {/* Отображаем расписание с вкладками и таблицей */}
-      <ScheduleTabs
-        scheduleData={Array.isArray(schedule) ? schedule : []}
-        isLoading={isLoading}
-        initialGroup={initialGroup}
-        initialTeacher={initialTeacher}
-        meta={meta}
-        selectedGroup={selectedGroup}
-        selectedTeacher={selectedTeacher}
-        onGroupChange={setSelectedGroup}
-        onTeacherChange={setSelectedTeacher}
-      />
+      {/* Главная страница — только календарь. Таблица (служебный инструмент
+          рассылки) переехала в /debug, вкладка «Таблица».
+          container — ширина по контейнеру (как было у ScheduleTabs). */}
+      <div className="container mx-auto px-3 sm:px-4">
+        <ScheduleView
+          scheduleData={Array.isArray(schedule) ? schedule : []}
+          initialGroup={initialGroup}
+          initialTeacher={initialTeacher}
+          meta={meta}
+          selectedGroup={selectedGroup}
+          selectedTeacher={selectedTeacher}
+          onGroupChange={setSelectedGroup}
+          onTeacherChange={setSelectedTeacher}
+        />
+      </div>
 
       {/* Диалог со списком изменений */}
       <Dialog open={changesDialogOpen} onOpenChange={setChangesDialogOpen}>
@@ -344,7 +357,7 @@ export default function Home({ initialGroup, initialTeacher }: DynamicSchedulePr
                       </h3>
                       <div className="grid gap-2">
                         {changesList.added.map((item, i) => (
-                          <div key={i} className="p-3 rounded-lg border bg-card text-card-foreground shadow-xs text-sm">
+                          <div key={i} className="p-3 rounded-3xl border bg-card text-card-foreground shadow-xs text-sm">
                             <div className="font-semibold">{item.subject}</div>
                             <div className="text-muted-foreground flex gap-2 mt-1">
                               <Badge variant="outline">{item.date}</Badge>
@@ -365,14 +378,14 @@ export default function Home({ initialGroup, initialTeacher }: DynamicSchedulePr
                       </h3>
                       <div className="grid gap-2">
                         {changesList.modified.map(({ old, new: cur }, i) => (
-                          <div key={i} className="p-3 rounded-lg border bg-card text-card-foreground shadow-xs text-sm">
+                          <div key={i} className="p-3 rounded-3xl border bg-card text-card-foreground shadow-xs text-sm">
                             <div className="font-semibold">{cur.subject}</div>
                             <div className="text-muted-foreground flex gap-2 mt-1 mb-2">
                               <Badge variant="outline">{cur.date}</Badge>
                               <Badge variant="outline">{cur.time}</Badge>
                               <Badge variant="outline">{cur.group}</Badge>
                           </div>
-                            <div className="text-xs space-y-1 bg-muted/50 p-2 rounded">
+                            <div className="text-xs space-y-1 bg-muted/50 p-2 rounded-xl">
                               {old.teacher !== cur.teacher && (
                                 <div>
                                   <span className="text-muted-foreground">Преподаватель:</span>{" "}
@@ -420,7 +433,7 @@ export default function Home({ initialGroup, initialTeacher }: DynamicSchedulePr
                       </h3>
                       <div className="grid gap-2">
                         {changesList.removed.map((item, i) => (
-                          <div key={i} className="p-3 rounded-lg border bg-card text-card-foreground shadow-xs text-sm opacity-80 decoration-slate-500">
+                          <div key={i} className="p-3 rounded-3xl border bg-card text-card-foreground shadow-xs text-sm opacity-80 decoration-muted-foreground">
                             <div className="font-semibold line-through">{item.subject}</div>
                             <div className="text-muted-foreground flex gap-2 mt-1">
                               <Badge variant="outline">{item.date}</Badge>

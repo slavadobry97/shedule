@@ -111,7 +111,7 @@ export function VirtualizedTable({
 
     if (tableData.length === 0) {
         return (
-            <div className="flex flex-col items-center justify-center p-8 text-muted-foreground border-2 border-dashed rounded-lg min-h-[300px]">
+            <div className="flex flex-col items-center justify-center p-8 text-muted-foreground border-2 border-dashed rounded-3xl min-h-[300px]">
                 {visibilityFilter === "invisible" ? (
                     <>
                         <CheckCircleIcon className="h-10 w-10 mb-4 text-success/50" />

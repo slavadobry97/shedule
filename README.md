@@ -110,7 +110,7 @@ npm run dev
 
 ## 🌐 Деплой на Netlify
 
-Подробная инструкция в [NETLIFY_DEPLOYMENT.md](NETLIFY_DEPLOYMENT.md).
+Подробная инструкция в [docs/deployment/NETLIFY_DEPLOYMENT.md](docs/deployment/NETLIFY_DEPLOYMENT.md).
 
 **Быстрый старт:**
 

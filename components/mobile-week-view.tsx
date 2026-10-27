@@ -36,7 +36,7 @@ const DayButton = React.memo(({ date, dayLabel, isSelected, isPast, onSelect }: 
             aria-selected={isSelected}
             aria-label={`${dayLabel}, ${dayNumber}`}
             className={cn(
-                "relative flex flex-col items-center justify-center h-16 rounded-xl transition-[color,background-color,border-color,transform] duration-200 border shrink-0 z-10 p-0",
+                "relative flex flex-col items-center justify-center h-16 rounded-3xl transition-[color,background-color,border-color,transform] duration-200 border shrink-0 z-10 p-0",
                 isSelected ? "border-transparent font-bold scale-105 hover:bg-transparent" : "border-border hover:bg-muted bg-background",
                 isPast && !isSelected && "opacity-60"
             )}
@@ -44,7 +44,7 @@ const DayButton = React.memo(({ date, dayLabel, isSelected, isPast, onSelect }: 
             {isSelected && (
                 <motion.div
                     layoutId="active-day-bg"
-                    className="absolute -inset-px bg-primary rounded-xl -z-10 shadow-md"
+                    className="absolute -inset-px bg-primary rounded-3xl -z-10 shadow-md"
                     transition={motionTransition(reduceMotion, { duration: MOTION_DURATION.base })}
                 />
             )}

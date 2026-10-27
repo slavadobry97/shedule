@@ -36,7 +36,7 @@ export function WeekPreview() {
             };
 
     return (
-        <div className="rounded-lg border border-border/70 bg-card p-4 shadow-[0_1px_2px_hsl(222_47%_11%/0.05)]">
+        <div className="rounded-3xl border border-border/70 bg-card p-4 shadow-[0_1px_2px_hsl(222_47%_11%/0.05)]">
             <div className="mb-3 flex items-center justify-between">
                 <span className="text-tiny uppercase tracking-[0.18em] text-muted-foreground">
                     Неделя
@@ -46,7 +46,7 @@ export function WeekPreview() {
                 </span>
             </div>
 
-            <div className="grid grid-cols-[auto_repeat(4,minmax(0,1fr))] gap-px overflow-hidden rounded-md border border-border/60 bg-border sm:grid-cols-[auto_repeat(5,minmax(0,1fr))]">
+            <div className="grid grid-cols-[auto_repeat(4,minmax(0,1fr))] gap-px overflow-hidden rounded-3xl border border-border/60 bg-border sm:grid-cols-[auto_repeat(5,minmax(0,1fr))]">
                 <div className="bg-muted/40" aria-hidden="true" />
 
                 {DAYS.map((day, index) => (
@@ -103,7 +103,7 @@ export function WeekPreview() {
                                             {title}
                                         </span>
                                         {tone === "changed" && (
-                                            <span className="shrink-0 rounded-sm bg-warning/15 px-1 font-mono text-xxs uppercase leading-none tracking-wide text-warning">
+                                            <span className="shrink-0 rounded-2xl bg-warning/15 px-1 font-mono text-xxs uppercase leading-none tracking-wide text-warning">
                                                 изм
                                             </span>
                                         )}

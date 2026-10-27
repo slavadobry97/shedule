@@ -6,6 +6,7 @@ import AlertCircleIconData from "@hugeicons/core-free-icons/AlertCircleIcon";
 import AlertDiamondIconData from "@hugeicons/core-free-icons/AlertDiamondIcon";
 import ArrowDown01IconData from "@hugeicons/core-free-icons/ArrowDown01Icon";
 import ArrowRight01IconData from "@hugeicons/core-free-icons/ArrowRight01Icon";
+import ArrowLeft01IconData from "@hugeicons/core-free-icons/ArrowLeft01Icon";
 import ArrowUp01IconData from "@hugeicons/core-free-icons/ArrowUp01Icon";
 import ArrowUpDownIconData from "@hugeicons/core-free-icons/ArrowUpDownIcon";
 import BellIconData from "@hugeicons/core-free-icons/BellIcon";
@@ -49,6 +50,7 @@ import SlidersHorizontalIconData from "@hugeicons/core-free-icons/SlidersHorizon
 import SparklesIconData from "@hugeicons/core-free-icons/SparklesIcon";
 import Sun01IconData from "@hugeicons/core-free-icons/Sun01Icon";
 import TableIconData from "@hugeicons/core-free-icons/TableIcon";
+import Grid2x2IconData from "@hugeicons/core-free-icons/Grid2x2Icon";
 import TrashIconData from "@hugeicons/core-free-icons/TrashIcon";
 import UserIconData from "@hugeicons/core-free-icons/UserIcon";
 import ViewIconData from "@hugeicons/core-free-icons/ViewIcon";
@@ -88,6 +90,7 @@ export const AlertTriangleIcon = createIcon(Alert02IconData, "AlertTriangleIcon"
 export const AlertCircleIcon = createIcon(AlertCircleIconData, "AlertCircleIcon");
 export const AlertOctagonIcon = createIcon(AlertDiamondIconData, "AlertOctagonIcon");
 export const ArrowDownIcon = createIcon(ArrowDown01IconData, "ArrowDownIcon");
+export const ArrowLeftIcon = createIcon(ArrowLeft01IconData, "ArrowLeftIcon");
 export const ArrowRightIcon = createIcon(ArrowRight01IconData, "ArrowRightIcon");
 export const ArrowUpIcon = createIcon(ArrowUp01IconData, "ArrowUpIcon");
 export const ArrowUpDownIcon = createIcon(ArrowUpDownIconData, "ArrowUpDownIcon");
@@ -137,6 +140,7 @@ export const SlidersHorizontalIcon = createIcon(SlidersHorizontalIconData, "Slid
 export const SparklesIcon = createIcon(SparklesIconData, "SparklesIcon");
 export const SunIcon = createIcon(Sun01IconData, "SunIcon");
 export const TableIcon = createIcon(TableIconData, "TableIcon");
+export const Grid2x2Icon = createIcon(Grid2x2IconData, "Grid2x2Icon");
 export const TrashIcon = createIcon(TrashIconData, "TrashIcon");
 export const UserIcon = createIcon(UserIconData, "UserIcon");
 export const UsersIcon = createIcon(UsersIconData, "UsersIcon");

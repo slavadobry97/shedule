@@ -1,8 +1,27 @@
-# 🚀 Быстрый старт: Деплой на Cloudflare Pages
+# 🚀 Деплой
+
+## Рабочая платформа (прод)
+
+Прод — **cPanel → Setup Node.js App** на `https://shedule.rgsu.by`: исходники
+заливаются архивом, затем `npm install` → `npm run build` → Restart. Автодеплоя
+из Git нет.
+
+## Резервные варианты
+
+Документация по облачным платформам сохранена как запасной путь — на случай
+переезда, аварии хостинга или сборки на стороне сервера:
+
+- **Cloudflare Pages** — см. ниже и [полное руководство](./CLOUDFLARE_DEPLOYMENT.md)
+- **Vercel** — [полное руководство](./VERCEL_DEPLOYMENT.md)
+- **Netlify** — [полное руководство](./NETLIFY_DEPLOYMENT.md)
+
+---
+
+# ☁️ Cloudflare Pages (резерв)
 
 ## Выбор платформы
 
-Этот проект поддерживает развертывание на двух платформах:
+Этот проект поддерживает развертывание на нескольких платформах:
 
 ### ☁️ Cloudflare Pages (Рекомендуется)
 - **Неограниченный bandwidth**
@@ -18,7 +37,7 @@
 - 300 минут сборки в месяц
 - Простая настройка
 
-📖 **[Полное руководство по Netlify](./old-netlify-config/NETLIFY_DEPLOYMENT.md)**
+📖 **[Полное руководство по Netlify](./NETLIFY_DEPLOYMENT.md)**
 
 ---
 
@@ -93,7 +112,7 @@ NEXT_PUBLIC_PLAUSIBLE_DOMAIN=your-domain.pages.dev
 - [CLOUDFLARE_DEPLOYMENT.md](./CLOUDFLARE_DEPLOYMENT.md) - Полное руководство по Cloudflare
 - [NGINX_DEPLOYMENT.md](./NGINX_DEPLOYMENT.md) - Свой nginx: проксирование, gzip и общий кэш расписания
 - [PLAUSIBLE_SELF_HOST.md](./PLAUSIBLE_SELF_HOST.md) - Аналитика Plausible: облако или свой инстанс
-- [old-netlify-config/NETLIFY_DEPLOYMENT.md](./old-netlify-config/NETLIFY_DEPLOYMENT.md) - Полное руководство по Netlify
+- [NETLIFY_DEPLOYMENT.md](./NETLIFY_DEPLOYMENT.md) - Полное руководство по Netlify (резерв)
 - [README.md](./README.md) - Основная документация проекта
 - [CHANGELOG.md](./CHANGELOG.md) - История изменений
 
@@ -119,12 +138,9 @@ NEXT_PUBLIC_PLAUSIBLE_DOMAIN=your-domain.pages.dev
 ├── lib/                    # Утилиты и хелперы
 ├── public/                 # Статические файлы
 ├── worker/                 # Service Worker для PWA
-├── old-netlify-config/     # Настройки Netlify (архив)
-│   ├── netlify.toml
-│   └── NETLIFY_DEPLOYMENT.md
 ├── wrangler.toml          # Конфигурация Cloudflare
 ├── .cfignore              # Игнорируемые файлы для Cloudflare
-└── CLOUDFLARE_DEPLOYMENT.md  # Руководство по Cloudflare
+└── docs/deployment/       # Руководства: cPanel, Cloudflare, Vercel, Netlify
 ```
 
 ---

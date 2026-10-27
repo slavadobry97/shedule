@@ -375,7 +375,7 @@ export default function ScheduleTable({ scheduleData, isLoading = false }: Sched
       )}
 
       {/* Таблица */}
-      <div className="rounded-lg border overflow-hidden">
+      <div className="rounded-3xl border overflow-hidden">
         <Table>
           <TableHeader className="text-center bg-muted">
             <TableRow className="text-center">

@@ -48,11 +48,11 @@ export function Features() {
                 </div>
             </Reveal>
 
-            <div className="mt-12 grid gap-px overflow-hidden rounded-lg border border-border bg-border sm:grid-cols-2 lg:grid-cols-4">
+            <div className="mt-12 grid gap-px overflow-hidden rounded-3xl border border-border bg-border sm:grid-cols-2 lg:grid-cols-4">
                 {FEATURES.map((feature, index) => (
                     <Reveal key={feature.title} delay={index * 0.06} className="bg-background">
                         <article className="h-full p-6">
-                            <div className="flex h-9 w-9 items-center justify-center rounded-md border border-border bg-background">
+                            <div className="flex h-9 w-9 items-center justify-center rounded-3xl border border-border bg-background">
                                 <feature.icon className="h-4 w-4 text-foreground" aria-hidden="true" />
                             </div>
                             <h3 className="mt-5 text-base font-semibold leading-snug">{feature.title}</h3>

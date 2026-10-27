@@ -282,9 +282,9 @@ function SuggestionCards({ scope, onPick }: { scope: TabMeta; onPick: (question:
                         key={suggestion.question}
                         type="button"
                         onClick={() => onPick(suggestion.question)}
-                        className="group flex w-full items-start gap-3 rounded-xl border border-border/60 bg-card p-3 text-left shadow-xs transition-colors hover:border-primary/25 hover:bg-primary/[0.03]"
+                        className="group flex w-full items-start gap-3 rounded-3xl border border-border/60 bg-card p-3 text-left shadow-xs transition-colors hover:border-primary/25 hover:bg-primary/3"
                     >
-                        <span className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-muted text-muted-foreground transition-colors group-hover:bg-primary/10 group-hover:text-primary">
+                        <span className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-3xl bg-muted text-muted-foreground transition-colors group-hover:bg-primary/10 group-hover:text-primary">
                             <Icon className="h-3.5 w-3.5" />
                         </span>
                         <span className="min-w-0 flex-1">
@@ -337,7 +337,7 @@ function ModelPicker({
     const isFree = current.model.endsWith(":free");
     const label = auto ? "Авто" : current.label;
     const freeBadge = isFree ? (
-        <span className="rounded-sm bg-success/10 px-1 font-mono text-[9px] font-medium uppercase tracking-wide text-success">
+        <span className="rounded-2xl bg-success/10 px-1 font-mono text-[9px] font-medium uppercase tracking-wide text-success">
             free
         </span>
     ) : null;
@@ -346,7 +346,7 @@ function ModelPicker({
     if (models.length <= 1) {
         return (
             <span className="inline-flex h-7 items-center gap-1.5 rounded-full border border-border/60 bg-background/70 px-2 text-xxs font-medium text-muted-foreground shadow-xs">
-                <span className="max-w-[100px] truncate">{label}</span>
+                <span className="max-w-25 truncate">{label}</span>
                 {freeBadge}
             </span>
         );
@@ -362,7 +362,7 @@ function ModelPicker({
                     title="Выбрать модель"
                     className="h-7 min-w-0 gap-1.5 rounded-full border border-border/60 bg-background/70 px-2 text-xxs font-medium text-muted-foreground shadow-xs hover:bg-background"
                 >
-                    <span className="max-w-[82px] truncate sm:max-w-[110px]">{label}</span>
+                    <span className="max-w-20.5 truncate sm:max-w-27.5">{label}</span>
                     {freeBadge}
                     <ChevronDownIcon className="h-3 w-3 shrink-0" />
                 </Button>
@@ -377,7 +377,7 @@ function ModelPicker({
                         type="button"
                         onClick={onAuto}
                         className={cn(
-                            "flex w-full items-center gap-2 rounded-md px-2 py-2 text-left transition-colors hover:bg-muted",
+                            "flex w-full items-center gap-2 rounded-3xl px-2 py-2 text-left transition-colors hover:bg-muted",
                             auto && "bg-muted"
                         )}
                     >
@@ -405,7 +405,7 @@ function ModelPicker({
                                 type="button"
                                 onClick={() => onSelect(option)}
                                 className={cn(
-                                    "flex w-full items-center gap-2 rounded-md px-2 py-2 text-left transition-colors hover:bg-muted",
+                                    "flex w-full items-center gap-2 rounded-3xl px-2 py-2 text-left transition-colors hover:bg-muted",
                                     isActive && "bg-muted"
                                 )}
                             >
@@ -803,7 +803,7 @@ export function DebugAIChat({ stats, activeTab = "checks", className, onClose }:
             <CardHeader className="space-y-0 border-b bg-canvas p-0">
                 <div className="flex items-center justify-between gap-2 px-4 pb-2.5 pt-3">
                     <div className="flex min-w-0 items-center gap-2">
-                        <div className="rounded-lg bg-primary/10 p-1.5">
+                        <div className="rounded-3xl bg-primary/10 p-1.5">
                             <SparklesIcon className="h-4 w-4 text-primary" />
                         </div>
                         <CardTitle className="truncate font-evolventa text-sm font-semibold">ИИ-помощник</CardTitle>
@@ -843,7 +843,7 @@ export function DebugAIChat({ stats, activeTab = "checks", className, onClose }:
 
                 {/* Строка контекста — главный признак варианта A: видно, по какой
                     вкладке и каким цифрам сейчас отвечает помощник. */}
-                <div className="flex items-center gap-1.5 border-t border-border/40 bg-muted/20 px-4 py-1.5 text-[10px] font-mono uppercase tracking-[0.12em] text-muted-foreground">
+                <div className="flex items-center gap-1.5 border-t border-border/40 bg-muted/20 px-4 py-1.5 text-xxs font-mono uppercase tracking-[0.12em] text-muted-foreground">
                     <span className="text-muted-foreground/60">Смотрю:</span>
                     <span className="font-medium text-foreground/80">{scope.label}</span>
                     <span className="text-muted-foreground/30">·</span>
@@ -855,7 +855,7 @@ export function DebugAIChat({ stats, activeTab = "checks", className, onClose }:
                 <ScrollArea ref={scrollRef} className="h-full p-4">
                     <div className="space-y-3 pb-4">
                         {aiUnavailable && (
-                            <div className="flex items-start gap-2 rounded-lg border border-warning/30 bg-warning/10 p-2.5 text-xs text-warning">
+                            <div className="flex items-start gap-2 rounded-3xl border border-warning/30 bg-warning/10 p-2.5 text-xs text-warning">
                                 <AlertTriangleIcon className="mt-0.5 h-4 w-4 shrink-0" />
                                 <span>{aiUnavailable}</span>
                             </div>
@@ -864,7 +864,7 @@ export function DebugAIChat({ stats, activeTab = "checks", className, onClose }:
                         {messages.length === 0 && (
                             <div className="space-y-4 py-1">
                                 <div className="flex items-start gap-3">
-                                    <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
+                                    <div className="grid h-9 w-9 shrink-0 place-items-center rounded-3xl bg-primary/10 text-primary">
                                         <SparklesIcon className="h-4 w-4" />
                                     </div>
                                     <div className="min-w-0">
@@ -892,7 +892,7 @@ export function DebugAIChat({ stats, activeTab = "checks", className, onClose }:
                                             transition={motionTransition(reduceMotion, {
                                                 duration: MOTION_DURATION.fast,
                                             })}
-                                            className="flex items-start gap-2 rounded-lg border border-warning/30 bg-warning/10 p-2.5 text-xs text-warning"
+                                            className="flex items-start gap-2 rounded-3xl border border-warning/30 bg-warning/10 p-2.5 text-xs text-warning"
                                         >
                                             <AlertTriangleIcon className="mt-0.5 h-4 w-4 shrink-0" />
                                             <span>{message.content}</span>
@@ -917,7 +917,7 @@ export function DebugAIChat({ stats, activeTab = "checks", className, onClose }:
                                             <span className="select-none pt-0.5 font-mono text-primary">
                                                 &gt;
                                             </span>
-                                            <span className="min-w-0 flex-1 whitespace-pre-wrap break-words font-medium">
+                                            <span className="min-w-0 flex-1 whitespace-pre-wrap wrap-break-word font-medium">
                                                 {stripEmoji(message.content)}
                                             </span>
                                         </motion.div>
@@ -970,7 +970,7 @@ export function DebugAIChat({ stats, activeTab = "checks", className, onClose }:
                                                         </h3>
                                                     ),
                                                     code: ({ children }) => (
-                                                        <code className="rounded bg-muted px-1 py-0.5 font-mono text-[0.7rem]">
+                                                        <code className="rounded-xl bg-muted px-1 py-0.5 font-mono text-[0.7rem]">
                                                             {children}
                                                         </code>
                                                     ),
@@ -980,7 +980,7 @@ export function DebugAIChat({ stats, activeTab = "checks", className, onClose }:
                                                     // prose не работает и таблицы нужно
                                                     // оформить явно.
                                                     table: ({ children }) => (
-                                                        <div className="my-2 overflow-x-auto rounded-lg border border-border/60">
+                                                        <div className="my-2 overflow-x-auto rounded-3xl border border-border/60">
                                                             <table className="w-full border-collapse text-xs [&_tr:last-child_td]:border-b-0">
                                                                 {children}
                                                             </table>
@@ -1016,7 +1016,7 @@ export function DebugAIChat({ stats, activeTab = "checks", className, onClose }:
                                                     ),
                                                     hr: () => <hr className="my-3 border-border/60" />,
                                                     pre: ({ children }) => (
-                                                        <pre className="my-2 overflow-x-auto rounded-md bg-muted/50 p-2.5 text-xs [&_code]:bg-transparent [&_code]:p-0">
+                                                        <pre className="my-2 overflow-x-auto rounded-3xl bg-muted/50 p-2.5 text-xs [&_code]:bg-transparent [&_code]:p-0">
                                                             {children}
                                                         </pre>
                                                     ),
@@ -1048,13 +1048,14 @@ export function DebugAIChat({ stats, activeTab = "checks", className, onClose }:
             <CardFooter className="flex-col items-stretch gap-2 border-t bg-canvas p-3">
                 {messages.length > 0 && (
                     <div className="space-y-2">
-                        <button
-                            type="button"
+                        <Button
+                            variant="link"
+                            size="sm"
                             onClick={() => setShowSuggestions((value) => !value)}
-                            className="self-start text-xs text-muted-foreground transition-colors hover:text-foreground"
+                            className="h-auto self-start p-0 text-xs text-muted-foreground hover:text-foreground"
                         >
                             {showSuggestions ? "Скрыть подсказки" : "Подсказки"}
-                        </button>
+                        </Button>
                         {showSuggestions && (
                             <SuggestionCards scope={scope} onPick={fillSuggestion} />
                         )}
@@ -1067,7 +1068,7 @@ export function DebugAIChat({ stats, activeTab = "checks", className, onClose }:
                     }}
                     className="flex w-full items-end gap-2"
                 >
-                    <div className="relative flex min-w-0 flex-1 items-end gap-2 rounded-lg border border-border/60 bg-background px-2.5 py-2 shadow-xs transition-colors focus-within:border-primary/40 focus-within:ring-2 focus-within:ring-primary/10">
+                    <div className="relative flex min-w-0 flex-1 items-end gap-2 rounded-3xl border border-border/60 bg-background px-2.5 py-2 shadow-xs transition-colors focus-within:border-primary/40 focus-within:ring-2 focus-within:ring-primary/10">
                         <span className="select-none pb-0.5 font-mono text-sm leading-5 text-primary">
                             &gt;
                         </span>
@@ -1121,17 +1122,17 @@ export function DebugAIChat({ stats, activeTab = "checks", className, onClose }:
                                 }
                             }}
                             rows={1}
-                            className="max-h-[160px] min-h-[20px] resize-none overflow-auto border-0 bg-transparent p-0 text-sm shadow-none [scrollbar-width:none] focus-visible:ring-0 focus-visible:ring-offset-0 [&::-webkit-scrollbar]:hidden"
+                            className="max-h-40 min-h-5 resize-none overflow-auto border-0 bg-transparent p-0 text-sm shadow-none scrollbar-none focus-visible:ring-0 focus-visible:ring-offset-0 [&::-webkit-scrollbar]:hidden"
                             disabled={isLoading || Boolean(aiUnavailable)}
                         />
                         <span
-                            className="hidden h-5 shrink-0 select-none items-center rounded border border-border/60 px-1.5 font-mono text-[10px] leading-none text-muted-foreground/50 sm:inline-flex"
+                            className="hidden h-5 shrink-0 select-none items-center rounded-xl border border-border/60 px-1.5 font-mono text-xxs leading-none text-muted-foreground/50 sm:inline-flex"
                             title="Ctrl+K — фокус в поле"
                         >
                             Ctrl K
                         </span>
                         {showCmdMenu && (
-                            <div className="absolute bottom-full left-0 right-0 z-50 mb-1 overflow-hidden rounded-lg border border-border/60 bg-popover shadow-lg">
+                            <div className="absolute bottom-full left-0 right-0 z-50 mb-1 overflow-hidden rounded-3xl border border-border/60 bg-popover shadow-lg">
                                 {commandMatches.map((command, index) => (
                                     <button
                                         key={command.name}
@@ -1161,7 +1162,7 @@ export function DebugAIChat({ stats, activeTab = "checks", className, onClose }:
                             Boolean(aiUnavailable) ||
                             (dailyUsage ? dailyUsage.count >= dailyUsage.limit : false)
                         }
-                        className="h-10 w-10 shrink-0 rounded-lg shadow-lg transition-[color,background-color,box-shadow,transform] active:scale-[0.96] hover:shadow-primary/20"
+                        className="h-10 w-10 shrink-0 rounded-3xl shadow-lg transition-[color,background-color,box-shadow,transform] active:scale-[0.96] hover:shadow-primary/20"
                     >
                         {isLoading ? (
                             <LoadingIcon className="h-4 w-4 animate-spin" />
@@ -1171,7 +1172,7 @@ export function DebugAIChat({ stats, activeTab = "checks", className, onClose }:
                     </Button>
                 </form>
 
-                <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 px-0.5 font-mono text-[10px] uppercase tracking-[0.08em] text-muted-foreground/50">
+                <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 px-0.5 font-mono text-xxs uppercase tracking-[0.08em] text-muted-foreground/50">
                     <span className="truncate">
                         {modelLabel} · бесплатно
                     </span>

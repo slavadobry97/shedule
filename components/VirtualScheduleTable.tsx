@@ -325,7 +325,7 @@ export default function VirtualScheduleTable({ isLoading: isLoadingProp = false 
                     }}
                     modal={false}
                 >
-                    <SelectTrigger className="max-w-40 order-first rounded-lg">
+                    <SelectTrigger className="max-w-40 order-first rounded-3xl bg-background">
                         <SelectValue placeholder="Выберите тип фильтра" />
                     </SelectTrigger>
                     <SelectContent>
@@ -346,7 +346,7 @@ export default function VirtualScheduleTable({ isLoading: isLoadingProp = false 
                                 role="combobox"
                                 aria-expanded={comboboxOpen}
                                 className={cn(
-                                    "w-full justify-between rounded-lg text-sm font-normal",
+                                    "w-full justify-between rounded-3xl text-sm font-normal",
                                     filter && "pr-8"
                                 )}
                             >
@@ -412,7 +412,7 @@ export default function VirtualScheduleTable({ isLoading: isLoadingProp = false 
             </div>
 
             {/* Таблица */}
-            <div className="rounded-lg border bg-background flex-1 flex flex-col overflow-hidden">
+            <div className="rounded-3xl border bg-background flex-1 flex flex-col overflow-hidden">
                 <div
                     ref={parentRef}
                     className="flex-1 overflow-auto"

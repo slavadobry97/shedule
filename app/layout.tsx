@@ -9,32 +9,35 @@ import { PwaDevCleanup } from "@/components/pwa-dev-cleanup";
 import localFont from "next/font/local";
 import "./globals.css";
 
-// Подключение шрифтов
-const evolventaSans = localFont({
-  src: "./fonts/Evolventa-Regular.woff",
+// Подключение шрифтов: одно семейство, два начертания (400/700) —
+// иначе жирные заголовки синтезируются браузером из регулярного.
+const evolventa = localFont({
+  src: [
+    { path: "./fonts/Evolventa-Regular.woff2", weight: "400", style: "normal" },
+    { path: "./fonts/Evolventa-Bold.woff2", weight: "700", style: "normal" },
+  ],
   variable: "--font-evolventa-sans",
-  weight: "400",
-  display: "swap", // Prevents font blocking
-});
-const evolventaBold = localFont({
-  src: "./fonts/Evolventa-Bold.woff",
-  variable: "--font-evolventa-bold",
-  weight: "700",
   display: "swap", // Prevents font blocking
 });
 
-// Настройки вьюпорта и темы
+// Настройки вьюпорта и темы.
+// viewportFit=cover обязателен: без него env(safe-area-inset-*) на iOS = 0.
+// theme-color — по схеме на тему (светлая/тёмная), цвет — полотно страницы.
 export const viewport: Viewport = {
-  themeColor: "#1e40af",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f5f7fb" },
+    { media: "(prefers-color-scheme: dark)", color: "#0d0e13" },
+  ],
   width: "device-width",
   initialScale: 1,
+  viewportFit: "cover",
 };
 
 export const metadata: Metadata = {
-  title: "Расписание занятий РГСУ | Филиал в Минске",
-  description: "Актуальное расписание занятий Филиала РГСУ в  г. Минске на 2026-2027 у чебный год. Поиск по группам, преподавателям и датам. Экспорт в  PDF.",
+  title: "Расписание занятий | Филиал РГСУ в Минске",
+  description: "Актуальное расписание занятий Филиала РГСУ в г. Минске на 2026-2027 учебный год. Поиск по группам, преподавателям и датам. Экспорт в PDF.",
   keywords: ["расписание", "РГСУ", "Минск", "занятия", "университет", "студенты", "преподаватели"],
-  authors: [{ name: "Филиал РГСУ в  г. Минске" }],
+  authors: [{ name: "Филиал РГСУ в г. Минске" }],
   robots: {
     index: true,
     follow: true,
@@ -57,7 +60,7 @@ export const metadata: Metadata = {
     canonical: '/',
   },
   openGraph: {
-    title: "Расписание занятий РГСУ | Филиал в Минске",
+    title: "Расписание занятий | Филиал РГСУ в Минске",
     description: "Актуальное расписание занятий Филиала РГСУ в г. Минске на 2026-2027 учебный год",
     type: 'website',
     locale: 'ru_RU',
@@ -67,13 +70,13 @@ export const metadata: Metadata = {
         url: '/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'Расписание занятий РГСУ',
+        alt: 'Расписание занятий | Филиал РГСУ в Минске',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: "Расписание занятий РГСУ",
+    title: "Расписание занятий | Филиал РГСУ в Минске",
     description: "Актуальное расписание занятий Филиала РГСУ в г. Минске",
     images: ['/og-image.png'],
   },
@@ -86,7 +89,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${evolventaSans.variable} ${evolventaBold.variable}`} suppressHydrationWarning>
+    <html lang="ru" className={evolventa.variable} suppressHydrationWarning>
 
       <body>
         <ThemeProvider

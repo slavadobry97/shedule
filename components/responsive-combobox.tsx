@@ -42,6 +42,8 @@ interface ResponsiveComboBoxProps {
     renderItem?: (item: Item, isSelected: boolean) => React.ReactNode;
     id?: string;
     className?: string;
+    /** Иконка перед значением — заменяет подпись над полем в компактной шапке. */
+    leadingIcon?: React.ReactNode;
 }
 
 export function ResponsiveComboBox({
@@ -54,6 +56,7 @@ export function ResponsiveComboBox({
     renderItem,
     id,
     className,
+    leadingIcon,
 }: ResponsiveComboBoxProps) {
     const [open, setOpen] = React.useState(false);
     const [isDesktop, setIsDesktop] = React.useState(true);
@@ -73,8 +76,12 @@ export function ResponsiveComboBox({
             {/* На мобильном input внутри Command может глючить с фокусом в Drawer, 
             но в shadcn Drawer обычно это обработано. 
             Если нет - можно вынести input наружу. Пока оставим стандартно. */}
+            {/* autoFocus: фокус сразу уходит из триггера в Drawer — иначе он
+                остаётся внутри aria-hidden подложки (warning React 19) и на
+                iOS не открывается клавиатура для поиска. */}
             <CommandInput
                 placeholder={searchPlaceholder}
+                autoFocus
                 className={cn(!isDesktop && "text-base")}
             />
             <CommandList>
@@ -90,19 +97,21 @@ export function ResponsiveComboBox({
                             }}
                             className={cn(isDesktop ? "" : "py-3 text-base")}
                         >
-                            {renderItem ? (
-                                renderItem(item, value === item.value)
-                            ) : (
-                                <>
-                                    <CheckIcon
-                                        className={cn(
-                                            "mr-2 h-4 w-4",
-                                            value === item.value ? "opacity-100" : "opacity-0"
-                                        )}
-                                    />
-                                    {item.label}
-                                </>
-                            )}
+                                    {renderItem ? (
+                                        renderItem(item, value === item.value)
+                                    ) : (
+                                        <>
+                                            <CheckIcon
+                                                className={cn(
+                                                    "mr-2 h-4 w-4 shrink-0",
+                                                    value === item.value ? "opacity-100" : "opacity-0"
+                                                )}
+                                            />
+                                            <span className="min-w-0 flex-1 truncate">
+                                                {item.label}
+                                            </span>
+                                        </>
+                                    )}
                         </CommandItem>
                     ))}
                 </CommandGroup>
@@ -119,21 +128,36 @@ export function ResponsiveComboBox({
                         variant="outline"
                         role="combobox"
                         aria-expanded={open}
-                        className={cn("w-full justify-between font-normal", className)}
+                        className={cn("w-full justify-between font-normal px-2.5", className)}
                     >
-                        <span className="truncate">
-                            {selectedItem ? selectedItem.label : placeholder}
+                        <span className="flex min-w-0 items-center gap-1.5">
+                            {leadingIcon && (
+                                <span className="shrink-0 text-muted-foreground">{leadingIcon}</span>
+                            )}
+                            <span className="truncate">
+                                {selectedItem ? selectedItem.label : placeholder}
+                            </span>
                         </span>
-                        <ChevronDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-60" />
+                        <ChevronDownIcon className="ml-1.5 h-4 w-4 shrink-0 opacity-60" />
                     </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                {/* Ширина — ровно по триггеру; радиус повторяет триггер (12) */}
+                <PopoverContent className="w-(--radix-popover-trigger-width) rounded-3xl p-0" align="start">
                     {Content}
                 </PopoverContent>
             </Popover>
         );
     }
 
+    // №127: vaul не пробрасывает modal в Radix Dialog — тот всегда вешает
+    // aria-hidden на фон (hideOthers). React 19 предупреждает, если в момент
+    // установки атрибута фокус внутри скрытого поддерева: на iOS Safari
+    // программный фокус в инпут шторки может не сработать, и фокус остаётся
+    // на триггере. Лечим синхронным blur триггера прямо в жесте клика —
+    // до commit'а aria-hidden.
+    const handleTriggerClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+        e.currentTarget.blur();
+    };
     return (
         <Drawer open={open} onOpenChange={setOpen} shouldScaleBackground={false}>
             <DrawerTrigger asChild>
@@ -142,12 +166,18 @@ export function ResponsiveComboBox({
                     variant="outline"
                     role="combobox"
                     aria-expanded={open}
-                    className={cn("w-full justify-between font-normal", className)}
+                    onClick={handleTriggerClick}
+                    className={cn("w-full justify-between font-normal px-2.5", className)}
                 >
-                    <span className="truncate">
-                        {selectedItem ? selectedItem.label : placeholder}
+                    <span className="flex min-w-0 items-center gap-1.5">
+                        {leadingIcon && (
+                            <span className="shrink-0 text-muted-foreground">{leadingIcon}</span>
+                        )}
+                        <span className="truncate">
+                            {selectedItem ? selectedItem.label : placeholder}
+                        </span>
                     </span>
-                    <ChevronDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-60" />
+                    <ChevronDownIcon className="ml-1.5 h-4 w-4 shrink-0 opacity-60" />
                 </Button>
             </DrawerTrigger>
             <DrawerContent>

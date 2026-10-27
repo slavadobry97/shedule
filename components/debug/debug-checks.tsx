@@ -72,7 +72,7 @@ export function DebugChecks({
                             {classroomConflicts.map((conflict, index) => (
                                 <div
                                     key={`${conflict.classroom}-${conflict.date}-${conflict.time}-${index}`}
-                                    className="rounded-md border border-destructive/30 bg-background p-2.5"
+                                    className="rounded-3xl border border-destructive/30 bg-background p-2.5"
                                 >
                                     <div className="flex flex-wrap items-center justify-between gap-2">
                                         <span className="flex items-center gap-1.5 font-medium">
@@ -123,7 +123,7 @@ export function DebugChecks({
                             {teacherDoubleBookings.map((clash) => (
                                 <div
                                     key={`${clash.teacher}-${clash.date}-${clash.time}`}
-                                    className="rounded-md border border-destructive/30 bg-background p-2.5"
+                                    className="rounded-3xl border border-destructive/30 bg-background p-2.5"
                                 >
                                     <div className="flex flex-wrap items-center justify-between gap-2">
                                         <span className="font-medium">{clash.teacher}</span>
@@ -195,7 +195,7 @@ export function DebugChecks({
                                 ({ item, index, reasons }) => (
                                     <div
                                         key={index}
-                                        className="rounded-md border border-destructive/30 bg-background p-2.5"
+                                        className="rounded-3xl border border-destructive/30 bg-background p-2.5"
                                     >
                                         <div className="flex flex-wrap items-center gap-2">
                                             <Badge variant="outline" className="font-mono">
@@ -472,7 +472,7 @@ export function ChecksSummary({ analysis }: { analysis: ScheduleAnalysis }) {
     return (
         <div className="flex flex-wrap items-center gap-2 text-sm">
             {criticalCount > 0 && (
-                <span className="inline-flex items-center gap-1.5 rounded-md border border-destructive/30 bg-destructive/10 px-2.5 py-1 font-medium text-destructive">
+                <span className="inline-flex items-center gap-1.5 rounded-3xl border border-destructive/30 bg-destructive/10 px-2.5 py-1 font-medium text-destructive">
                     <AlertOctagonIcon className="h-4 w-4" />
                     {criticalCount}{" "}
                     {plural(
@@ -484,7 +484,7 @@ export function ChecksSummary({ analysis }: { analysis: ScheduleAnalysis }) {
                 </span>
             )}
             {warningCount > 0 && (
-                <span className="inline-flex items-center gap-1.5 rounded-md border border-warning/30 bg-warning/10 px-2.5 py-1 font-medium text-warning">
+                <span className="inline-flex items-center gap-1.5 rounded-3xl border border-warning/30 bg-warning/10 px-2.5 py-1 font-medium text-warning">
                     <UsersIcon className="h-4 w-4" />
                     {warningCount}{" "}
                     {plural(warningCount, "предупреждение", "предупреждения", "предупреждений")}

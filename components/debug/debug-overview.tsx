@@ -29,7 +29,7 @@ import { Badge } from "@/components/ui/badge";
 export function DebugOverview({ analysis }: { analysis: ScheduleAnalysis }) {
     return (
         <div className="space-y-6">
-            <div className="overflow-hidden rounded-lg border border-border/70 bg-card">
+            <div className="overflow-hidden rounded-3xl border border-border/70 bg-card">
                 <IslandMetric
                     icon={<FileTextIcon className="h-4 w-4" />}
                     label="Занятий"
@@ -62,13 +62,13 @@ export function DebugOverview({ analysis }: { analysis: ScheduleAnalysis }) {
                 />
             </div>
 
-            <Accordion type="multiple" className="divide-y divide-border/60 overflow-hidden rounded-lg border border-border/70 bg-card">
+            <Accordion type="multiple" className="divide-y divide-border/60 overflow-hidden rounded-3xl border border-border/70 bg-card">
                 {/* Нагрузка преподавателей */}
                 {analysis.teacherWorkload.length > 0 && (
                     <AccordionItem value="teacher-workload" className="border-0">
-                        <AccordionTrigger className="rounded-none px-4 py-3.5 hover:bg-muted/40 hover:no-underline sm:px-5">
+                        <AccordionTrigger className="rounded-xl-none px-4 py-3.5 hover:bg-muted/40 hover:no-underline sm:px-5">
                             <div className="flex items-center gap-3 sm:gap-4">
-                                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border bg-muted/40 text-muted-foreground">
+                                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-3xl border border-border bg-muted/40 text-muted-foreground">
                                     <UserIcon className="h-4 w-4" />
                                 </span>
                                 <div className="text-left">
@@ -130,9 +130,9 @@ export function DebugOverview({ analysis }: { analysis: ScheduleAnalysis }) {
                 {/* Окна в расписании групп */}
                 {analysis.gaps.length > 0 && (
                     <AccordionItem value="schedule-gaps" className="border-0">
-                        <AccordionTrigger className="rounded-none px-4 py-3.5 hover:bg-muted/40 hover:no-underline sm:px-5">
+                        <AccordionTrigger className="rounded-xl-none px-4 py-3.5 hover:bg-muted/40 hover:no-underline sm:px-5">
                             <div className="flex items-center gap-3 sm:gap-4">
-                                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border bg-muted/40 text-muted-foreground">
+                                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-3xl border border-border bg-muted/40 text-muted-foreground">
                                     <ClockIcon className="h-4 w-4" />
                                 </span>
                                 <div className="text-left">
@@ -146,7 +146,7 @@ export function DebugOverview({ analysis }: { analysis: ScheduleAnalysis }) {
                             </div>
                         </AccordionTrigger>
                         <AccordionContent className="px-4 pb-4 pl-12 sm:px-5 sm:pl-[3.25rem]">
-                            <div className="mb-4 p-3 bg-warning/5 dark:bg-warning/20 rounded-lg border border-warning/30 dark:bg-warning/50">
+                            <div className="mb-4 p-3 bg-warning/5 dark:bg-warning/20 rounded-3xl border border-warning/30 dark:bg-warning/50">
                                 <div className="flex items-center gap-2">
                                     <AlertTriangleIcon className="h-4 w-4 text-warning" />
                                     <p className="text-sm font-medium text-warning dark:text-warning">
@@ -163,7 +163,7 @@ export function DebugOverview({ analysis }: { analysis: ScheduleAnalysis }) {
                                 {analysis.gaps.map((gap, index) => (
                                     <div
                                         key={`${gap.group}-${gap.date}-${gap.gapTime}-${index}`}
-                                        className="flex items-center justify-between p-2 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
+                                        className="flex items-center justify-between p-2 rounded-3xl bg-muted/50 hover:bg-muted transition-colors"
                                     >
                                         <div className="flex items-center gap-2 min-w-0 flex-1">
                                             <UsersIcon className="h-4 w-4 text-muted-foreground shrink-0" />
@@ -193,9 +193,9 @@ export function DebugOverview({ analysis }: { analysis: ScheduleAnalysis }) {
                 {/* Использование аудиторий */}
                 {analysis.classroomUsage.length > 0 && (
                     <AccordionItem value="classroom-usage" className="border-0">
-                        <AccordionTrigger className="rounded-none px-4 py-3.5 hover:bg-muted/40 hover:no-underline sm:px-5">
+                        <AccordionTrigger className="rounded-xl-none px-4 py-3.5 hover:bg-muted/40 hover:no-underline sm:px-5">
                             <div className="flex items-center gap-3 sm:gap-4">
-                                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border bg-muted/40 text-muted-foreground">
+                                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-3xl border border-border bg-muted/40 text-muted-foreground">
                                     <Location01Icon className="h-4 w-4" />
                                 </span>
                                 <div className="text-left">

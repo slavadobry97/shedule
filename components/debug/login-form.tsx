@@ -51,7 +51,7 @@ export function DebugLoginForm() {
     return (
         <Card className="w-full max-w-sm border border-border/70">
             <CardHeader className="space-y-3 pb-4">
-                <span className="flex h-10 w-10 items-center justify-center rounded-md border border-border bg-muted/40">
+                <span className="flex h-10 w-10 items-center justify-center rounded-3xl border border-border bg-muted/40">
                     <LockIcon className="h-5 w-5 text-primary" />
                 </span>
                 <div className="space-y-1.5">
@@ -124,7 +124,7 @@ export function DebugLoginForm() {
                                 transition={motionTransition(reduceMotion, { duration: MOTION_DURATION.fast })}
                                 className="overflow-hidden"
                             >
-                                <div className="flex items-center gap-3 p-3 text-sm text-destructive bg-destructive/10 rounded-lg border border-destructive/20 shadow-xs">
+                                <div className="flex items-center gap-3 p-3 text-sm text-destructive bg-destructive/10 rounded-3xl border border-destructive/20 shadow-xs">
  <AlertCircleIcon className="h-4 w-4 shrink-0" />
                                     <p className="font-medium">{error}</p>
                                 </div>
@@ -139,7 +139,7 @@ export function DebugLoginForm() {
                                 transition={motionTransition(reduceMotion, { duration: MOTION_DURATION.fast })}
                                 className="overflow-hidden"
                             >
-                                <div className="flex items-center gap-3 p-3 text-sm text-success bg-success/10 rounded-lg border border-success/20 shadow-xs">
+                                <div className="flex items-center gap-3 p-3 text-sm text-success bg-success/10 rounded-3xl border border-success/20 shadow-xs">
  <CheckCircleIcon className="h-4 w-4 shrink-0" />
                                     <p className="font-medium">Успешный вход! Переадресация...</p>
                                 </div>

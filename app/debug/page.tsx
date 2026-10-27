@@ -21,7 +21,7 @@ export default async function DebugPage() {
         if (!isDebugAuthConfigured()) {
             return (
                 <div className="min-h-screen flex items-center justify-center bg-canvas p-4">
-                    <div className="max-w-md rounded-lg border border-border bg-background p-6 text-center">
+                    <div className="max-w-md rounded-3xl border border-border bg-background p-6 text-center">
                         <h1 className="text-lg font-semibold">Отладка не настроена</h1>
                         <p className="mt-2 text-sm text-muted-foreground">
                             Задайте переменную окружения <code className="font-mono text-xs">DEBUG_PASSWORD</code> —

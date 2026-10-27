@@ -22,7 +22,7 @@ export default function ThemeSwitcher() {
       variant="outline"
       size="icon"
       onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-      className="rounded-xl"
+      className="rounded-3xl"
     >
       {theme === "dark" ? <SunIcon className="h-[1.2rem] w-[1.2rem]" /> : <MoonIcon className="h-[1.2rem] w-[1.2rem]" />}
       <span className="sr-only">Toggle theme</span>

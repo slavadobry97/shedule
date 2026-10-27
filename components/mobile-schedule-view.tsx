@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "cn";
+import { getLessonTypeColor } from "@/lib/lesson-type-colors";
 import { getDeclension } from "@/lib/utils";
 import { ScheduleItem } from "@/types/schedule";
 import { isLessonActive, isLessonPast } from "@/lib/time-utils";
@@ -14,8 +15,6 @@ import { MOTION_DURATION, MOTION_EASE, MOTION_SPRING } from "@/lib/motion";
 import { DATE_FORMATS, getPairNumber } from "@/lib/constants";
 import {
  CalendarDaysIcon,
- ChevronLeftIcon,
- ChevronRightIcon,
  ClockIcon,
  FileTextIcon,
  Location01Icon,
@@ -23,7 +22,7 @@ import {
  UserIcon,
  UsersIcon,
 } from "@/components/icons";
-import { addDays, format, isSameDay, parse, startOfWeek, getDay } from "date-fns";
+import { addDays, format, isSameDay, parse, getDay } from "date-fns";
 import { ru } from "date-fns/locale";
 import { MobileWeekView } from "./mobile-week-view";
 import { useState, useRef } from "react";
@@ -155,35 +154,6 @@ export function MobileScheduleView({
                 <div
                     className="min-h-[calc(100vh-200px)] relative touch-pan-y overscroll-none" // Add touch-pan-y to fix "whole screen" swipe
                 >
-                    {/* Навигация по неделям (Mobile Style) */}
-                    <div className="flex items-center justify-between px-2 py-2 mb-2">
-                        <Button
-                            variant="ghost"
-                            className="text-primary hover:bg-transparent p-0 h-auto font-medium flex items-center gap-1"
-                            onClick={() => {
-                                triggerHaptic('medium');
-                                const currentMonday = startOfWeek(date, { weekStartsOn: 1 });
-                                setDate(addDays(currentMonday, -7));
-                            }}
-                        >
- <ChevronLeftIcon className="h-5 w-5" />
-                            <span>Пред. неделя</span>
-                        </Button>
-
-                        <Button
-                            variant="ghost"
-                            className="text-primary hover:bg-transparent p-0 h-auto font-medium flex items-center gap-1"
-                            onClick={() => {
-                                triggerHaptic('medium');
-                                const currentMonday = startOfWeek(date, { weekStartsOn: 1 });
-                                setDate(addDays(currentMonday, 7));
-                            }}
-                        >
-                            <span>След. неделя</span>
- <ChevronRightIcon className="h-5 w-5" />
-                        </Button>
-                    </div>
-
                     {/* Компонент выбора дня */}
                     <MobileWeekView
                         currentDate={date}
@@ -277,9 +247,9 @@ export function MobileScheduleView({
                                             <DrawerTrigger asChild>
                                                 <Card
                                                     className={cn(
-                                                        "rounded-xl relative overflow-hidden active:scale-[0.98] transition-[color,background-color,border-color,box-shadow,transform] cursor-pointer border",
+                                                        "rounded-3xl relative overflow-hidden active:scale-[0.98] transition-[color,background-color,border-color,box-shadow,transform] cursor-pointer border",
                                                         isActive
-                                                            ? "border-green-500 shadow-md bg-green-50/50 dark:bg-green-900/10"
+                                                            ? "border-success bg-success/5 ring-1 ring-success/20"
                                                             : isPast
                                                                 ? "opacity-60 grayscale-[0.5] bg-muted/30 border-border/50"
                                                                 : "bg-card border-border hover:border-primary/20"
@@ -289,20 +259,21 @@ export function MobileScheduleView({
                                                     {isGrouped && (
                                                         <div className={cn(
                                                             "absolute right-3 px-2.5 py-1 rounded-full text-xs font-semibold shadow-xs z-10",
-                                                            isActive ? "top-9 bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300 border-green-200/50" : "top-3 bg-primary/5 text-primary dark:bg-blue-900/30 dark:text-blue-300 border border-blue-200"
+                                                            isActive ? "top-9 bg-success/10 text-success border-success/20" : "top-3 bg-primary/5 text-primary dark:bg-blue-900/30 dark:text-blue-300 border border-blue-200"
                                                         )}>
                                                             {groupLessons.length} {getDeclension(groupLessons.length, ['группа', 'группы', 'групп'])}
                                                         </div>
                                                     )}
 
                                                     {isActive && (
-                                                        <div className="absolute top-0 right-0 px-3 py-1 bg-green-500 text-white text-xxs uppercase tracking-wider font-bold rounded-bl-xl z-20 shadow-xs">
+                                                        // Концентрические радиусы: tr повторяет угол карточки (rounded-3xl), bl — внутренний скруг.
+                                                        <div className="absolute top-0 right-0 px-3 py-1 bg-success text-success-foreground text-xxs uppercase tracking-wider font-bold rounded-tr-3xl rounded-bl-lg z-20">
                                                             Сейчас
                                                         </div>
                                                     )}
 
                                                     <CardContent className="p-0 flex">
-                                                        <div className="flex flex-col items-start justify-center w-20 bg-muted/30 border-r border-border/50 pl-3 shrink-0">
+                                                        <div className="flex flex-col items-start justify-center w-20 bg-muted/30 border-r border-border/50 pl-4 shrink-0">
                                                             <span className="text-xxs font-bold text-brand uppercase tracking-wider mb-0.5 whitespace-nowrap">
                                                                 {getPairNumber(primaryLesson.time)} пара
                                                             </span>
@@ -314,28 +285,31 @@ export function MobileScheduleView({
                                                             </span>
                                                         </div>
 
-                                                        <div className="flex-1 p-3 flex flex-col min-w-0">
+                                                        <div className="flex-1 p-4 flex flex-col min-w-0">
                                                             <div className={cn("mb-2", isGrouped ? "pr-24" : isActive ? "pr-16" : "")}>
                                                                 <h3 className="font-semibold text-brand leading-tight mb-1">
                                                                     {primaryLesson.subject}
                                                                 </h3>
                                                                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
  <FileTextIcon className="h-3 w-3 shrink-0" />
-                                                                    <span className="truncate">{primaryLesson.lessonType}</span>
+                                                                    <span className={cn("inline-block h-2 w-2 shrink-0 rounded-full", getLessonTypeColor(primaryLesson.lessonType).dot)} />
+                                                                    <span className="truncate">
+                                                                        {primaryLesson.lessonType}
+                                                                    </span>
                                                                 </div>
                                                             </div>
 
-                                                            <div className="flex items-center justify-between text-xs text-muted-foreground mt-auto">
+                                                            <div className="flex items-center gap-4 text-xs text-muted-foreground mt-auto">
                                                                 <div className="flex items-center gap-1.5 font-medium shrink-0">
  <Location01Icon className="h-3.5 w-3.5 shrink-0" />
                                                                     <span className="truncate">ауд. {primaryLesson.classroom}</span>
                                                                 </div>
 
-                                                                <div className="flex items-center gap-1.5 max-w-[45%] justify-end ml-2">
+                                                                <div className="flex min-w-0 items-center gap-1.5">
                                                                     {selectedTeacher !== "all" ? (
                                                                         <>
  <UsersIcon className="h-3.5 w-3.5 shrink-0" />
-                                                                            <span className="text-right font-medium truncate">
+                                                                            <span className="font-medium truncate">
                                                                                 {groupLessons.length > 1
                                                                                     ? `${groupLessons[0].group} +${groupLessons.length - 1}`
                                                                                     : groupLessons[0].group}
@@ -344,7 +318,7 @@ export function MobileScheduleView({
                                                                     ) : (
                                                                         <>
  <UserIcon className="h-3.5 w-3.5 shrink-0" />
-                                                                            <span className="text-right font-medium truncate">{primaryLesson.teacher}</span>
+                                                                            <span className="font-medium truncate">{primaryLesson.teacher}</span>
                                                                         </>
                                                                     )}
                                                                 </div>
@@ -360,7 +334,10 @@ export function MobileScheduleView({
                                                             {primaryLesson.subject}
                                                         </DrawerTitle>
                                                         <DrawerDescription className="text-center">
-                                                            {primaryLesson.lessonType} • {format(date, "dd MMMM", { locale: ru })}
+                                                            <span className="inline-flex items-center">
+                                                                <span className={cn("inline-block h-2 w-2 shrink-0 rounded-full mr-1.5", getLessonTypeColor(primaryLesson.lessonType).dot)} />
+                                                                {primaryLesson.lessonType} • {format(date, "dd MMMM", { locale: ru })}
+                                                            </span>
                                                         </DrawerDescription>
                                                     </DrawerHeader>
 
@@ -369,7 +346,7 @@ export function MobileScheduleView({
                                                             <Card key={idx} className="bg-muted/50 border shadow-none">
                                                                 <CardContent className="p-4 space-y-4">
                                                                     <div className="flex items-center gap-4">
-                                                                        <div className="h-10 w-10 rounded-xl bg-blue-100 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400 flex items-center justify-center shrink-0">
+                                                                        <div className="h-10 w-10 rounded-3xl bg-info/10 text-info flex items-center justify-center shrink-0">
  <UserIcon className="h-5 w-5" />
                                                                         </div>
                                                                         <div className="space-y-0.5">
@@ -379,7 +356,7 @@ export function MobileScheduleView({
                                                                     </div>
 
                                                                     <div className="flex items-center gap-4">
-                                                                        <div className="h-10 w-10 rounded-xl bg-green-100 text-green-600 dark:bg-green-500/20 dark:text-green-400 flex items-center justify-center shrink-0">
+                                                                        <div className="h-10 w-10 rounded-3xl bg-success/10 text-success flex items-center justify-center shrink-0">
  <UsersIcon className="h-5 w-5" />
                                                                         </div>
                                                                         <div className="space-y-0.5">
@@ -390,7 +367,7 @@ export function MobileScheduleView({
 
                                                                     <div className="flex items-center justify-between gap-4">
                                                                         <div className="flex items-center gap-4">
-                                                                            <div className="h-10 w-10 rounded-xl bg-info/10 text-info flex items-center justify-center shrink-0">
+                                                                            <div className="h-10 w-10 rounded-3xl bg-info/10 text-info flex items-center justify-center shrink-0">
  <ClockIcon className="h-5 w-5" />
                                                                             </div>
                                                                             <div className="space-y-0.5">
@@ -400,7 +377,7 @@ export function MobileScheduleView({
                                                                         </div>
 
                                                                         <div className="flex items-center gap-4 flex-row-reverse text-right">
-                                                                            <div className="h-10 w-10 rounded-xl bg-violet-100 text-violet-600 dark:bg-violet-500/20 dark:text-violet-400 flex items-center justify-center shrink-0">
+                                                                            <div className="h-10 w-10 rounded-3xl bg-lesson-credit/10 text-lesson-credit flex items-center justify-center shrink-0">
  <Location01Icon className="h-5 w-5" />
                                                                             </div>
                                                                             <div className="space-y-0.5">

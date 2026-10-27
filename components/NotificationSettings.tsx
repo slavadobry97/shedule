@@ -73,12 +73,9 @@ export function NotificationSettings({ groups, teachers }: NotificationSettingsP
             if (supported) {
                 setPermission(Notification.permission);
 
-                // Проверяем существующую подписку
-                const registration = await navigator.serviceWorker.ready;
-                const subscription = await registration.pushManager.getSubscription();
-                setIsSubscribed(!!subscription);
-
-                // Загружаем сохранённые фильтры
+                // Фильтры и разрешение — сразу: не ждём service worker, иначе в dev
+                // (SW не зарегистрирован) ready не разрешается никогда и панель
+                // остаётся заблокированной (№132).
                 const savedGroup = localStorage.getItem(STORAGE_KEYS.SELECTED_GROUP);
                 const savedTeacher = localStorage.getItem(STORAGE_KEYS.SELECTED_TEACHER);
 
@@ -86,6 +83,13 @@ export function NotificationSettings({ groups, teachers }: NotificationSettingsP
                     setSelectedGroup(savedGroup);
                 } else if (savedTeacher && savedTeacher !== 'all') {
                     setSelectedTeacher(savedTeacher);
+                }
+
+                // Существующая подписка — только если SW реально зарегистрирован
+                const registration = await navigator.serviceWorker.getRegistration();
+                if (registration) {
+                    const subscription = await registration.pushManager.getSubscription();
+                    setIsSubscribed(!!subscription);
                 }
             }
         };
@@ -113,8 +117,17 @@ export function NotificationSettings({ groups, teachers }: NotificationSettingsP
                 return;
             }
 
-            // Получаем service worker
-            const registration = await navigator.serviceWorker.ready;
+            // Получаем service worker (в dev его нет — warn вместо вечного лоадера)
+            const registration = await navigator.serviceWorker.getRegistration();
+            if (!registration) {
+                setIsLoading(false);
+                showToast({
+                    title: 'Service worker недоступен',
+                    message: 'Подписка работает на собранной версии сайта',
+                    variant: 'error',
+                });
+                return;
+            }
 
             // Подписываемся на push
             const subscription = await registration.pushManager.subscribe({
@@ -293,7 +306,7 @@ export function NotificationSettings({ groups, teachers }: NotificationSettingsP
                 aria-expanded={isOpen}
                     variant="outline"
                     size="icon"
-                    className="relative rounded-xl"
+                    className="relative rounded-3xl"
                     title="Настройки уведомлений"
                             >
                     {isSubscribed ? (
@@ -302,7 +315,7 @@ export function NotificationSettings({ groups, teachers }: NotificationSettingsP
                     <BellOffIcon className="h-5 w-5 text-muted-foreground" />
                     )}
                     {isSubscribed && (
-                        <span className="absolute -top-0.5 -right-0.5 size-2 rounded-xl bg-green-500" />
+                        <span className="absolute -top-0.5 -right-0.5 size-2 rounded-3xl bg-green-500" />
                     )}
                         </Button>
 
