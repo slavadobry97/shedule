@@ -41,3 +41,6 @@ wrangler.toml.bak
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Личные документы (случайно попали в репо, убраны 28.10)
+*.docx
