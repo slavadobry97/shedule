@@ -86,7 +86,7 @@ function ago(ts: number, now: number): string {
     const hPart = `${h} ${plural(h, ["час", "часа", "часов"])}`;
     return rest === 0
         ? `${hPart} назад`
-        : `${hPart} ${rest} ${plural(rest, ["минуту", "минуты", "минут"])} назад`;
+        : `${hPart} ${rest} ${plural(rest, ["минуту", "минуты", "минут"])} назад`;
 }
 
 function fmtTime(ts: number): string {
@@ -133,7 +133,7 @@ export function DashboardBento({ data }: { data: DashboardData }) {
                             tone={fresh.tone === "neutral" ? undefined : fresh.tone}
                         />
                         <Row
-                            label="Занятий в базе"
+                            label="Занятий в базе"
                             value={cron.rows === null ? "пока нет" : cron.rows.toLocaleString("ru-RU")}
                             tone={cron.rows === null ? "neutral" : undefined}
                         />
@@ -155,7 +155,7 @@ export function DashboardBento({ data }: { data: DashboardData }) {
                     <div className="divide-y divide-border/50">
                         <Row
                             label="Получают уведомления"
-                            value={push.total === null ? "нет данных" : `${push.total} ${plural(push.total, ["человек", "человека", "человек"])}`}
+                            value={push.total === null ? "нет данных" : `${push.total} ${plural(push.total, ["человек", "человека", "человек"])}`}
                         />
                         <Row
                             label="Следят за своей группой"

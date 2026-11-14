@@ -66,8 +66,8 @@ export default async function DashboardPage() {
                     <div className="mx-auto max-w-md rounded-3xl border border-border bg-background p-6 text-center">
                         <h1 className="text-lg font-semibold">Панель не настроена</h1>
                         <p className="mt-2 text-sm text-muted-foreground">
-                            Задайте переменную окружения <code className="font-mono text-xs">DEBUG_PASSWORD</code> —
-                            без неё служебный раздел в продакшене закрыт.
+                            Задайте переменную окружения <code className="font-mono text-xs">DEBUG_PASSWORD</code>&nbsp;—
+                            без неё служебный раздел в продакшене закрыт
                         </p>
                     </div>
                 </main>
@@ -80,7 +80,7 @@ export default async function DashboardPage() {
                     <div className="mb-4 text-center">
                         <h1 className="font-evolventa text-2xl font-bold tracking-[-0.01em]">Состояние расписания</h1>
                         <p className="mt-1 text-sm text-muted-foreground">
-                            Введите пароль администратора
+                            Вход по паролю администратора
                         </p>
                     </div>
                     <DebugLoginForm />
