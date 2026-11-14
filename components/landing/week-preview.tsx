@@ -54,8 +54,7 @@ export function WeekPreview() {
                         key={day}
                         {...reveal(0.05 + index * 0.05)}
                         className={cn(
-                            // text-xxs — токен globals.css; выживает в cn благодаря
-                            // lib/cn.ts (кегли xxs/tiny в font-size)
+                            // text-xxs выживает в cn: кегли зарегистрированы в lib/cn.ts
                             "bg-background px-1 py-2 text-center font-mono text-xxs uppercase tracking-[0.12em] text-muted-foreground",
                             index === DAYS.length - 1 && "hidden sm:block"
                         )}

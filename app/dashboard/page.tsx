@@ -15,9 +15,8 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 /**
- * Снимок операционной панели. Каждый источник — в своём try/catch:
- * Redis может быть не настроен (локальная сборка) или лежать — остров
- * честно гасится («нет данных»), а не роняет всю страницу.
+ * Каждый источник в своём try/catch: Redis может быть не настроен —
+ * остров гасится, а не роняет страницу.
  */
 async function collectData(): Promise<DashboardData> {
     let lastCheck: number | null = null;
