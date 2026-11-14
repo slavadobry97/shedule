@@ -10,7 +10,6 @@ import { IslandMetric } from "@/components/debug/debug-island";
 import { ClassroomHeatmap } from "@/components/debug/classroom-heatmap";
 import { ScheduleAnalysis } from "@/types/debug";
 import {
-    AlertTriangleIcon,
     CalendarDaysIcon,
     ClockIcon,
     FileTextIcon,
@@ -52,7 +51,7 @@ export function DebugOverview({ analysis }: { analysis: ScheduleAnalysis }) {
                 />
                 <IslandMetric
                     icon={<ClockIcon className="h-4 w-4" />}
-                    label="Временные слоты"
+                    label="Время начала занятий"
                     value={analysis.timeSlots}
                 />
                 <IslandMetric
@@ -140,24 +139,16 @@ export function DebugOverview({ analysis }: { analysis: ScheduleAnalysis }) {
                                         Окна в расписании групп
                                     </p>
                                     <p className="mt-0.5 text-sm font-normal text-muted-foreground">
-                                        Найдено {analysis.totalGaps} свободных слотов между занятиями
+                                        Найдено {analysis.totalGaps} свободных промежутков между занятиями
                                     </p>
                                 </div>
                             </div>
                         </AccordionTrigger>
                         <AccordionContent className="px-4 pb-4 pl-12 sm:px-5 sm:pl-[3.25rem]">
-                            <div className="mb-4 p-3 bg-warning/5 dark:bg-warning/20 rounded-3xl border border-warning/30 dark:bg-warning/50">
-                                <div className="flex items-center gap-2">
-                                    <AlertTriangleIcon className="h-4 w-4 text-warning" />
-                                    <p className="text-sm font-medium text-warning dark:text-warning">
-                                        Найдено {analysis.totalGaps} окон в расписании
-                                    </p>
-                                </div>
-                                <p className="text-xs text-warning dark:text-warning mt-1">
-                                    Окна снижают посещаемость и увеличивают время пребывания студентов в
-                                    университете
-                                </p>
-                            </div>
+                            <p className="mb-4 text-xs text-muted-foreground">
+                                Промежутки снижают посещаемость и увеличивают время пребывания
+                                студентов в университете
+                            </p>
 
                             <div className="space-y-2 max-h-80 overflow-y-auto">
                                 {analysis.gaps.map((gap, index) => (

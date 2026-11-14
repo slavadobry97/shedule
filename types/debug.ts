@@ -19,6 +19,8 @@ export interface ClassroomConflict {
     time: string;
     teachers: string[];
     subjects: string[];
+    /** Номера строк листа по каждому преподавателю (indexes[i] ↔ teachers[i]) */
+    indexes: number[];
 }
 
 /** Преподаватель в один слот в разных аудиториях */
@@ -93,7 +95,7 @@ export interface ScheduleAnalysis {
     timeSlots: number;
 
     emptyFields: EmptyFieldCounts;
-    duplicates: [string, number][];
+    duplicates: [string, number[]][];
 
     invalidTimeSlots: RowIssue[];
     invalidDates: RowIssue[];

@@ -76,6 +76,18 @@
   /* Логотип и текст бренда. В тёмной теме — белый: на почти чёрном
      фирменный синий нечитаем. */
   --brand: var(--royal-blue);
+  /* Сайдбар — псевдонимы поверх основной семьи поверхностей: плотная
+     поверхность как у карточек, граница и выделение те же. Объявляется и в
+     :root, и в .dark: var() разрешается в месте объявления, одной записи на
+     обе темы недостаточно. */
+  --sidebar: var(--background);
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: var(--accent);
+  --sidebar-accent-foreground: var(--foreground);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--ring);
   }
 
   .dark {
@@ -116,6 +128,15 @@
   --input: hsl(217.2 32.6% 17.5%);
   --ring: hsl(227 75% 55%);
   --brand: hsl(0 0% 100%);
+  /* Сайдбар — те же псевдонимы, что в :root (см. комментарий там) */
+  --sidebar: var(--background);
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: var(--accent);
+  --sidebar-accent-foreground: var(--foreground);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--ring);
 }
 
 /**
@@ -124,6 +145,24 @@
  */
 @utility bg-brand-gradient {
   background-image: var(--brand-gradient);
+}
+
+/**
+ * Тонированная подложка карточки по семантическому тону — рецепт KpiCard
+ * из journal-rgsu (мягкий градиент из угла), но на токенах, а не на сырых
+ * цветах палитры. Накладывается поверх bg-card: bg-card bg-tone-info.
+ * Тёмная тема подхватывается сама — миксуется текущее значение токена,
+ * а в тёмной теме --info/--success — светлые шаги.
+ * Использование: bg-tone-info | -success | -warning | -destructive |
+ * -primary | -brand | -royal-blue | -ruby (любой --color-* токен).
+ */
+@utility bg-tone-* {
+  --tone-color: --value(--color-*);
+  background-image: linear-gradient(
+    to bottom right,
+    color-mix(in srgb, var(--tone-color) 9%, transparent) 0%,
+    transparent 62%
+  );
 }
 
 @theme inline {
@@ -142,6 +181,14 @@
   --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
   --color-destructive-hover: var(--destructive-hover);

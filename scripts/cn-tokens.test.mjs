@@ -32,3 +32,15 @@ test("clsx-синтаксис работает (строки, условия, о
     assert.match(out, /font-bold/);
     assert.match(out, /text-xxs/);
 });
+
+test("bg-tone-* выживает рядом с bg-card (карточка не должна стать прозрачной)", () => {
+    const out = cn("rounded-3xl border border-border/70 bg-card", "bg-tone-destructive");
+    assert.match(out, /bg-card/);
+    assert.match(out, /bg-tone-destructive/);
+});
+
+test("bg-tone-* конфликтуют между собой правильно (последний побеждает)", () => {
+    const out = cn("bg-tone-success", "bg-tone-warning");
+    assert.ok(!/bg-tone-success/.test(out));
+    assert.match(out, /bg-tone-warning/);
+});

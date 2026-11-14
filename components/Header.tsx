@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { HeaderActions } from "./header-actions";
 import { ChevronRightIcon, UserIcon, UsersIcon } from "@/components/icons";
 import { Suspense } from "react";
@@ -53,6 +53,14 @@ function HeaderContent() {
 }
 
 export function Header() {
+    const pathname = usePathname();
+
+    // У страницы состояния расписания своя оболочка с сайдбаром
+    // (app/dashboard/layout.tsx) — глобальная шапка там дублировала бы её.
+    if (pathname === "/dashboard") {
+        return null;
+    }
+
     return (
         <header className="sticky top-0 z-50 w-full border-b bg-canvas supports-[backdrop-filter]:bg-canvas/80 backdrop-blur-[20px] backdrop-saturate-180">
             <Suspense fallback={<div className="h-14" />}>

@@ -63,7 +63,7 @@ export function DebugChecks({
                 title="Аудитория занята дважды"
                 description="В одну аудиторию в одно время поставлены разные преподаватели. Потоковая лекция одним преподавателем — не конфликт"
                 status={{
-                    label: classroomConflicts.length > 0 ? `${classroomConflicts.length}` : "ок",
+                    label: classroomConflicts.length > 0 ? `${classroomConflicts.length}` : "в порядке",
                     tone: classroomConflicts.length > 0 ? "danger" : "success",
                 }}
                 details={
@@ -92,11 +92,14 @@ export function DebugChecks({
                                         {conflict.teachers.map((teacher, i) => (
                                             <div
                                                 key={i}
-                                                className="flex items-center gap-1 text-xs text-muted-foreground"
+                                                className="flex flex-wrap items-center gap-1 text-xs text-muted-foreground"
                                             >
                                                 <UserIcon className="h-3 w-3" />
                                                 <span>{teacher}</span>
                                                 <span className="text-xs">({conflict.subjects[i]})</span>
+                                                <span className="font-mono text-[10px]">
+                                                    строка <SheetRowLink index={conflict.indexes[i]} />
+                                                </span>
                                             </div>
                                         ))}
                                     </div>
@@ -114,7 +117,7 @@ export function DebugChecks({
                 title="Преподаватель в двух аудиториях"
                 description="Один преподаватель в одно и то же время ведёт занятия в разных аудиториях. Подгруппы одной лекции в одной аудитории — не конфликт"
                 status={{
-                    label: teacherDoubleBookings.length > 0 ? `${teacherDoubleBookings.length}` : "ок",
+                    label: teacherDoubleBookings.length > 0 ? `${teacherDoubleBookings.length}` : "в порядке",
                     tone: teacherDoubleBookings.length > 0 ? "danger" : "success",
                 }}
                 details={
@@ -184,7 +187,7 @@ export function DebugChecks({
                 title="Записи не отображаются в календаре"
                 description="Они есть в Google Sheets, но студенты и преподаватели их не видят"
                 status={{
-                    label: invisibleRecords.length > 0 ? `${invisibleRecords.length}` : "ок",
+                    label: invisibleRecords.length > 0 ? `${invisibleRecords.length}` : "в порядке",
                     tone: invisibleRecords.length > 0 ? "danger" : "success",
                 }}
                 defaultOpen={invisibleRecords.length > 0}
@@ -246,7 +249,7 @@ export function DebugChecks({
                 title="Формат времени"
                 description="Проверка корректности записи времени (ЧЧ:ММ - ЧЧ:ММ)"
                 status={{
-                    label: invalidTimeSlots.length > 0 ? `${invalidTimeSlots.length}` : "ок",
+                    label: invalidTimeSlots.length > 0 ? `${invalidTimeSlots.length}` : "в порядке",
                     tone: invalidTimeSlots.length > 0 ? "warning" : "success",
                 }}
                 details={
@@ -272,7 +275,7 @@ export function DebugChecks({
                                 </p>
                             )}
                             <div className="border-t pt-2">
-                                <p className="text-xs text-muted-foreground">Допустимые слоты:</p>
+                                <p className="text-xs text-muted-foreground">Допустимое время занятий:</p>
                                 <div className="mt-1 flex flex-wrap gap-1">
                                     {TIME_SLOTS.map((slot) => (
                                         <Badge key={slot} variant="outline" className="font-mono text-xs">
@@ -293,7 +296,7 @@ export function DebugChecks({
                 title="Формат даты"
                 description="Проверка корректности записи даты (ДД.ММ.ГГГГ)"
                 status={{
-                    label: invalidDates.length > 0 ? `${invalidDates.length}` : "ок",
+                    label: invalidDates.length > 0 ? `${invalidDates.length}` : "в порядке",
                     tone: invalidDates.length > 0 ? "warning" : "success",
                 }}
                 details={
@@ -329,7 +332,7 @@ export function DebugChecks({
                 title="День недели"
                 description="День недели распознаётся и попадает в нужную колонку календаря"
                 status={{
-                    label: invalidDays.length > 0 ? `${invalidDays.length}` : "ок",
+                    label: invalidDays.length > 0 ? `${invalidDays.length}` : "в порядке",
                     tone: invalidDays.length > 0 ? "warning" : "success",
                 }}
                 details={
@@ -362,10 +365,10 @@ export function DebugChecks({
             <IslandRow
                 icon={<FileTextIcon className="h-4 w-4" />}
                 tone={hasEmptyFields ? "warning" : "success"}
-                title="Заполненность данных"
+                title="Пропущенные поля"
                 description="Поиск пропущенных обязательных полей"
                 status={{
-                    label: hasEmptyFields ? "пропуски" : "ок",
+                    label: hasEmptyFields ? "пропуски" : "в порядке",
                     tone: hasEmptyFields ? "warning" : "success",
                 }}
                 details={
@@ -392,21 +395,29 @@ export function DebugChecks({
                 title="Дубликаты записей"
                 description="Полностью идентичные повторяющиеся строки"
                 status={{
-                    label: duplicates.length > 0 ? `${duplicates.length}` : "ок",
+                    label: duplicates.length > 0 ? `${duplicates.length}` : "в порядке",
                     tone: duplicates.length > 0 ? "warning" : "success",
                 }}
                 details={
                     duplicates.length > 0 ? (
                         <div className="space-y-1.5">
-                            {(showAllDuplicates ? duplicates : duplicates.slice(0, 15)).map(([key, count]) => (
-                                <div
-                                    key={key}
-                                    className="flex items-start justify-between gap-2 text-sm"
-                                >
-                                    <span className="min-w-0 break-all font-mono text-xs">{key}</span>
-                                    <Badge variant="outline" className="shrink-0">
-                                        {count}x
-                                    </Badge>
+                            {(showAllDuplicates ? duplicates : duplicates.slice(0, 15)).map(([key, rows]) => (
+                                <div key={key} className="space-y-1 text-sm">
+                                    <div className="flex items-start justify-between gap-2">
+                                        <span className="min-w-0 break-all font-mono text-xs">{key}</span>
+                                        <Badge variant="outline" className="shrink-0">
+                                            {rows.length}x
+                                        </Badge>
+                                    </div>
+                                    <p className="text-xs text-muted-foreground">
+                                        строки{" "}
+                                        {rows.map((row, i) => (
+                                            <span key={row}>
+                                                {i > 0 && ", "}
+                                                <SheetRowLink index={row} />
+                                            </span>
+                                        ))}
+                                    </p>
                                 </div>
                             ))}
                             {duplicates.length > 15 && (
@@ -463,7 +474,7 @@ export function ChecksSummary({ analysis }: { analysis: ScheduleAnalysis }) {
                     tone="success"
                     title="Всё в порядке"
                     description={`Все ${analysis.total} записей корректны: попадают в календарь, места не пересекаются`}
-                    status={{ label: "ок", tone: "success" }}
+                    status={{ label: "в порядке", tone: "success" }}
                 />
             </Island>
         );
@@ -477,9 +488,9 @@ export function ChecksSummary({ analysis }: { analysis: ScheduleAnalysis }) {
                     {criticalCount}{" "}
                     {plural(
                         criticalCount,
-                        "критичная проверка не пройдена",
-                        "критичные проверки не пройдены",
-                        "критичных проверок не пройдено"
+                        "серьёзная проблема",
+                        "серьёзные проблемы",
+                        "серьёзных проблем"
                     )}
                 </span>
             )}
@@ -491,7 +502,8 @@ export function ChecksSummary({ analysis }: { analysis: ScheduleAnalysis }) {
                 </span>
             )}
             <span className="text-muted-foreground">
-                Всего проверок: {checks.length}. Критичные — сверху.
+                Проверяем {checks.length} {plural(checks.length, "пункт", "пункта", "пунктов")}.
+                Серьёзные — сверху.
             </span>
         </div>
     );

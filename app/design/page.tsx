@@ -1,13 +1,9 @@
-import type { Metadata } from "next";
-import { DesignSystemPage } from "@/components/design/design-system-page";
+import { redirect } from "next/navigation";
 
-export const metadata: Metadata = {
-    title: "Дизайн-система | Расписание РГСУ",
-    description:
-        "Служебная витрина компонентов, токенов и иконок приложения расписания РГСУ.",
-    robots: { index: false, follow: false },
-};
-
+/**
+ * Витрина дизайн-системы переехала в /dashboard (раздел «Дизайн-система»,
+ * ?tab=design) — одна служебная зона вместо отдельных страниц.
+ */
 export default function DesignPage() {
-    return <DesignSystemPage />;
+    redirect("/dashboard?tab=design");
 }

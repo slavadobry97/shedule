@@ -184,7 +184,7 @@ shedule/
 │   ├── api/               # API routes
 │   │   ├── push/         # Push-уведомления
 │   │   └── schedule/     # Загрузка расписания
-│   ├── debug/            # Страница отладки
+│   ├── debug/            # Редирект на /dashboard (старые ссылки)
 │   └── page.tsx          # Главная страница
 ├── components/            # React компоненты
 │   ├── ui/               # shadcn/ui компоненты
@@ -192,7 +192,7 @@ shedule/
 ├── lib/                   # Утилиты и хелперы
 │   ├── push-utils.ts     # Push-уведомления
 │   ├── schedule-utils.ts # Работа с расписанием
-│   └── debug-analysis.ts # Разбор данных расписания для /debug
+│   └── debug-analysis.ts # Разбор данных расписания для /dashboard
 ├── public/               # Статические файлы
 │   ├── manifest.json     # PWA манифест
 │   └── sw.js            # Service Worker

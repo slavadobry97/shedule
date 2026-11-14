@@ -2,7 +2,6 @@
 
 import useSWR from "swr";
 import ReactMarkdown from "react-markdown";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
@@ -11,38 +10,33 @@ import {
     CalendarDaysIcon,
     CheckCircleIcon,
     CloseCircleIcon,
-    HistoryIcon,
 } from "@/components/icons";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
-/** Что нового в приложении */
+/** Лента обновлений приложения (раздел «История») */
 export function ChangelogContent() {
     const { data, error, isLoading } = useSWR<{ content: string }>("/api/changelog", fetcher);
 
     if (isLoading) {
         return (
-            <Card>
-                <CardContent className="pt-6 space-y-4">
-                    <Skeleton className="h-8 w-64" />
-                    <div className="space-y-3">
-                        <Skeleton className="h-5 w-32" />
-                        <Skeleton className="h-4 w-full" />
-                        <Skeleton className="h-4 w-3/4" />
-                    </div>
-                </CardContent>
-            </Card>
+            <div className="rounded-3xl border border-border/70 bg-card p-6 space-y-4">
+                <Skeleton className="h-8 w-64" />
+                <div className="space-y-3">
+                    <Skeleton className="h-5 w-32" />
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-3/4" />
+                </div>
+            </div>
         );
     }
 
     if (error) {
         return (
-            <Card className="border-destructive">
-                <CardContent className="pt-6 flex items-center gap-2 text-destructive">
-                    <CloseCircleIcon className="h-4 w-4" />
-                    Ошибка загрузки истории версий
-                </CardContent>
-            </Card>
+            <div className="rounded-3xl border border-destructive/40 bg-card p-6 flex items-center gap-2 text-destructive">
+                <CloseCircleIcon className="h-4 w-4" />
+                Не удалось загрузить историю изменений
+            </div>
         );
     }
 
@@ -106,17 +100,8 @@ export function ChangelogContent() {
     };
 
     return (
-        <Card>
-            <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                    <HistoryIcon className="h-5 w-5" />
-                    История изменений
-                </CardTitle>
-                <CardDescription>Что нового в приложении</CardDescription>
-            </CardHeader>
-            <CardContent className="max-h-[calc(100vh-300px)] overflow-y-auto">
-                {data?.content && renderChangelog(data.content)}
-            </CardContent>
-        </Card>
+        <div className="rounded-3xl border border-border/70 bg-card p-6 max-h-[calc(100vh-300px)] overflow-y-auto">
+            {data?.content && renderChangelog(data.content)}
+        </div>
     );
 }

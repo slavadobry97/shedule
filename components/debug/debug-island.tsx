@@ -77,7 +77,13 @@ export function IslandRow({
                     {icon}
                 </span>
 
-                <div className="min-w-0 flex-1">
+                <div
+                    className={cn(
+                        "min-w-0 flex-1",
+                        hasDetails && "cursor-pointer select-none"
+                    )}
+                    onClick={hasDetails ? () => setOpen((value) => !value) : undefined}
+                >
                     <div className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
                         <span className="text-sm font-semibold tracking-[-0.01em]">{title}</span>
                         {status && (

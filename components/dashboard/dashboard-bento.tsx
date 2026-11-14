@@ -4,6 +4,7 @@ import {
     ClockIcon,
     RefreshIcon,
 } from "@/components/icons";
+import { SectionHeader } from "@/components/dashboard/section-header";
 import { cn } from "cn";
 
 /**
@@ -35,6 +36,15 @@ const TONE_TEXT: Record<Tone, string> = {
     danger: "text-destructive",
     info: "text-info",
     neutral: "text-muted-foreground",
+};
+
+/** Градиентная подложка карточки в тон статуса (bg-tone-* в globals.css) */
+const CARD_TONE: Record<Tone, string> = {
+    success: "bg-tone-success",
+    warning: "bg-tone-warning",
+    danger: "bg-tone-destructive",
+    info: "bg-tone-info",
+    neutral: "",
 };
 
 function StatusPill({ tone, label }: { tone: Tone; label?: string }) {
@@ -99,20 +109,27 @@ export function DashboardBento({ data }: { data: DashboardData }) {
 
     const aiLeft = Math.max(0, ai.limit - ai.count);
     const aiRatio = ai.limit > 0 ? ai.count / ai.limit : 0;
+    const pushTone: Tone = push.total === null || push.total === 0 ? "neutral" : "success";
+    const aiTone: Tone = aiRatio >= 0.8 ? "warning" : "success";
 
     return (
         <div className="space-y-4">
-            <div className="flex items-center gap-2 font-mono text-tiny text-muted-foreground">
-                <ClockIcon className="h-3.5 w-3.5" />
-                данные на {fmtTime(generatedAt)}
-            </div>
+            <SectionHeader
+                tab="summary"
+                actions={
+                    <span className="flex items-center gap-2 font-mono text-tiny text-muted-foreground">
+                        <ClockIcon className="h-3.5 w-3.5" />
+                        данные на {fmtTime(generatedAt)}
+                    </span>
+                }
+            />
 
             <div className="grid gap-4 md:grid-cols-3">
                 {/* Расписание */}
-                <div className="overflow-hidden rounded-3xl border border-border/70 bg-card">
+                <div className={cn("overflow-hidden rounded-3xl border border-border/70 bg-card", CARD_TONE[fresh.tone])}>
                     <div className="flex items-center justify-between border-b border-border/60 px-4 py-3">
                         <span className="flex items-center gap-2 text-sm font-semibold">
-                            <RefreshIcon className="h-4 w-4 text-primary" />
+                            <RefreshIcon className={cn("h-4 w-4", fresh.tone === "neutral" ? "text-primary" : TONE_TEXT[fresh.tone])} />
                             Расписание
                         </span>
                         <StatusPill tone={fresh.tone} label={fresh.label} />
@@ -132,14 +149,14 @@ export function DashboardBento({ data }: { data: DashboardData }) {
                 </div>
 
                 {/* Уведомления */}
-                <div className="overflow-hidden rounded-3xl border border-border/70 bg-card">
+                <div className={cn("overflow-hidden rounded-3xl border border-border/70 bg-card", CARD_TONE[pushTone])}>
                     <div className="flex items-center justify-between border-b border-border/60 px-4 py-3">
                         <span className="flex items-center gap-2 text-sm font-semibold">
-                            <BellRingIcon className="h-4 w-4 text-primary" />
+                            <BellRingIcon className={cn("h-4 w-4", pushTone === "neutral" ? "text-primary" : TONE_TEXT[pushTone])} />
                             Уведомления
                         </span>
                         <StatusPill
-                            tone={push.total === null ? "neutral" : push.total > 0 ? "success" : "neutral"}
+                            tone={pushTone}
                             label={push.total === null ? "Нет данных" : push.total > 0 ? "Работают" : "Не подключены"}
                         />
                     </div>
@@ -160,13 +177,13 @@ export function DashboardBento({ data }: { data: DashboardData }) {
                 </div>
 
                 {/* ИИ-помощник */}
-                <div className="overflow-hidden rounded-3xl border border-border/70 bg-card">
+                <div className={cn("overflow-hidden rounded-3xl border border-border/70 bg-card", CARD_TONE[aiTone])}>
                     <div className="flex items-center justify-between border-b border-border/60 px-4 py-3">
                         <span className="flex items-center gap-2 text-sm font-semibold">
-                            <BotIcon className="h-4 w-4 text-primary" />
+                            <BotIcon className={cn("h-4 w-4", TONE_TEXT[aiTone])} />
                             ИИ-помощник
                         </span>
-                        <StatusPill tone={aiRatio >= 0.8 ? "warning" : "success"} label={aiRatio >= 0.8 ? "Ответы на исходе" : "Всё хорошо"} />
+                        <StatusPill tone={aiTone} label={aiRatio >= 0.8 ? "Ответы на исходе" : "Всё хорошо"} />
                     </div>
                     <div className="divide-y divide-border/50">
                         <Row

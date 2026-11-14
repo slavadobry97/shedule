@@ -2,7 +2,7 @@ import { createHash } from "crypto";
 import { cookies } from "next/headers";
 
 /**
- * Доступ к служебной странице /debug и её API.
+ * Доступ к служебной странице /dashboard и её API.
  *
  * Пароль задаётся переменной окружения DEBUG_PASSWORD. Если она не задана:
  * - в проде — fail closed: доступ закрыт, страница показывает «не настроено»;

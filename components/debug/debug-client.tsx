@@ -1,27 +1,17 @@
 "use client";
 
-import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import useSWR from "swr";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { MOTION_DURATION, motionTransition } from "@/lib/motion";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { analyzeSchedule } from "@/lib/debug-analysis";
 import { API_ENDPOINTS, REFRESH_INTERVAL } from "@/lib/constants";
 import { compareScheduleData, LogEntry } from "@/lib/schedule-utils";
 import { ScheduleItem } from "@/types/schedule";
 import { ScheduleAnalysis } from "@/types/debug";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Spinner } from "@/components/ui/spinner";
+import type { DashboardData } from "@/components/dashboard/dashboard-bento";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ScheduleError } from "@/components/schedule-error";
-import {
-    Tabs,
-    TabsContent,
-    TabsList,
-    TabsTrigger,
-} from "@/components/ui/tabs";
 import {
     Select,
     SelectContent,
@@ -29,14 +19,8 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import {
-    Drawer,
-    DrawerContent,
-    DrawerTrigger,
-    DrawerTitle,
-    DrawerDescription,
-} from "@/components/ui/drawer";
+import { SectionHeader } from "@/components/dashboard/section-header";
+import { DesignSystemPage } from "@/components/design/design-system-page";
 import { Island } from "@/components/debug/debug-island";
 import { DebugChecks, ChecksSummary } from "@/components/debug/debug-checks";
 import { DebugOverview } from "@/components/debug/debug-overview";
@@ -50,33 +34,51 @@ import {
 } from "@/components/debug/records-table";
 import { DebugAIChat, type DebugTab } from "@/components/debug/ai-chat";
 import {
-    Grid2x2Icon,
-    HistoryIcon,
-    LayoutDashboardIcon,
     LoaderCircleIcon,
-    PaintBoardIcon,
     RefreshIcon,
-    ShieldCheckIcon,
     SlidersHorizontalIcon,
-    SparklesIcon,
-    TableIcon,
-    TrashIcon,
 } from "@/components/icons";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
+/** Допустимые значения ?tab= в адресе страницы. */
+const TAB_VALUES: DebugTab[] = [
+    "summary",
+    "checks",
+    "overview",
+    "records",
+    "table",
+    "journal",
+    "history",
+    "chat",
+    "design",
+];
+
 /**
- * Служебный раздел: проверка данных расписания.
+ * Служебная зона: разделы страницы /dashboard. Навигация живёт в сайдбаре
+ * оболочки (ссылки ?tab=…), здесь — единая шапка раздела (SectionHeader,
+ * названия из реестра section-meta) и содержимое активного раздела.
  *
- * Устройство страницы:
- * - «Проверки» — что сломано. Единый список, критичные сверху.
- * - «Обзор» — цифры и аналитика: нагрузка, окна, аудитории.
- * - «Записи» — сырые строки таблицы.
- * - «Журнал» — что менялось за сессию.
+ * Разделы:
+ * - «Сводка» — серверные острова состояния (приходят готовой нодой
+ *   summaryNode);
+ * - «Проверки» — что мешает расписанию показываться правильно;
+ * - «Обзор» — цифры: нагрузка, промежутки, аудитории;
+ * - «Записи» — каждая строка таблицы деканата, со ссылками в Google Таблицу;
+ * - «Рассылка» — собрать расписание по преподавателю/группе и скачать PDF;
+ * - «Журнал» — что менялось, пока открыта страница;
  * - «История» — что нового в приложении.
+ * - «ИИ-помощник» — чат по данным расписания (на весь раздел).
+ * - «Дизайн-система» — витрина токенов и компонентов.
  */
-export default function DebugClient() {
-    const reduceMotion = useReducedMotion();
+export default function DebugClient({
+    summaryNode,
+    dashboardData = null,
+}: {
+    summaryNode?: ReactNode;
+    /** Данные Сводки — уходят в ИИ-помощника для ответов о свежести */
+    dashboardData?: DashboardData | null;
+}) {
     const { data: schedule, error, isLoading, mutate } = useSWR<ScheduleItem[]>(
         API_ENDPOINTS.SCHEDULE,
         fetcher,
@@ -88,7 +90,8 @@ export default function DebugClient() {
     const [showAllDuplicates, setShowAllDuplicates] = useState(false);
     const [showAllInvisible, setShowAllInvisible] = useState(false);
 
-    // Логика отслеживания изменений (аналогично DynamicSchedule)
+    // Отслеживание изменений расписания (аналогично DynamicSchedule):
+    // записываем в sessionStorage, читает раздел «Журнал».
     const previousDataRef = useRef<ScheduleItem[] | null>(null);
     const isFirstLoadRef = useRef(true);
 
@@ -127,7 +130,7 @@ export default function DebugClient() {
         }
     }, [schedule]);
 
-    // Фильтр и сортировка таблицы
+    // Фильтр и сортировка таблицы записей
     const [visibilityFilter, setVisibilityFilter] = useState<VisibilityFilter>("all");
     const [sortField, setSortField] = useState<SortField>(null);
     const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
@@ -135,16 +138,15 @@ export default function DebugClient() {
     // Состояние обновления
     const [isRefreshing, setIsRefreshing] = useState(false);
 
-    // Панель ИИ: на десктопе — Sheet справа, на мобильном — Drawer снизу.
-    // Открытость общая, чтобы кнопка закрытия работала в обоих вариантах.
-    const [chatOpen, setChatOpen] = useState(false);
-
-    // Активная вкладка нужна ИИ-помощнику: по ней строятся подсказки
-    // и строка «Смотрю: …» в шапке.
-    const [activeTab, setActiveTab] = useState<DebugTab>("checks");
-
-    // Проверка мобильного устройства
-    const isMobile = useIsMobile();
+    // Активный раздел читается из адреса (?tab=…): навигация — сайдбар и
+    // ссылки, поэтому адрес — единственный источник правды. «Сводка» —
+    // чистый /dashboard без параметра.
+    const searchParams = useSearchParams();
+    const rawTab = searchParams.get("tab") as DebugTab | null;
+    const activeTab: DebugTab =
+        rawTab && TAB_VALUES.includes(rawTab) && (rawTab !== "summary" || summaryNode)
+            ? rawTab
+            : "summary";
 
     // Обработчик кнопки "Обновить"
     const handleRefresh = async () => {
@@ -162,101 +164,37 @@ export default function DebugClient() {
         [schedule]
     );
 
-    if (isLoading) {
-        return (
-            <div className="min-h-screen flex flex-col items-center justify-center gap-4">
-                <Spinner className="h-5 w-5 text-muted-foreground" />
-                <p className="font-mono text-tiny uppercase tracking-[0.2em] text-muted-foreground">
-                    Загрузка данных
-                </p>
-            </div>
-        );
+    if (error) {
+        return <ScheduleError error={error} onRetry={handleRefresh} />;
     }
 
-    if (error) {
-        return (
-            <div className="container mx-auto p-4 sm:p-8">
-                <ScheduleError error={error} onRetry={handleRefresh} />
-            </div>
-        );
-    }
+    const refreshButton = (
+        <Button
+            onClick={handleRefresh}
+            variant="outline"
+            size="sm"
+            disabled={isRefreshing}
+            className="gap-2"
+        >
+            {isRefreshing ? (
+                <LoaderCircleIcon className="h-4 w-4 animate-spin" />
+            ) : (
+                <RefreshIcon className="h-4 w-4" />
+            )}
+            {isRefreshing ? "Обновление…" : "Обновить"}
+        </Button>
+    );
 
     return (
-        <div className="container mx-auto p-4 sm:p-8 space-y-6 sm:space-y-8">
-            <div className="flex flex-col gap-4 border-b border-border pb-6 sm:flex-row sm:items-end sm:justify-between">
-                <div>
-                    <div className="flex items-center gap-2 font-mono text-tiny uppercase tracking-[0.2em] text-muted-foreground">
-                        Служебный раздел
-                        <Badge variant="outline" className="h-4 rounded-2xl px-1 font-mono text-xxs">
-                            Debug
-                        </Badge>
-                    </div>
-                    <h1 className="mt-2 font-evolventa text-2xl font-bold tracking-[-0.015em] sm:text-3xl">
-                        Проверка данных расписания
-                    </h1>
-                </div>
-                <Button
-                    onClick={handleRefresh}
-                    variant="outline"
-                    size="sm"
-                    disabled={isRefreshing}
-                    className="w-full gap-2 sm:w-auto"
-                >
-                    {isRefreshing ? (
-                        <LoaderCircleIcon className="h-4 w-4 animate-spin" />
-                    ) : (
-                        <RefreshIcon className="h-4 w-4" />
-                    )}
-                    {isRefreshing ? "Обновление…" : "Обновить"}
-                </Button>
-            </div>
+        <div className="space-y-6">
+            {/* Раздел выбирается в сайдбаре (ссылки ?tab=…), здесь — единая
+                шапка раздела (SectionHeader) и содержимое. Тяжёлые разделы
+                не монтируются впустую. */}
+            {activeTab === "summary" && summaryNode}
 
-            <div className="flex items-center justify-between gap-4">
-                <p className="text-xs text-muted-foreground">
-                    Проверяются сырые данные таблицы деканата и результат
-                    преобразования в календарь.
-                </p>
-                <Button asChild variant="ghost" size="sm" className="shrink-0 gap-2">
-                    <Link href="/design">
-                        <PaintBoardIcon className="h-4 w-4" />
-                        Дизайн-система
-                    </Link>
-                </Button>
-            </div>
-
-            <Tabs
-                value={activeTab}
-                onValueChange={(value) => setActiveTab(value as DebugTab)}
-                className="space-y-6"
-            >
-                <TabsList className="h-auto w-full justify-start gap-1 overflow-x-auto rounded-3xl border border-border/60 bg-accent p-1 shadow-xs">
-                    <TabsTrigger value="checks" className="flex items-center gap-1.5 whitespace-nowrap">
-                        <ShieldCheckIcon className="h-3.5 w-3.5" />
-                        Проверки
-                    </TabsTrigger>
-                    <TabsTrigger value="overview" className="flex items-center gap-1.5 whitespace-nowrap">
-                        <LayoutDashboardIcon className="h-3.5 w-3.5" />
-                        Обзор
-                    </TabsTrigger>
-                    <TabsTrigger value="records" className="flex items-center gap-1.5 whitespace-nowrap">
-                        <TableIcon className="h-3.5 w-3.5" />
-                        Записи
-                    </TabsTrigger>
-                    <TabsTrigger value="table" className="flex items-center gap-1.5 whitespace-nowrap">
-                        <Grid2x2Icon className="h-3.5 w-3.5" />
-                        Таблица
-                    </TabsTrigger>
-                    <TabsTrigger value="journal" className="flex items-center gap-1.5 whitespace-nowrap">
-                        <TrashIcon className="h-3.5 w-3.5" />
-                        Журнал
-                    </TabsTrigger>
-                    <TabsTrigger value="history" className="flex items-center gap-1.5 whitespace-nowrap">
-                        <HistoryIcon className="h-3.5 w-3.5" />
-                        История
-                    </TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="checks" className="space-y-6">
+            {activeTab === "checks" && (
+                <>
+                    <SectionHeader tab="checks" actions={refreshButton} />
                     {analysis && (
                         <>
                             <ChecksSummary analysis={analysis} />
@@ -271,37 +209,42 @@ export default function DebugClient() {
                             </Island>
                         </>
                     )}
-                </TabsContent>
+                </>
+            )}
 
-                <TabsContent value="overview" className="space-y-6">
+            {activeTab === "overview" && (
+                <>
+                    <SectionHeader tab="overview" />
                     {analysis && <DebugOverview analysis={analysis} />}
-                </TabsContent>
+                </>
+            )}
 
-                <TabsContent value="records" className="space-y-6">
+            {activeTab === "records" && (
+                <>
+                    <SectionHeader
+                        tab="records"
+                        actions={
+                            <div className="flex items-center gap-2">
+                                <SlidersHorizontalIcon className="h-4 w-4 text-muted-foreground" />
+                                <Select
+                                    value={visibilityFilter}
+                                    onValueChange={(value: string) =>
+                                        setVisibilityFilter(value as VisibilityFilter)
+                                    }
+                                >
+                                    <SelectTrigger className="w-[230px] h-8 text-sm">
+                                        <SelectValue placeholder="Все записи" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">Все записи</SelectItem>
+                                        <SelectItem value="visible">Попадают в расписание</SelectItem>
+                                        <SelectItem value="invisible">Не попадают в расписание</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        }
+                    />
                     <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center justify-between flex-wrap gap-2">
-                                <span>Полный список записей</span>
-                                <div className="flex items-center gap-2">
-                                    <SlidersHorizontalIcon className="h-4 w-4 text-muted-foreground" />
-                                    <Select
-                                        value={visibilityFilter}
-                                        onValueChange={(value: string) =>
-                                            setVisibilityFilter(value as VisibilityFilter)
-                                        }
-                                    >
-                                        <SelectTrigger className="w-[180px] h-8 text-sm">
-                                            <SelectValue placeholder="Все записи" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="all">Все записи</SelectItem>
-                                            <SelectItem value="visible">Только видимые</SelectItem>
-                                            <SelectItem value="invisible">Только невидимые</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                            </CardTitle>
-                        </CardHeader>
                         <CardContent>
                             <VirtualizedTable
                                 schedule={schedule || []}
@@ -323,102 +266,53 @@ export default function DebugClient() {
                             )}
                         </CardContent>
                     </Card>
-                </TabsContent>
+                </>
+            )}
 
-                <TabsContent value="table" className="space-y-6">
-                    {/* Служебная таблица рассылки: самодостаточный компонент,
-                        сам тянет полный массив через SWR и монтируется лениво. */}
+            {activeTab === "table" && (
+                <>
+                    <SectionHeader tab="table" />
+                    {/* Таблица рассылки: самодостаточный компонент, сам тянет
+                        полный массив через SWR и монтируется лениво. */}
                     <VirtualScheduleTable isLoading={isLoading} />
-                </TabsContent>
+                </>
+            )}
 
-                <TabsContent value="journal">
+            {activeTab === "journal" && (
+                <>
+                    <SectionHeader tab="journal" />
                     <SessionLog />
-                </TabsContent>
+                </>
+            )}
 
-                <TabsContent value="history" className="space-y-6">
+            {activeTab === "history" && (
+                <>
+                    <SectionHeader tab="history" />
                     <ChangelogContent />
-                </TabsContent>
-            </Tabs>
+                </>
+            )}
 
-            {/* Плавающая кнопка ИИ Помощника */}
-            <div className="fixed bottom-6 right-6 z-50">
-                {/* Постоянная кнопка: вход на первом рендере не нужен */}
-                <AnimatePresence initial={false}>
-                    <motion.div
-                        initial={reduceMotion ? false : { opacity: 0, scale: 0.5 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={motionTransition(reduceMotion, { duration: MOTION_DURATION.base })}
-                        className="relative"
-                    >
-                        {!isMobile ? (
-                            <Sheet open={chatOpen} onOpenChange={setChatOpen} modal={false}>
-                                <SheetTrigger asChild>
-                                    <Button
-                                        variant="outline"
-                                        size="icon"
-                                        aria-label="Открыть ИИ-помощника"
-                                        title="ИИ-помощник"
-                                        className="rounded-full shadow-lg bg-canvas supports-[backdrop-filter]:bg-canvas/80 backdrop-blur-[20px] backdrop-saturate-180 transition-[color,background-color,box-shadow,transform] hover:scale-110 active:scale-[0.96] group border-muted-foreground/20"
-                                    >
-                                        <SparklesIcon className="h-[1.2rem] w-[1.2rem] text-primary animate-pulse" />
-                                    </Button>
-                                </SheetTrigger>
-                                {/* Оверлея нет: таблицу на странице надо читать и
-                                    выделять, пока чат открыт. modal={false} у Sheet
-                                    снимает блокировку кликов и скролла. */}
-                                {/* Клик по странице не должен закрывать панель:
-                                    её смысл — работать с таблицей, не теряя чат. */}
-                                <SheetContent
-                                    side="right"
-                                    hideOverlay
-                                    hideClose
-                                    onPointerDownOutside={(event) => event.preventDefault()}
-                                    onInteractOutside={(event) => event.preventDefault()}
-                                    className="w-full gap-0 border-l border-primary/10 bg-canvas p-0 shadow-2xl sm:w-[min(560px,45vw)] sm:max-w-none data-[state=open]:duration-300 data-[state=closed]:duration-300 [animation-timing-function:cubic-bezier(0.22,1,0.36,1)]"
-                                >
-                                    <SheetTitle className="sr-only">ИИ-помощник</SheetTitle>
-                                    <DebugAIChat
-                                        stats={analysis}
-                                        activeTab={activeTab}
-                                        className="h-full rounded-xl-none border-0 shadow-none"
-                                        onClose={() => setChatOpen(false)}
-                                    />
-                                </SheetContent>
-                            </Sheet>
-                        ) : (
-                            <Drawer open={chatOpen} onOpenChange={setChatOpen}>
-                                <DrawerTrigger asChild>
-                                    <Button
-                                        variant="outline"
-                                        size="icon"
-                                        aria-label="Открыть ИИ-помощника"
-                                        title="ИИ-помощник"
-                                        className="rounded-full shadow-lg bg-canvas supports-[backdrop-filter]:bg-canvas/80 backdrop-blur-[20px] backdrop-saturate-180 transition-[color,background-color,box-shadow,transform] hover:scale-110 active:scale-[0.96] group border-muted-foreground/20"
-                                    >
-                                        <SparklesIcon className="h-[1.2rem] w-[1.2rem] text-primary animate-pulse" />
-                                    </Button>
-                                </DrawerTrigger>
-                                <DrawerContent className="h-[85vh] p-0">
-                                    <div className="hidden">
-                                        <DrawerTitle>ИИ-помощник</DrawerTitle>
-                                        <DrawerDescription>
-                                            Вопросы по данным расписания
-                                        </DrawerDescription>
-                                    </div>
-                                    <div className="h-full w-full">
-                                        <DebugAIChat
-                                            stats={analysis}
-                                            activeTab={activeTab}
-                                            className="h-full border-none shadow-none rounded-xl-none"
-                                            onClose={() => setChatOpen(false)}
-                                        />
-                                    </div>
-                                </DrawerContent>
-                            </Drawer>
-                        )}
-                    </motion.div>
-                </AnimatePresence>
-            </div>
+            {activeTab === "chat" && (
+                <div className="flex h-[calc(100dvh-6.5rem)] min-h-[460px] flex-col gap-6">
+                    <SectionHeader tab="chat" />
+                    {/* Колонка раздела занимает ровно высоту вьюпорта: лента —
+                        flex-1 и сжимается, композер-остров всегда прижат к низу,
+                        страница не скроллится. Ctrl+K фокусирует ввод. */}
+                    <DebugAIChat
+                        stats={analysis}
+                        dashboard={dashboardData}
+                        activeTab="chat"
+                        className="min-h-0 flex-1"
+                    />
+                </div>
+            )}
+
+            {activeTab === "design" && (
+                <>
+                    <SectionHeader tab="design" />
+                    <DesignSystemPage />
+                </>
+            )}
         </div>
     );
 }

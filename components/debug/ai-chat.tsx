@@ -5,16 +5,21 @@ import { cn } from "cn";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { MOTION_DURATION, motionTransition } from "@/lib/motion";
 import { stripEmoji } from "@/lib/sanitize";
+import { useMounted } from "@/hooks/use-mounted";
 import { ScheduleAnalysis } from "@/types/debug";
+import { AI_ASSISTANT } from "@/lib/constants";
+import type { DashboardData } from "@/components/dashboard/dashboard-bento";
 import {
     AlertTriangleIcon,
     ArrowRightIcon,
     CheckIcon,
     ChevronDownIcon,
     CloseIcon,
+    Grid2x2Icon,
     HistoryIcon,
     LayoutDashboardIcon,
     LoaderCircleIcon,
+    PaintBoardIcon,
     SendIcon,
     ShieldCheckIcon,
     SparklesIcon,
@@ -24,13 +29,21 @@ import {
 } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverClose, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
-export type DebugTab = "checks" | "overview" | "records" | "journal" | "history";
+export type DebugTab =
+    | "summary"
+    | "checks"
+    | "overview"
+    | "records"
+    | "table"
+    | "journal"
+    | "history"
+    | "chat"
+    | "design";
 
 interface Message {
     id: string;
@@ -70,7 +83,9 @@ interface ChatResponse {
 interface DebugAIChatProps {
     /** Разбор расписания: цифры, аналитика и результаты проверок */
     stats: ScheduleAnalysis | null;
-    /** Активная вкладка /debug: от неё зависят подсказки и строка контекста */
+    /** Данные Сводки: крон, подписки, лимит ИИ — для честных ответов о свежести */
+    dashboard?: DashboardData | null;
+    /** Активная вкладка /dashboard: от неё зависят подсказки и строка контекста */
     activeTab?: DebugTab;
     className?: string;
     /** Закрыть панель: кнопка в шапке, если чат живёт в Sheet */
@@ -101,6 +116,27 @@ const HISTORY_LIMIT = 12;
  * придумывать вопрос, глядя на таблицу проверок.
  */
 const TAB_META: Record<DebugTab, TabMeta> = {
+    summary: {
+        label: "Сводка",
+        icon: LayoutDashboardIcon,
+        suggestions: [
+            {
+                title: "Что сейчас не так с расписанием?",
+                hint: "Общий статус и критичное",
+                question: "Что сейчас не так с расписанием? Начни с критичного.",
+            },
+            {
+                title: "Свежие ли данные?",
+                hint: "Как давно обновлялось расписание",
+                question: "Как давно обновлялось расписание и что это значит для методиста?",
+            },
+            {
+                title: "Куда уходят уведомления?",
+                hint: "Кто и на что подписан",
+                question: "Сколько подписок на уведомления и за чем они следят?",
+            },
+        ],
+    },
     checks: {
         label: "Проверки",
         icon: ShieldCheckIcon,
@@ -164,6 +200,27 @@ const TAB_META: Record<DebugTab, TabMeta> = {
             },
         ],
     },
+    table: {
+        label: "Рассылка",
+        icon: Grid2x2Icon,
+        suggestions: [
+            {
+                title: "Как пользоваться таблицей?",
+                hint: "Служебная таблица рассылки",
+                question: "Что показывает служебная таблица и как ей пользоваться?",
+            },
+            {
+                title: "Почему строки нет в календаре?",
+                hint: "Невидимые записи",
+                question: "Почему запись из таблицы может не попадать в календарь?",
+            },
+            {
+                title: "Как найти занятие?",
+                hint: "Поиск по группе или преподавателю",
+                question: "Как быстро найти занятие конкретного преподавателя?",
+            },
+        ],
+    },
     journal: {
         label: "Журнал",
         icon: TrashIcon,
@@ -207,6 +264,49 @@ const TAB_META: Record<DebugTab, TabMeta> = {
             },
         ],
         note: "Ленту обновлений ИИ не читает — отвечает по данным расписания.",
+    },
+    chat: {
+        label: "ИИ-помощник",
+        icon: SparklesIcon,
+        suggestions: [
+            {
+                title: "Что сейчас не так с расписанием?",
+                hint: "Общий статус и критичное",
+                question: "Что сейчас не так с расписанием? Начни с критичного.",
+            },
+            {
+                title: "Свежие ли данные?",
+                hint: "Как давно обновлялось расписание",
+                question: "Как давно обновлялось расписание и что это значит для методиста?",
+            },
+            {
+                title: "Куда уходят уведомления?",
+                hint: "Кто и на что подписан",
+                question: "Сколько подписок на уведомления и за чем они следят?",
+            },
+        ],
+    },
+    design: {
+        label: "Дизайн-система",
+        icon: PaintBoardIcon,
+        suggestions: [
+            {
+                title: "Какие правила стиля?",
+                hint: "Токены, шрифты, скругления",
+                question: "Какие основные правила дизайн-системы проекта?",
+            },
+            {
+                title: "Как добавить иконку?",
+                hint: "Поштучный импорт Hugeicons",
+                question: "Как правильно добавить новую иконку в проект?",
+            },
+            {
+                title: "Когда тонированные подложки?",
+                hint: "Утилита bg-tone-*",
+                question: "Когда использовать тонированные подложки bg-tone-*?",
+            },
+        ],
+        note: "Про дизайн-систему ИИ отвечает по правилам проекта, не по данным расписания.",
     },
 };
 
@@ -259,6 +359,14 @@ function getScopeDetail(tab: DebugTab, stats: ScheduleAnalysis | null): string {
     if (!stats) return "данные загружаются";
 
     switch (tab) {
+        case "summary":
+            return `крон, подписки и лимит ИИ · ${formatNumber(stats.total)} занятий в базе`;
+        case "chat":
+            return "свободный вопрос · отвечаю по данным расписания";
+        case "table":
+            return "служебная таблица рассылки · те же данные расписания";
+        case "design":
+            return "витрина дизайн-системы · правила стиля проекта";
         case "checks":
             return `${stats.checks.length} проверок · ${stats.criticalCount} критичных`;
         case "overview":
@@ -276,7 +384,7 @@ function SuggestionCards({ scope, onPick }: { scope: TabMeta; onPick: (question:
 
     return (
         <div className="space-y-2">
-            <div className="grid gap-2">
+            <div className="grid gap-2 sm:grid-cols-2">
                 {scope.suggestions.map((suggestion) => (
                     <button
                         key={suggestion.question}
@@ -426,7 +534,7 @@ function ModelPicker({
     );
 }
 
-export function DebugAIChat({ stats, activeTab = "checks", className, onClose }: DebugAIChatProps) {
+export function DebugAIChat({ stats, dashboard = null, activeTab = "checks", className, onClose }: DebugAIChatProps) {
     const reduceMotion = useReducedMotion();
     const [messages, setMessages] = useState<Message[]>([]);
     // Повторный показ карточек-подсказок, когда переписка уже началась.
@@ -451,6 +559,20 @@ export function DebugAIChat({ stats, activeTab = "checks", className, onClose }:
     const inputRef = useRef<HTMLTextAreaElement>(null);
 
     const scope = TAB_META[activeTab] ?? TAB_META.checks;
+
+    // Приветствие по времени суток — только после монтирования: сервер и
+    // клиент могут быть в разных часовых поясах.
+    const mounted = useMounted();
+    const hour = new Date().getHours();
+    const greeting = mounted
+        ? hour < 5
+            ? "Доброй ночи"
+            : hour < 12
+              ? "Доброе утро"
+              : hour < 18
+                ? "Добрый день"
+                : "Добрый вечер"
+        : null;
     const scopeDetail = getScopeDetail(activeTab, stats);
 
     const commandMatches = useMemo(() => {
@@ -605,6 +727,17 @@ export function DebugAIChat({ stats, activeTab = "checks", className, onClose }:
         }
     }, [messages]);
 
+    // Авторост поля ввода, как в обычных AI-чатах: одна строка растёт
+    // с текстом до потолка max-h-40, дальше поле скроллится внутри.
+    // Через эффект, а не onChange: растёт и при подстановке подсказки,
+    // и при очистке через /clear.
+    useEffect(() => {
+        const el = inputRef.current;
+        if (!el) return;
+        el.style.height = "auto";
+        el.style.height = `${el.scrollHeight}px`;
+    }, [input]);
+
     // Автопрокрутка вниз
     useEffect(() => {
         if (scrollRef.current) {
@@ -721,6 +854,7 @@ export function DebugAIChat({ stats, activeTab = "checks", className, onClose }:
                 body: JSON.stringify({
                     messages: history,
                     context: stats,
+                    dashboard,
                     activeTab,
                     ...(selection ? { provider: selection.provider, model: selection.model } : {}),
                 }),
@@ -791,31 +925,26 @@ export function DebugAIChat({ stats, activeTab = "checks", className, onClose }:
     const lastUsage = [...messages].reverse().find((message) => message.usage)?.usage;
 
     return (
-        <Card
-            className={cn(
-                // Высота привязана к вьюпорту: на низком экране окно не обрежется.
-                // cn (clsx + tailwind-merge) нужен, чтобы h-full из Sheet/Drawer
-                // переопределял базовую высоту, а не спорил с ней порядком в CSS.
-                "flex h-[min(640px,calc(100vh-7rem))] flex-col overflow-hidden border border-primary/10 bg-canvas shadow-xl",
-                className
-            )}
-        >
-            <CardHeader className="space-y-0 border-b bg-canvas p-0">
-                <div className="flex items-center justify-between gap-2 px-4 pb-2.5 pt-3">
+        <>
+            {/* Лента чата без общей карточки: шапка и сообщения прямо на
+                канвасе, композер — отдельный остров, прижатый к низу экрана */}
+            <div
+                className={cn(
+                    // Высоту задаёт вызывающий код (flex-1 внутри колонки раздела):
+                    // лента сжимается/растягивается так, чтобы композер-остров
+                    // всегда был прижат к низу без прокрутки страницы.
+                    "flex min-h-0 flex-col",
+                    className
+                )}
+            >
+                <div className="flex items-center justify-between gap-2 px-4 pb-2.5">
                     <div className="flex min-w-0 items-center gap-2">
                         <div className="rounded-3xl bg-primary/10 p-1.5">
                             <SparklesIcon className="h-4 w-4 text-primary" />
                         </div>
-                        <CardTitle className="truncate font-evolventa text-sm font-semibold">ИИ-помощник</CardTitle>
+                        <span className="truncate font-evolventa text-sm font-semibold">ИИ-помощник</span>
                     </div>
                     <div className="flex shrink-0 items-center gap-1">
-                        <ModelPicker
-                            models={models}
-                            active={selection}
-                            auto={auto}
-                            onSelect={chooseModel}
-                            onAuto={chooseAuto}
-                        />
                         <Button
                             variant="ghost"
                             size="icon"
@@ -841,17 +970,16 @@ export function DebugAIChat({ stats, activeTab = "checks", className, onClose }:
                     </div>
                 </div>
 
-                {/* Строка контекста — главный признак варианта A: видно, по какой
-                    вкладке и каким цифрам сейчас отвечает помощник. */}
-                <div className="flex items-center gap-1.5 border-t border-border/40 bg-muted/20 px-4 py-1.5 text-xxs font-mono uppercase tracking-[0.12em] text-muted-foreground">
+                {/* Строка контекста: видно, по какому разделу и каким цифрам
+                    сейчас отвечает помощник. */}
+                <div className="flex w-fit items-center gap-1.5 rounded-2xl bg-muted/30 px-3 py-1.5 text-xxs font-mono uppercase tracking-[0.12em] text-muted-foreground">
                     <span className="text-muted-foreground/60">Смотрю:</span>
                     <span className="font-medium text-foreground/80">{scope.label}</span>
                     <span className="text-muted-foreground/30">·</span>
                     <span className="truncate normal-case tracking-normal">{scopeDetail}</span>
                 </div>
-            </CardHeader>
 
-            <CardContent className="relative flex-1 overflow-hidden p-0">
+            <div className="relative min-h-0 flex-1 overflow-hidden">
                 <ScrollArea ref={scrollRef} className="h-full p-4">
                     <div className="space-y-3 pb-4">
                         {aiUnavailable && (
@@ -868,6 +996,11 @@ export function DebugAIChat({ stats, activeTab = "checks", className, onClose }:
                                         <SparklesIcon className="h-4 w-4" />
                                     </div>
                                     <div className="min-w-0">
+                                        {greeting && (
+                                            <p className="mb-0.5 text-xs text-muted-foreground">
+                                                {greeting}, {AI_ASSISTANT.userName}
+                                            </p>
+                                        )}
                                         <h2 className="font-evolventa text-sm font-semibold leading-snug">
                                             Спросите о том, что видите
                                         </h2>
@@ -882,7 +1015,7 @@ export function DebugAIChat({ stats, activeTab = "checks", className, onClose }:
                         )}
 
                         <AnimatePresence initial={false}>
-                            {messages.map((message, index) => {
+                            {messages.map((message) => {
                                 if (message.role === "error") {
                                     return (
                                         <motion.div
@@ -892,7 +1025,7 @@ export function DebugAIChat({ stats, activeTab = "checks", className, onClose }:
                                             transition={motionTransition(reduceMotion, {
                                                 duration: MOTION_DURATION.fast,
                                             })}
-                                            className="flex items-start gap-2 rounded-3xl border border-warning/30 bg-warning/10 p-2.5 text-xs text-warning"
+                                            className="mb-3 flex items-start gap-2 rounded-3xl border border-warning/30 bg-warning/10 p-2.5 text-xs text-warning"
                                         >
                                             <AlertTriangleIcon className="mt-0.5 h-4 w-4 shrink-0" />
                                             <span>{message.content}</span>
@@ -909,17 +1042,13 @@ export function DebugAIChat({ stats, activeTab = "checks", className, onClose }:
                                             transition={motionTransition(reduceMotion, {
                                                 duration: MOTION_DURATION.fast,
                                             })}
-                                            className={cn(
-                                                "flex gap-2 text-sm",
-                                                index > 0 && "border-t border-border/40 pt-3"
-                                            )}
+                                            className="mb-3 flex justify-end"
                                         >
-                                            <span className="select-none pt-0.5 font-mono text-primary">
-                                                &gt;
-                                            </span>
-                                            <span className="min-w-0 flex-1 whitespace-pre-wrap wrap-break-word font-medium">
+                                            {/* Пузырь пользователя справа — как во всех
+                                                AI-чатах; ответы ИИ остаются слева */}
+                                            <div className="max-w-[85%] whitespace-pre-wrap wrap-break-word rounded-3xl bg-primary/10 px-3.5 py-2 text-sm font-medium">
                                                 {stripEmoji(message.content)}
-                                            </span>
+                                            </div>
                                         </motion.div>
                                     );
                                 }
@@ -932,7 +1061,7 @@ export function DebugAIChat({ stats, activeTab = "checks", className, onClose }:
                                         transition={motionTransition(reduceMotion, {
                                             duration: MOTION_DURATION.fast,
                                         })}
-                                        className="border-l-2 border-primary/15 pl-3"
+                                        className="mb-3"
                                     >
                                         <div className="text-sm leading-relaxed text-foreground">
                                             <ReactMarkdown
@@ -1043,9 +1172,12 @@ export function DebugAIChat({ stats, activeTab = "checks", className, onClose }:
                         )}
                     </div>
                 </ScrollArea>
-            </CardContent>
+            </div>
+        </div>
 
-            <CardFooter className="flex-col items-stretch gap-2 border-t bg-canvas p-3">
+        {/* Остров-композер: прижат к низу экрана, пока открыт раздел;
+            растёт вверх при наборе текста и открытых подсказках */}
+        <div className="sticky bottom-0 z-30 pt-2">
                 {messages.length > 0 && (
                     <div className="space-y-2">
                         <Button
@@ -1066,110 +1198,118 @@ export function DebugAIChat({ stats, activeTab = "checks", className, onClose }:
                         event.preventDefault();
                         handleSend();
                     }}
-                    className="flex w-full items-end gap-2"
+                    className="relative w-full rounded-3xl border border-border/60 bg-background px-3.5 pb-2.5 pt-3 shadow-xs transition-colors focus-within:border-primary/40 focus-within:ring-2 focus-within:ring-primary/10"
                 >
-                    <div className="relative flex min-w-0 flex-1 items-end gap-2 rounded-3xl border border-border/60 bg-background px-2.5 py-2 shadow-xs transition-colors focus-within:border-primary/40 focus-within:ring-2 focus-within:ring-primary/10">
-                        <span className="select-none pb-0.5 font-mono text-sm leading-5 text-primary">
-                            &gt;
-                        </span>
-                        <Textarea
-                            ref={inputRef}
-                            placeholder={
-                                aiUnavailable ? "Чат недоступен" : "Спросить или /помощь"
-                            }
-                            aria-label="Вопрос к ИИ"
-                            value={input}
-                            onChange={(event) => {
-                                setInput(event.target.value);
-                                setCmdDismissed(false);
-                            }}
-                            onKeyDown={(event) => {
-                                if (showCmdMenu) {
-                                    if (event.key === "ArrowDown") {
-                                        event.preventDefault();
-                                        setCmdIndex((index) => Math.min(index + 1, commandMatches.length - 1));
-                                        return;
-                                    }
-                                    if (event.key === "ArrowUp") {
-                                        event.preventDefault();
-                                        setCmdIndex((index) => Math.max(index - 1, 0));
-                                        return;
-                                    }
-                                    if (event.key === "Enter" && !event.shiftKey) {
-                                        event.preventDefault();
-                                        const selected = commandMatches[cmdIndex];
-                                        if (selected) executeCommand(selected.name);
-                                        return;
-                                    }
-                                    if (event.key === "Tab") {
-                                        event.preventDefault();
-                                        const selected = commandMatches[cmdIndex];
-                                        if (selected) {
-                                            setInput(selected.name);
-                                            setCmdDismissed(true);
-                                        }
-                                        return;
-                                    }
-                                    if (event.key === "Escape") {
-                                        event.preventDefault();
-                                        setCmdDismissed(true);
-                                        return;
-                                    }
+                    <Textarea
+                        ref={inputRef}
+                        placeholder={
+                            aiUnavailable ? "Чат недоступен" : "Спросить или /помощь"
+                        }
+                        aria-label="Вопрос к ИИ"
+                        value={input}
+                        onChange={(event) => {
+                            setInput(event.target.value);
+                            setCmdDismissed(false);
+                        }}
+                        onKeyDown={(event) => {
+                            if (showCmdMenu) {
+                                if (event.key === "ArrowDown") {
+                                    event.preventDefault();
+                                    setCmdIndex((index) => Math.min(index + 1, commandMatches.length - 1));
+                                    return;
+                                }
+                                if (event.key === "ArrowUp") {
+                                    event.preventDefault();
+                                    setCmdIndex((index) => Math.max(index - 1, 0));
+                                    return;
                                 }
                                 if (event.key === "Enter" && !event.shiftKey) {
                                     event.preventDefault();
-                                    handleSend();
+                                    const selected = commandMatches[cmdIndex];
+                                    if (selected) executeCommand(selected.name);
+                                    return;
                                 }
-                            }}
-                            rows={1}
-                            className="max-h-40 min-h-5 resize-none overflow-auto border-0 bg-transparent p-0 text-sm shadow-none scrollbar-none focus-visible:ring-0 focus-visible:ring-offset-0 [&::-webkit-scrollbar]:hidden"
-                            disabled={isLoading || Boolean(aiUnavailable)}
-                        />
+                                if (event.key === "Tab") {
+                                    event.preventDefault();
+                                    const selected = commandMatches[cmdIndex];
+                                    if (selected) {
+                                        setInput(selected.name);
+                                        setCmdDismissed(true);
+                                    }
+                                    return;
+                                }
+                                if (event.key === "Escape") {
+                                    event.preventDefault();
+                                    setCmdDismissed(true);
+                                    return;
+                                }
+                            }
+                            if (event.key === "Enter" && !event.shiftKey) {
+                                event.preventDefault();
+                                handleSend();
+                            }
+                        }}
+                        rows={1}
+                        className="max-h-40 min-h-5 resize-none overflow-auto border-0 bg-transparent p-0 text-sm shadow-none scrollbar-none focus-visible:ring-0 focus-visible:ring-offset-0 [&::-webkit-scrollbar]:hidden"
+                        disabled={isLoading || Boolean(aiUnavailable)}
+                    />
+                    {/* Нижняя панель композера: дневной лимит слева, модель и
+                        отправка справа — раскладка ChatGPT / Claude / Z.ai */}
+                    <div className="flex items-center justify-between gap-2 pt-2">
                         <span
-                            className="hidden h-5 shrink-0 select-none items-center rounded-xl border border-border/60 px-1.5 font-mono text-xxs leading-none text-muted-foreground/50 sm:inline-flex"
-                            title="Ctrl+K — фокус в поле"
+                            className="font-mono text-xxs tabular-nums text-muted-foreground/60"
+                            title="Дневной лимит вопросов"
                         >
-                            Ctrl K
+                            {dailyUsage?.count ?? 0}/{dailyUsage?.limit ?? 250}
                         </span>
-                        {showCmdMenu && (
-                            <div className="absolute bottom-full left-0 right-0 z-50 mb-1 overflow-hidden rounded-3xl border border-border/60 bg-popover shadow-lg">
-                                {commandMatches.map((command, index) => (
-                                    <button
-                                        key={command.name}
-                                        type="button"
-                                        onMouseEnter={() => setCmdIndex(index)}
-                                        onClick={() => executeCommand(command.name)}
-                                        className={cn(
-                                            "flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-sm transition-colors",
-                                            index === cmdIndex ? "bg-muted" : "hover:bg-muted/60"
-                                        )}
-                                    >
-                                        <span className="font-mono text-primary">{command.name}</span>
-                                        <span className="text-xs text-muted-foreground">{command.description}</span>
-                                    </button>
-                                ))}
-                            </div>
-                        )}
+                        <div className="flex items-center gap-2">
+                            <ModelPicker
+                                models={models}
+                                active={selection}
+                                auto={auto}
+                                onSelect={chooseModel}
+                                onAuto={chooseAuto}
+                            />
+                            <Button
+                                type="submit"
+                                size="icon"
+                                aria-label="Отправить вопрос"
+                                title="Отправить"
+                                disabled={
+                                    !input.trim() ||
+                                    isLoading ||
+                                    Boolean(aiUnavailable) ||
+                                    (dailyUsage ? dailyUsage.count >= dailyUsage.limit : false)
+                                }
+                                className="h-9 w-9 shrink-0 rounded-full shadow-lg transition-[color,background-color,box-shadow,transform] active:scale-[0.96] hover:shadow-primary/20"
+                            >
+                                {isLoading ? (
+                                    <LoaderCircleIcon className="h-4 w-4 animate-spin" />
+                                ) : (
+                                    <SendIcon className="h-4 w-4" />
+                                )}
+                            </Button>
+                        </div>
                     </div>
-                    <Button
-                        type="submit"
-                        size="icon"
-                        aria-label="Отправить вопрос"
-                        title="Отправить"
-                        disabled={
-                            !input.trim() ||
-                            isLoading ||
-                            Boolean(aiUnavailable) ||
-                            (dailyUsage ? dailyUsage.count >= dailyUsage.limit : false)
-                        }
-                        className="h-10 w-10 shrink-0 rounded-3xl shadow-lg transition-[color,background-color,box-shadow,transform] active:scale-[0.96] hover:shadow-primary/20"
-                    >
-                        {isLoading ? (
-                            <LoaderCircleIcon className="h-4 w-4 animate-spin" />
-                        ) : (
-                            <SendIcon className="h-4 w-4" />
-                        )}
-                    </Button>
+                    {showCmdMenu && (
+                        <div className="absolute bottom-full left-0 right-0 z-50 mb-1 overflow-hidden rounded-3xl border border-border/60 bg-popover shadow-lg">
+                            {commandMatches.map((command, index) => (
+                                <button
+                                    key={command.name}
+                                    type="button"
+                                    onMouseEnter={() => setCmdIndex(index)}
+                                    onClick={() => executeCommand(command.name)}
+                                    className={cn(
+                                        "flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-sm transition-colors",
+                                        index === cmdIndex ? "bg-muted" : "hover:bg-muted/60"
+                                    )}
+                                >
+                                    <span className="font-mono text-primary">{command.name}</span>
+                                    <span className="text-xs text-muted-foreground">{command.description}</span>
+                                </button>
+                            ))}
+                        </div>
+                    )}
                 </form>
 
                 <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 px-0.5 font-mono text-xxs uppercase tracking-[0.08em] text-muted-foreground/50">
@@ -1178,11 +1318,10 @@ export function DebugAIChat({ stats, activeTab = "checks", className, onClose }:
                     </span>
                     <span className="tabular-nums">
                         Контекст {formatNumber(lastUsage?.totalTokenCount || 0)}
-                        {contextLength ? ` / ${formatContext(contextLength)}` : ""} ·{" "}
-                        {dailyUsage?.count ?? 0}/{dailyUsage?.limit ?? 250}
+                        {contextLength ? ` / ${formatContext(contextLength)}` : ""}
                     </span>
                 </div>
-            </CardFooter>
-        </Card>
+        </div>
+        </>
     );
 }

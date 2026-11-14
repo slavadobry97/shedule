@@ -54,12 +54,19 @@ export function analyzeSchedule(schedule: ScheduleItem[]): ScheduleAnalysis {
     };
 
     // --- Дубликаты: полностью идентичные повторяющиеся строки ---
-    const keyCount = new Map<string, number>();
-    schedule.forEach((item) => {
+    // Значение — номера строк листа (index + 1), чтобы в деталях проверки
+    // дать прямые ссылки в таблицу деканата.
+    const keyCount = new Map<string, number[]>();
+    schedule.forEach((item, index) => {
         const key = `${item.group} | ${item.date} | ${item.time} | ${item.teacher} | ${item.subject}`;
-        keyCount.set(key, (keyCount.get(key) || 0) + 1);
+        const list = keyCount.get(key);
+        if (list) {
+            list.push(index + 1);
+        } else {
+            keyCount.set(key, [index + 1]);
+        }
     });
-    const duplicates = Array.from(keyCount.entries()).filter(([, count]) => count > 1);
+    const duplicates = Array.from(keyCount.entries()).filter(([, rows]) => rows.length > 1);
 
     // --- Формат полей ---
     const invalidTimeSlots: RowIssue[] = [];
@@ -157,9 +164,12 @@ export function analyzeSchedule(schedule: ScheduleItem[]): ScheduleAnalysis {
     // Конфликт аудитории: разные преподаватели в одной аудитории в одно время.
     // Потоковая лекция (один преподаватель) — не конфликт.
     const classroomConflicts: ClassroomConflict[] = [];
-    const classroomOccupancy = new Map<string, { teacher: string; subject: string; group: string }>();
+    const classroomOccupancy = new Map<
+        string,
+        { teacher: string; subject: string; group: string; index: number }
+    >();
 
-    schedule.forEach((item) => {
+    schedule.forEach((item, index) => {
         if (item.classroom && item.date && item.time && item.teacher) {
             const key = `${item.classroom}|${item.date}|${item.time}`;
             const existing = classroomOccupancy.get(key);
@@ -174,6 +184,7 @@ export function analyzeSchedule(schedule: ScheduleItem[]): ScheduleAnalysis {
                         if (!existingConflict.teachers.includes(item.teacher)) {
                             existingConflict.teachers.push(item.teacher);
                             existingConflict.subjects.push(item.subject);
+                            existingConflict.indexes.push(index + 1);
                         }
                     } else {
                         classroomConflicts.push({
@@ -182,6 +193,7 @@ export function analyzeSchedule(schedule: ScheduleItem[]): ScheduleAnalysis {
                             time: item.time,
                             teachers: [existing.teacher, item.teacher],
                             subjects: [existing.subject, item.subject],
+                            indexes: [existing.index, index + 1],
                         });
                     }
                 }
@@ -190,6 +202,7 @@ export function analyzeSchedule(schedule: ScheduleItem[]): ScheduleAnalysis {
                     teacher: item.teacher,
                     subject: item.subject,
                     group: item.group,
+                    index: index + 1,
                 });
             }
         }

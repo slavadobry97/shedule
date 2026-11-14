@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { DashboardBento, type DashboardData } from "@/components/dashboard/dashboard-bento";
 import { DebugLoginForm } from "@/components/debug/login-form";
+import DebugClient from "@/components/debug/debug-client";
 import { isDebugAuthConfigured, isDebugAuthorized } from "@/utils/debug-auth";
 import { getAllSubscriptions, getLastCheck, getScheduleSnapshot } from "@/utils/push-utils";
 import { getDebugAiUsage } from "@/utils/debug-ai-limit";
@@ -11,7 +12,7 @@ export const metadata: Metadata = {
 };
 
 // cookies() и Redis-чтение внутри — страница всегда серверная,
-// иначе Next запечёт «закрытый» HTML на сборке (как на /debug).
+// иначе Next запечёт «закрытый» HTML на сборке.
 export const dynamic = "force-dynamic";
 
 /**
@@ -61,20 +62,20 @@ export default async function DashboardPage() {
     if (!authorized) {
         if (!isDebugAuthConfigured()) {
             return (
-                <main className="container mx-auto px-4 py-6">
+                <div className="container mx-auto px-4 py-6">
                     <div className="mx-auto max-w-md rounded-3xl border border-border bg-background p-6 text-center">
                         <h1 className="text-lg font-semibold">Панель не настроена</h1>
                         <p className="mt-2 text-sm text-muted-foreground">
                             Задайте переменную окружения <code className="font-mono text-xs">DEBUG_PASSWORD</code>&nbsp;—
-                            без неё служебный раздел в продакшене закрыт
+                            без неё служебный раздел в продакшене закрыт
                         </p>
                     </div>
-                </main>
+                </div>
             );
         }
 
         return (
-            <main className="container mx-auto px-4 py-6">
+            <div className="container mx-auto px-4 py-6">
                 <div className="mx-auto max-w-md">
                     <div className="mb-4 text-center">
                         <h1 className="font-evolventa text-2xl font-bold tracking-[-0.01em]">Состояние расписания</h1>
@@ -84,19 +85,17 @@ export default async function DashboardPage() {
                     </div>
                     <DebugLoginForm />
                 </div>
-            </main>
+            </div>
         );
     }
 
     const data = await collectData();
 
     return (
-        <main className="container mx-auto px-4 py-6">
-            <div className="mb-4">
-                <h1 className="font-evolventa text-2xl font-bold tracking-[-0.01em]">Состояние расписания</h1>
-                <p className="text-xs text-muted-foreground">Расписание, уведомления и помощник: всё на одном экране</p>
-            </div>
-            <DashboardBento data={data} />
-        </main>
+        <div className="container mx-auto px-4 py-6">
+            {/* Названия и описания разделов — в реестре section-meta:
+                Сводка получает свою шапку внутри DebugClient. */}
+            <DebugClient summaryNode={<DashboardBento data={data} />} dashboardData={data} />
+        </div>
     );
 }

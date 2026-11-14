@@ -329,7 +329,7 @@ export default function Home({ initialGroup, initialTeacher }: DynamicSchedulePr
   return (
     <div>
       {/* Главная страница — только календарь. Таблица (служебный инструмент
-          рассылки) переехала в /debug, вкладка «Таблица».
+          рассылки) переехала в /dashboard, вкладка «Таблица».
           container — ширина по контейнеру (как было у ScheduleTabs). */}
       <div className="container mx-auto px-3 sm:px-4">
         <ScheduleView

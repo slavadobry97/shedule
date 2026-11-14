@@ -266,7 +266,7 @@ export function ScheduleView({
 
   return (
     // pt-4: воздух под шапкой — раньше его давал блок табов (py-2 + высота
-    // табов), убранный при переезде «Таблицы» в /debug.
+    // табов), убранный при переезде «Таблицы» в /dashboard.
     <div className="space-y-3 pt-4 pb-4">
       <div className="flex flex-wrap items-end gap-2">
         <ScheduleFilters

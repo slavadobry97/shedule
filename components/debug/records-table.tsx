@@ -181,8 +181,8 @@ export function VirtualizedTable({
                         </div>
                     </div>
                     <div className="p-2 w-16 shrink-0">Ауд.</div>
-                    <div className="p-2 w-16 shrink-0 text-center flex items-center justify-center">
-                        <ViewIcon className="h-4 w-4" />
+                    <div className="p-2 w-20 shrink-0 text-xs text-muted-foreground">
+                        В календаре
                     </div>
                 </div>
 
@@ -231,7 +231,7 @@ export function VirtualizedTable({
                                 <div className="p-2 w-16 shrink-0">
                                     {item.classroom || <span className="text-destructive">—</span>}
                                 </div>
-                                <div className="p-2 w-12 shrink-0 flex items-center justify-center">
+                                <div className="p-2 w-20 shrink-0 flex items-center justify-center">
                                     {isInvisible ? (
                                         <ViewOffIcon className="h-4 w-4 text-destructive" />
                                     ) : (

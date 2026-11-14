@@ -121,10 +121,11 @@ export default function VirtualScheduleTable({ isLoading: isLoadingProp = false 
         return () => clearTimeout(timer);
     }, [scheduleData, filterType, comboboxOpen, filter]);
 
-    // Фильтрация данных с поддержкой поиска по всем полям
+    // Фильтрация данных с поддержкой поиска по всем полям.
+    // Без фильтра показываем всё: раздел «Рассылка» — сначала виден весь
+    // массив, фильтр его сужает.
     const filteredData = useMemo(() => {
         if (!scheduleData) return [];
-        if (!debouncedFilter) return []; // Не показывать данные пока не выбран фильтр
 
         const searchLower = debouncedFilter.toLowerCase();
 
@@ -498,8 +499,8 @@ export default function VirtualScheduleTable({ isLoading: isLoadingProp = false 
                                 <>
  <SearchIcon className="h-12 w-12 opacity-50" />
                                     <div className="text-center">
-                                        <p className="font-medium text-lg">Выберите фильтр</p>
-                                        <p className="text-sm">Выберите преподавателя, группу или другой параметр поиска для отображения расписания</p>
+                                        <p className="font-medium text-lg">Записей пока нет</p>
+                                        <p className="text-sm">Таблица заполнится, когда данные расписания загрузятся</p>
                                     </div>
                                 </>
                             )}
