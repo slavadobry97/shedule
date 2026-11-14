@@ -54,7 +54,9 @@ export function WeekPreview() {
                         key={day}
                         {...reveal(0.05 + index * 0.05)}
                         className={cn(
-                            "bg-background px-1 py-2 text-center font-mono text-xxs uppercase tracking-[0.12em] text-muted-foreground",
+                            // text-[10px], не text-xxs: tw-merge убивает кастомный
+                            // токен рядом с text-muted-foreground (пилюли-метки всплывали до 16px)
+                            "bg-background px-1 py-2 text-center font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground",
                             index === DAYS.length - 1 && "hidden sm:block"
                         )}
                     >

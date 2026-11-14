@@ -48,8 +48,12 @@ const STATUS_LABEL: Record<Tone, string> = {
 };
 
 function StatusPill({ tone }: { tone: Tone }) {
+    // text-[10px], а не text-xxs: tw-merge считает кастомный токен «цветом»
+    // и убивает его рядом с text-destructive/text-info (пилюля всплывала в 16px).
+    // inline-flex + h-5 + leading-none: глиф центрируется флексом, а не наследует
+    // высокие метрики строки Geist Mono.
     return (
-        <span className={cn("rounded-full border px-2.5 py-0.5 font-mono text-xxs uppercase tracking-[0.14em]", PILL[tone])}>
+        <span className={cn("inline-flex h-5 items-center justify-center rounded-full border px-2.5 font-mono text-[10px] leading-none uppercase tracking-[0.14em]", PILL[tone])}>
             {STATUS_LABEL[tone]}
         </span>
     );
