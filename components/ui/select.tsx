@@ -6,9 +6,10 @@ import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from "@/components/icons";
 
 import { cn } from "cn";
 
-const Select = ({ modal = false, ...props }: any) => (
-  <SelectPrimitive.Root modal={modal} {...props} />
-)
+// Root напрямую: у Radix Select 2.x пропа modal не существует (ни в типах,
+// ни в рантайме) — прежняя обёртка с any молча его проглатывала.
+// Реальный фикс кликабельности в модальном Sheet — сентинел NONE (№131).
+const Select = SelectPrimitive.Root
 
 const SelectGroup = SelectPrimitive.Group
 

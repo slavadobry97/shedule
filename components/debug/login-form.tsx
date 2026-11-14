@@ -6,8 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { loginAction } from "@/app/actions/debug-auth";
-import { AlertCircleIcon, CheckCircleIcon, ViewIcon, ViewOffIcon, LoadingIcon, LockIcon } from "@/components/icons";
-import { toast } from "sonner";
+import { AlertCircleIcon, CheckCircleIcon, ViewIcon, ViewOffIcon, LoaderCircleIcon, LockIcon } from "@/components/icons";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { MOTION_DURATION, motionTransition } from "@/lib/motion";
 import { cn } from "cn";
@@ -39,9 +38,10 @@ export function DebugLoginForm() {
                     window.location.reload();
                 }, 1000);
             } else {
-                setError("Неверный пароль");
+                // Сервер отличает неверный пароль от блокировки по лимиту
+                setError(result.message || "Неверный пароль");
             }
-        } catch (error) {
+        } catch {
             setError("Ошибка подключения");
         } finally {
             setIsLoading(false);
@@ -158,7 +158,7 @@ export function DebugLoginForm() {
                     >
                         {isLoading ? (
                             <>
-                                <LoadingIcon className="h-4 w-4 animate-spin" />
+                                <LoaderCircleIcon className="h-4 w-4 animate-spin" />
                                 <span>Проверка…</span>
                             </>
                         ) : success ? (

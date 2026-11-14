@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { isDebugAuthorized } from "@/lib/debug-auth";
-import { getDebugAiUsage, incrementDebugAiUsage } from "@/lib/debug-ai-limit";
-import { classifyAiError } from "@/lib/debug-ai-errors";
+import { isDebugAuthorized } from "@/utils/debug-auth";
+import { getDebugAiUsage, incrementDebugAiUsage } from "@/utils/debug-ai-limit";
+import { classifyAiError } from "@/utils/debug-ai-errors";
 import {
     chat,
     getDefaultSelection,
@@ -10,7 +10,7 @@ import {
     resolveProvider,
     type AiModelSelection,
     type ChatMessage,
-} from "@/lib/debug-ai-provider";
+} from "@/utils/debug-ai-provider";
 import { ScheduleAnalysis } from "@/types/debug";
 
 /**
@@ -68,7 +68,7 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
     // Отладка защищена паролем. В проде без DEBUG_PASSWORD закрыто полностью,
-    // в dev — открыто (см. lib/debug-auth.ts).
+    // в dev — открыто (см. utils/debug-auth.ts).
     if (!(await isDebugAuthorized())) {
         return NextResponse.json({ error: "Отладка закрыта" }, { status: 401 });
     }

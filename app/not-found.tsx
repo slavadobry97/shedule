@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import Error404 from "@/public/error404.svg";
@@ -19,16 +20,19 @@ export default function NotFound() {
         width={400}
         height={400}
       />
-      <h1 className="text-xl sm:text-2xl font-semibold text-[#4d5f7d] mb-4 text-center">
-        Упс - Страница не найдена
+      <h1 className="text-xl sm:text-2xl font-semibold text-muted-foreground mb-4 text-center">
+        Упс — Страница не найдена
       </h1>
-      <Button
-        onClick={() => router.push("https://rgsu.by")}
-        variant="outline"
-        className="text-center"
-      >
-        На главную
-      </Button>
+      <div className="flex items-center gap-3">
+        {/* «На главную» — главная приложения. Внешний rgsu.by раньше шёл через
+            router.push, который для внешних URL не работает. */}
+        <Button onClick={() => router.push("/")} variant="outline" className="text-center">
+          На главную
+        </Button>
+        <Button asChild variant="ghost">
+          <Link href="/landing">О сервисе</Link>
+        </Button>
+      </div>
     </main>
   );
 }

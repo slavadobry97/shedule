@@ -82,6 +82,9 @@ export function VirtualizedTable({
         return data;
     }, [schedule, invisibleRecords, visibilityFilter, sortField, sortDirection]);
 
+    // @tanstack/react-virtual несовместим с React Compiler; проект компилятор
+    // не использует — предупреждение для нас шум.
+    // eslint-disable-next-line react-hooks/incompatible-library
     const virtualizer = useVirtualizer({
         count: tableData.length,
         getScrollElement: () => parentRef.current,

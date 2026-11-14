@@ -53,7 +53,7 @@ import {
     Grid2x2Icon,
     HistoryIcon,
     LayoutDashboardIcon,
-    LoadingIcon,
+    LoaderCircleIcon,
     PaintBoardIcon,
     RefreshIcon,
     ShieldCheckIcon,
@@ -203,7 +203,7 @@ export default function DebugClient() {
                     className="w-full gap-2 sm:w-auto"
                 >
                     {isRefreshing ? (
-                        <LoadingIcon className="h-4 w-4 animate-spin" />
+                        <LoaderCircleIcon className="h-4 w-4 animate-spin" />
                     ) : (
                         <RefreshIcon className="h-4 w-4" />
                     )}

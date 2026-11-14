@@ -5,7 +5,7 @@ import * as PopoverPrimitive from "@radix-ui/react-popover"
 
 import { cn } from "cn";
 
-const Popover = ({ modal = false, ...props }: any) => (
+const Popover = ({ modal = false, ...props }: React.ComponentProps<typeof PopoverPrimitive.Root>) => (
   <PopoverPrimitive.Root modal={modal} {...props} />
 )
 

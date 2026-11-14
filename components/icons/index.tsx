@@ -36,7 +36,7 @@ import HistoryIconData from "@hugeicons/core-free-icons/HistoryIcon";
 import InfoIconData from "@hugeicons/core-free-icons/InfoIcon";
 import LayoutDashboardIconData from "@hugeicons/core-free-icons/LayoutDashboardIcon";
 import Location01IconData from "@hugeicons/core-free-icons/Location01Icon";
-import Loading02IconData from "@hugeicons/core-free-icons/Loading02Icon";
+import LoaderCircleIconData from "@hugeicons/core-free-icons/LoaderCircleIcon";
 import LockKeyholeIconData from "@hugeicons/core-free-icons/LockKeyholeIcon";
 import Moon01IconData from "@hugeicons/core-free-icons/Moon01Icon";
 import PaintBoardIconData from "@hugeicons/core-free-icons/PaintBoardIcon";
@@ -124,7 +124,7 @@ export const GraduationCapIcon = createIcon(GraduationCapIconData, "GraduationCa
 export const HistoryIcon = createIcon(HistoryIconData, "HistoryIcon");
 export const InfoIcon = createIcon(InfoIconData, "InfoIcon");
 export const LayoutDashboardIcon = createIcon(LayoutDashboardIconData, "LayoutDashboardIcon");
-export const LoadingIcon = createIcon(Loading02IconData, "LoadingIcon");
+export const LoaderCircleIcon = createIcon(LoaderCircleIconData, "LoaderCircleIcon");
 export const LockIcon = createIcon(LockKeyholeIconData, "LockIcon");
 export const Location01Icon = createIcon(Location01IconData, "Location01Icon");
 export const MoonIcon = createIcon(Moon01IconData, "MoonIcon");

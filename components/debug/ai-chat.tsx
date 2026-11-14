@@ -14,7 +14,7 @@ import {
     CloseIcon,
     HistoryIcon,
     LayoutDashboardIcon,
-    LoadingIcon,
+    LoaderCircleIcon,
     SendIcon,
     ShieldCheckIcon,
     SparklesIcon,
@@ -745,7 +745,7 @@ export function DebugAIChat({ stats, activeTab = "checks", className, onClose }:
                 setDailyUsage(data.dailyUsage);
             }
         } catch (error: unknown) {
-            // Сервер уже вернул понятный текст (см. lib/debug-ai-errors.ts).
+            // Сервер уже вернул понятный текст (см. utils/debug-ai-errors.ts).
             // Здесь только сетевой случай: до сервера запрос не дошёл.
             const message =
                 error instanceof Error && error.message !== "Failed to fetch"
@@ -1037,7 +1037,7 @@ export function DebugAIChat({ stats, activeTab = "checks", className, onClose }:
                                 className="flex items-center gap-2 text-sm text-muted-foreground"
                             >
                                 <span className="select-none font-mono text-primary/60">&gt;</span>
-                                <LoadingIcon className="h-3.5 w-3.5 animate-spin text-primary" />
+                                <LoaderCircleIcon className="h-3.5 w-3.5 animate-spin text-primary" />
                                 <span className="font-mono text-xs">Считаю по расписанию…</span>
                             </motion.div>
                         )}
@@ -1165,7 +1165,7 @@ export function DebugAIChat({ stats, activeTab = "checks", className, onClose }:
                         className="h-10 w-10 shrink-0 rounded-3xl shadow-lg transition-[color,background-color,box-shadow,transform] active:scale-[0.96] hover:shadow-primary/20"
                     >
                         {isLoading ? (
-                            <LoadingIcon className="h-4 w-4 animate-spin" />
+                            <LoaderCircleIcon className="h-4 w-4 animate-spin" />
                         ) : (
                             <SendIcon className="h-4 w-4" />
                         )}

@@ -53,6 +53,54 @@ export interface PushPayload {
     };
 }
 
+// --- Validation ---
+
+/**
+ * Push-сервисы, в которые разрешена доставка. Подписка с любым другим
+ * endpoint отклоняется: иначе сервер можно заставить делать запросы на
+ * произвольные адреса (SSRF), включая внутренние сервисы хостинга.
+ */
+const ALLOWED_PUSH_HOSTS = [
+    'fcm.googleapis.com',
+    'android.googleapis.com',
+    'updates.push.services.mozilla.com',
+    'web.push.apple.com',
+    'notify.windows.com',
+] as const;
+
+const BASE64URL_RE = /^[A-Za-z0-9_-]+$/;
+
+export function isValidPushEndpoint(endpoint: string): boolean {
+    if (!endpoint || endpoint.length > 2048) return false;
+
+    let url: URL;
+    try {
+        url = new URL(endpoint);
+    } catch {
+        return false;
+    }
+
+    if (url.protocol !== 'https:') return false;
+
+    return ALLOWED_PUSH_HOSTS.some(
+        (host) => url.hostname === host || url.hostname.endsWith(`.${host}`)
+    );
+}
+
+/** p256dh — точка P-256 (~87 симв. base64url), auth — секрет 16+ байт */
+export function isValidPushKeys(keys: PushSubscription['keys']): boolean {
+    if (!keys?.p256dh || !keys?.auth) return false;
+
+    return (
+        keys.p256dh.length >= 40 &&
+        keys.p256dh.length <= 200 &&
+        keys.auth.length >= 10 &&
+        keys.auth.length <= 100 &&
+        BASE64URL_RE.test(keys.p256dh) &&
+        BASE64URL_RE.test(keys.auth)
+    );
+}
+
 // --- Redis Keys ---
 
 const KEYS = {
@@ -105,13 +153,17 @@ export async function getAllSubscriptions(): Promise<SubscriptionRecord[]> {
 }
 
 /**
- * Проверяет, подходит ли изменение под фильтры подписки
+ * Проверяет, подходит ли изменение под фильтры подписки.
+ *
+ * Подписка всегда скоупится: пустые фильтры не совпадают ни с чем
+ * (return false ниже — это не баг). Студент получает уведомления только
+ * о своей группе или преподавателе; подписка без выбора отклоняется
+ * ещё на /api/push/subscribe.
  */
 export function matchesFilters(
     item: ScheduleItem,
     filters: SubscriptionRecord['filters']
 ): boolean {
-    // Если фильтры пустые — подходит всё
     const hasGroupFilter = filters.groups.length > 0;
     const hasTeacherFilter = filters.teachers.length > 0;
 

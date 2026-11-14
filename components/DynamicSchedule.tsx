@@ -1,14 +1,21 @@
 "use client";
 
 import useSWR from "swr";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ScheduleItem, ScheduleMeta } from "@/types/schedule";
 import { ScheduleView } from "@/components/schedule-view";
 import { ScheduleError } from "@/components/schedule-error";
 import { motion, useReducedMotion } from "framer-motion";
 import { MOTION_DURATION, motionTransition } from "@/lib/motion";
 import { showScheduleToast, showToast } from "@/components/ui/sonner";
-import { API_ENDPOINTS, REFRESH_INTERVAL, STORAGE_KEYS } from "@/lib/constants";
+import { API_ENDPOINTS, REFRESH_INTERVAL } from "@/lib/constants";
+import {
+  clearSavedGroup,
+  clearSavedTeacher,
+  readSavedSelection,
+  saveGroupSelection,
+  saveTeacherSelection,
+} from "@/lib/selection-storage";
 import { metaFetcher, scheduleFetcher } from "@/lib/api";
 import { compareScheduleData, ChangeDetails } from "@/lib/schedule-utils";
 import {
@@ -114,10 +121,10 @@ export default function Home({ initialGroup, initialTeacher }: DynamicSchedulePr
   const [selectedTeacher, setSelectedTeacher] = useState<string>(initialTeacher ?? "all");
   const [isMounted, setIsMounted] = useState(false);
 
-  const handleViewDetails = (changes: ChangeDetails) => {
+  const handleViewDetails = useCallback((changes: ChangeDetails) => {
     setChangesList(changes);
     setChangesDialogOpen(true);
-  };
+  }, []);
 
   // Сохранённый выбор подхватываем после монтирования: на сервере
   // localStorage недоступен, и иначе разметка сервера и клиента разошлась бы.
@@ -129,25 +136,21 @@ export default function Home({ initialGroup, initialTeacher }: DynamicSchedulePr
     setIsMounted(true);
 
     const { group, teacher } = initialSelectionRef.current;
-
-    const savedGroup = localStorage.getItem(STORAGE_KEYS.SELECTED_GROUP);
-    const savedTeacher = localStorage.getItem(STORAGE_KEYS.SELECTED_TEACHER);
-    const hasSavedGroup = !!savedGroup && savedGroup !== "all";
-    const hasSavedTeacher = !!savedTeacher && savedTeacher !== "all";
+    const saved = readSavedSelection();
 
     // Группа и преподаватель взаимоисключающие: восстанавливаем только один.
     // Если в адресе уже задан фильтр, противоположный не трогаем.
     if (group && group !== "all") {
       // Адрес задаёт группу — очищаем сохранённого преподавателя.
-      localStorage.setItem(STORAGE_KEYS.SELECTED_TEACHER, "all");
+      clearSavedTeacher();
     } else if (teacher && teacher !== "all") {
-      localStorage.setItem(STORAGE_KEYS.SELECTED_GROUP, "all");
-    } else if (hasSavedGroup) {
-      setSelectedGroup(savedGroup!);
-      localStorage.setItem(STORAGE_KEYS.SELECTED_TEACHER, "all");
-    } else if (hasSavedTeacher) {
-      setSelectedTeacher(savedTeacher!);
-      localStorage.setItem(STORAGE_KEYS.SELECTED_GROUP, "all");
+      clearSavedGroup();
+    } else if (saved.group) {
+      setSelectedGroup(saved.group);
+      saveGroupSelection(saved.group);
+    } else if (saved.teacher) {
+      setSelectedTeacher(saved.teacher);
+      saveTeacherSelection(saved.teacher);
     }
   }, []);
 
@@ -260,13 +263,13 @@ export default function Home({ initialGroup, initialTeacher }: DynamicSchedulePr
         previousDataRef.current = [...schedule];
       }
     }
-  }, [schedule]);
+  }, [schedule, selectedGroup, selectedTeacher, handleViewDetails]);
 
   // Отображаем ошибку, если есть
   if (error || metaError || (schedule && !Array.isArray(schedule))) {
     return (
       <ScheduleError
-        error={error ?? metaError ?? new Error((schedule as any)?.error || "Некорректный ответ сервера")}
+        error={error ?? metaError ?? new Error((schedule as { error?: string } | null)?.error || "Некорректный ответ сервера")}
         onRetry={() => {
           if (metaError) void mutateMeta();
           else void mutate();
@@ -280,6 +283,11 @@ export default function Home({ initialGroup, initialTeacher }: DynamicSchedulePr
   // Пока не смонтировались — заставка: иначе приветственный экран мелькнул бы
   // перед восстановлением группы из памяти. Дальше заставка только на первой
   // загрузке расписания: смена группы показывается скелетонами.
+  /* hasLoadedRef — маркер «заставка уже показывалась»: осознанный ref для
+     одноразового поведения; альтернатива (state + эффект) нарушает
+     react-hooks/set-state-in-effect. react-hooks/refs отслеживает «заражение»
+     через переменную showSplash вплоть до if — гасим блок целиком. */
+  /* eslint-disable react-hooks/refs */
   const showSplash = !isMounted
     ? true
     : !meta
@@ -316,6 +324,7 @@ export default function Home({ initialGroup, initialTeacher }: DynamicSchedulePr
       </div>
     );
   }
+  /* eslint-enable react-hooks/refs */
 
   return (
     <div>

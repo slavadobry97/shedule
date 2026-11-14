@@ -1,14 +1,13 @@
 import { NextResponse } from 'next/server';
 import { readFileSync } from 'fs';
 import { join } from 'path';
-import { stripEmoji } from '@/lib/sanitize';
 
 export async function GET() {
     try {
         const changelogPath = join(process.cwd(), 'PUBLIC_CHANGELOG.md');
         const content = readFileSync(changelogPath, 'utf-8');
         return NextResponse.json({ content });
-    } catch (error) {
+    } catch {
         return NextResponse.json({ content: 'Changelog не найден' }, { status: 404 });
     }
 }

@@ -1,6 +1,6 @@
 import DebugClient from "@/components/debug/debug-client";
 import { DebugLoginForm } from "@/components/debug/login-form";
-import { isDebugAuthConfigured, isDebugAuthorized } from "@/lib/debug-auth";
+import { isDebugAuthConfigured, isDebugAuthorized } from "@/utils/debug-auth";
 
 export const metadata = {
     title: "Отладка | Расписание РГСУ",

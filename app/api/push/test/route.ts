@@ -1,10 +1,17 @@
 import { NextResponse } from 'next/server';
 import webpush from 'web-push';
-import { getAllSubscriptions } from '@/lib/push-utils';
+import { getAllSubscriptions } from '@/utils/push-utils';
+import { isDebugAuthorized } from '@/utils/debug-auth';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
+    // Тестовая рассылка идёт всем подписчикам — без проверки любой человек
+    // из сети мог бы устроить массовый спам одним запросом
+    if (!(await isDebugAuthorized())) {
+        return NextResponse.json({ error: 'Отладка закрыта' }, { status: 401 });
+    }
+
     try {
         // Настраиваем VAPID
         webpush.setVapidDetails(
@@ -38,13 +45,12 @@ export async function GET() {
 
         // Отправляем всем подписчикам
         let sent = 0;
-        let errors: string[] = [];
+        const errors: string[] = [];
 
         for (const sub of subscriptions) {
             try {
                 await webpush.sendNotification(sub.subscription, payload);
                 sent++;
-                console.log(`[Test Push] Sent to ${sub.subscription.endpoint.slice(-20)}`);
             } catch (error: unknown) {
                 const errorMessage = error instanceof Error ? error.message : 'Unknown error';
                 console.error(`[Test Push] Failed:`, errorMessage);

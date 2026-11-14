@@ -155,7 +155,7 @@ export const showScheduleToast = ({
                   <span className="text-muted-foreground">{change.field}: </span>
                   <span className="line-through text-destructive/70">{change.from}</span>
                   <span className="mx-1">→</span>
-                  <span className="text-green-600 dark:text-green-400">{change.to}</span>
+                  <span className="text-success">{change.to}</span>
                 </div>
               ))}
             </div>

@@ -1,5 +1,6 @@
 "use client";
 
+import { LoaderCircleIcon } from "@/components/icons";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -32,8 +33,8 @@ const NONE = "none";
  *
  * Выбор — Radix Select, а не ResponsiveComboBox: панель живёт в модальном
  * Sheet, и вложенный портал комбобокса (popover/drawer) оказывается вне
- * scroll-шарда шторки — клики в нём блокируются (№131). Select с modal
- * создаёт собственный верхний слой блокировки и кликается корректно.
+ * scroll-шарда шторки — клики в нём блокируются (№131; рабочий элемент
+ * фикса — сентинел NONE, а не modal: у Radix Select 2.x его нет).
  */
 export function NotificationsPanel({
     isSubscribed,
@@ -58,12 +59,22 @@ export function NotificationsPanel({
                     <Label htmlFor="notifications-switch" className="text-base font-medium">
                         Push-уведомления
                     </Label>
-                    <p className="text-sm text-muted-foreground">
-                        {isSubscribed
-                            ? "Уведомления включены"
-                            : permission === "denied"
-                                ? "Заблокированы в  браузере"
-                                : "Выберите группу/преподавателя"}
+                    {/* Подписка идёт 1–3 с (запрос к FCM). Паттерн настроек iOS:
+                        тумблер переключается мгновенно (оптимистично), а в строке
+                        статуса — крошечный индикатор. Никаких больших спиннеров. */}
+                    <p className="text-sm text-muted-foreground" aria-live="polite">
+                        {isLoading ? (
+                            <span className="inline-flex items-center gap-1.5">
+                                <LoaderCircleIcon className="h-4 w-4 shrink-0 animate-spin" />
+                                {isSubscribed ? "Включаем..." : "Выключаем..."}
+                            </span>
+                        ) : isSubscribed ? (
+                            "Уведомления включены"
+                        ) : permission === "denied" ? (
+                            "Заблокированы в браузере"
+                        ) : (
+                            "Выберите группу/преподавателя"
+                        )}
                     </p>
                 </div>
                 <Switch
@@ -101,7 +112,6 @@ export function NotificationsPanel({
                 <div className="space-y-2">
                     <Label className="text-sm font-medium">Группа</Label>
                     <Select
-                        modal
                         value={selectedGroup || NONE}
                         onValueChange={(value: string) => onGroupChange(value === NONE ? "" : value)}
                     >
@@ -130,7 +140,6 @@ export function NotificationsPanel({
                 <div className="space-y-2">
                     <Label className="text-sm font-medium">Преподаватель</Label>
                     <Select
-                        modal
                         value={selectedTeacher || NONE}
                         onValueChange={(value: string) => onTeacherChange(value === NONE ? "" : value)}
                     >

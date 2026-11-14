@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { CheckIcon, ChevronDownIcon, SearchIcon } from "@/components/icons";
+import { CheckIcon, ChevronDownIcon } from "@/components/icons";
 
 import { cn } from "cn";
 import { Button } from "@/components/ui/button";

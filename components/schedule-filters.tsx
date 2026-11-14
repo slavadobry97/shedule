@@ -16,6 +16,7 @@ import {
   UsersIcon,
 } from "@/components/icons";
 import { API_ENDPOINTS, STORAGE_KEYS } from "@/lib/constants";
+import { safeGet } from "@/lib/storage";
 import { showToast } from "@/components/ui/sonner";
 import { MOTION_ICON_SPRING } from "@/lib/motion";
 import { copyText } from "@/lib/clipboard";
@@ -120,8 +121,13 @@ export function ScheduleFilters({
     const [savedGroup, setSavedGroup] = useState<string | null>(null);
     const [savedTeacher, setSavedTeacher] = useState<string | null>(null);
     useEffect(() => {
-        setSavedGroup(localStorage.getItem(STORAGE_KEYS.SELECTED_GROUP));
-        setSavedTeacher(localStorage.getItem(STORAGE_KEYS.SELECTED_TEACHER));
+        // Читаем «сырые» значения: сравнение ниже зависит и от "all".
+        // Одноразовое чтение localStorage после монтирования — осознанное
+        // исключение из react-hooks/set-state-in-effect (useSyncExternalStore
+        // для нереактивного одноразового чтения избыточен).
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setSavedGroup(safeGet(STORAGE_KEYS.SELECTED_GROUP));
+        setSavedTeacher(safeGet(STORAGE_KEYS.SELECTED_TEACHER));
     }, []);
 
     // №122 (финал, владелец): один фильтр — активный режим (группа ИЛИ

@@ -4,14 +4,12 @@ import { stripEmoji } from "@/lib/sanitize";
 
 export const loadSchedule = async (): Promise<ScheduleItem[]> => {
   try {
-    console.log("Начало загрузки расписания");
 
     // Проверка наличия переменных окружения
     if (!process.env.GOOGLE_CLIENT_EMAIL || !process.env.GOOGLE_PRIVATE_KEY) {
       throw new Error("Отсутствуют необходимые переменные окружения");
     }
 
-    console.log("Переменные окружения проверены");
 
     // Инициализация API таблиц
     const privateKey = process.env.GOOGLE_PRIVATE_KEY
@@ -26,11 +24,9 @@ export const loadSchedule = async (): Promise<ScheduleItem[]> => {
       scopes: ["https://www.googleapis.com/auth/spreadsheets.readonly"],
     });
 
-    console.log("Аутентификация Google создана");
 
     const sheets = google.sheets({ version: "v4", auth });
 
-    console.log("Начало запроса к Google Sheets");
 
     // Получить данные таблицы
     const response = await sheets.spreadsheets.values.get({
@@ -38,16 +34,13 @@ export const loadSchedule = async (): Promise<ScheduleItem[]> => {
       range: "A2:H",
     });
 
-    console.log("Данные получены из Google Sheets");
 
     const rows = response.data.values || [];
 
     if (!rows || rows.length === 0) {
-      console.log("Данные не найдены в таблице");
       return [];
     }
 
-    console.log(`Получено ${rows.length} строк данных`);
 
     // Эмодзи в текстовых полях ломают поиск и сортировку — вычищаем на входе
     return rows.map((row, index) => ({

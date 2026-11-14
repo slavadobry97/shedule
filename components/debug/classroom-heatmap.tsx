@@ -1,6 +1,5 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
     Tooltip,
@@ -8,7 +7,7 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { InfoIcon, Location01Icon } from "@/components/icons";
+import { Location01Icon } from "@/components/icons";
 import { getDeclension } from "@/lib/utils";
 
 

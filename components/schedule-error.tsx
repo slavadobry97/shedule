@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { AlertCircleIcon, RefreshIcon, WifiOffIcon } from "@/components/icons";
 import { Button } from "@/components/ui/button";
@@ -15,28 +15,27 @@ interface ScheduleErrorProps {
     isRetrying?: boolean;
 }
 
+// online — внешний store браузера: useSyncExternalStore вместо state+эффекта.
+const subscribeOnline = (callback: () => void) => {
+    window.addEventListener("online", callback);
+    window.addEventListener("offline", callback);
+    return () => {
+        window.removeEventListener("online", callback);
+        window.removeEventListener("offline", callback);
+    };
+};
+
 export function ScheduleError({ error, onRetry, isRetrying = false }: ScheduleErrorProps) {
     const reduceMotion = useReducedMotion();
-    const [online, setOnline] = useState(true);
+    const online = useSyncExternalStore(subscribeOnline, () => navigator.onLine, () => true);
     const [attemptedAt, setAttemptedAt] = useState<Date | null>(null);
     const [showDetails, setShowDetails] = useState(false);
 
+    // Метка времени не может считаться в рендере (нечисто) — фиксируем в
+    // эффекте при появлении новой ошибки. Осознанное исключение из
+    // react-hooks/set-state-in-effect.
     useEffect(() => {
-        setOnline(navigator.onLine);
-
-        const handleOnline = () => setOnline(true);
-        const handleOffline = () => setOnline(false);
-
-        window.addEventListener("online", handleOnline);
-        window.addEventListener("offline", handleOffline);
-
-        return () => {
-            window.removeEventListener("online", handleOnline);
-            window.removeEventListener("offline", handleOffline);
-        };
-    }, []);
-
-    useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setAttemptedAt(new Date());
     }, [error]);
 
@@ -46,9 +45,9 @@ export function ScheduleError({ error, onRetry, isRetrying = false }: ScheduleEr
     const { title, description } = useMemo(() => {
         if (!online) {
             return {
-                title: "Нет с оединения с  с етью",
+                title: "Нет соединения с сетью",
                 description:
-                    "Проверьте подключение к  интернету. Как только с вязь в осстановится, расписание подгрузится автоматически.",
+                    "Проверьте подключение к интернету. Как только связь восстановится, расписание подгрузится автоматически.",
             };
         }
 
@@ -64,7 +63,7 @@ export function ScheduleError({ error, onRetry, isRetrying = false }: ScheduleEr
             return {
                 title: "Сервер расписания недоступен",
                 description:
-                    "Не у далось получить данные с  с ервера. Повторная попытка о бычно занимает несколько с екунд.",
+                    "Не удалось получить данные с сервера. Повторная попытка обычно занимает несколько секунд.",
             };
         }
 
@@ -83,7 +82,7 @@ export function ScheduleError({ error, onRetry, isRetrying = false }: ScheduleEr
         <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-canvas p-4">
             <div
                 aria-hidden="true"
-                className="pointer-events-none absolute inset-0 -z-10 opacity-50 bg-[linear-gradient(to_right,var(--border)_1px,transparent_1px),linear-gradient(to_bottom,var(--border)_1px,transparent_1px)] [background-sibg-size-[64px_64px]adial-gradient(ellipse_60%_55%_at_50%_45%,black,transparent_78%)]"
+                className="pointer-events-none absolute inset-0 -z-10 opacity-50 [background-image:linear-gradient(to_right,var(--border)_1px,transparent_1px),linear-gradient(to_bottom,var(--border)_1px,transparent_1px)] [background-size:64px_64px] [mask-image:radial-gradient(ellipse_60%_55%_at_50%_45%,black,transparent_78%)]"
             />
             <div
                 aria-hidden="true"

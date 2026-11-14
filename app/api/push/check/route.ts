@@ -1,4 +1,5 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { timingSafeEqual } from 'crypto';
 import { loadSchedule } from '@/utils/loadSchedule';
 import { compareScheduleData } from '@/lib/schedule-utils';
 import {
@@ -7,21 +8,36 @@ import {
     updateLastCheck,
     notifySubscribers,
     getAllSubscriptions,
-} from '@/lib/push-utils';
+} from '@/utils/push-utils';
 
-// Этот endpoint вызывается Vercel Cron каждые 5 минут
+// Этот endpoint вызывает внешний cron (cron-job.org и т.п.) каждые 5 минут.
+// Защита: cron передаёт секрет в заголовке Authorization: Bearer <CRON_SECRET>.
+// Если CRON_SECRET не задан — маршрут закрыт (fail closed): без секрета любой
+// человек из сети мог бы выжечь квоту Google Sheets бесконечными запросами.
 export const dynamic = 'force-dynamic';
-export const maxDuration = 60; // Максимум 60 секунд для Hobby плана
 
-export async function GET() {
+function isAuthorizedCron(request: NextRequest): boolean {
+    const secret = process.env.CRON_SECRET;
+    if (!secret) return false;
+
+    const header = request.headers.get('authorization') ?? '';
+    const expected = `Bearer ${secret}`;
+    if (header.length !== expected.length) return false;
+
+    return timingSafeEqual(Buffer.from(header), Buffer.from(expected));
+}
+
+export async function GET(request: NextRequest) {
+    if (!isAuthorizedCron(request)) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     try {
-        console.log('[Push Check] Starting schedule check...');
 
         // Получаем текущее расписание
         const currentSchedule = await loadSchedule();
 
         if (!currentSchedule || currentSchedule.length === 0) {
-            console.log('[Push Check] No schedule data available');
             return NextResponse.json({
                 success: false,
                 message: 'No schedule data'
@@ -33,7 +49,6 @@ export async function GET() {
 
         // Если нет предыдущего snapshot — просто сохраняем текущий
         if (!previousSchedule) {
-            console.log('[Push Check] No previous snapshot, saving current...');
             await saveScheduleSnapshot(currentSchedule);
             await updateLastCheck();
             return NextResponse.json({
@@ -53,7 +68,6 @@ export async function GET() {
         const hasChanges = totalChanges.added > 0 || totalChanges.removed > 0 || totalChanges.modified > 0;
 
         if (!hasChanges) {
-            console.log('[Push Check] No changes detected');
             await updateLastCheck();
             return NextResponse.json({
                 success: true,
@@ -62,11 +76,9 @@ export async function GET() {
             });
         }
 
-        console.log(`[Push Check] Changes detected:`, totalChanges);
 
         // Получаем количество подписчиков
         const subscriptions = await getAllSubscriptions();
-        console.log(`[Push Check] Active subscriptions: ${subscriptions.length}`);
 
         // Отправляем уведомления
         let sentCount = 0;
@@ -88,7 +100,6 @@ export async function GET() {
         await saveScheduleSnapshot(currentSchedule);
         await updateLastCheck();
 
-        console.log(`[Push Check] Notifications sent: ${sentCount}`);
 
         return NextResponse.json({
             success: true,

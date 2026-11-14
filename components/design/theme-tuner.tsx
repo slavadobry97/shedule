@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useTheme } from "next-themes";
+import { useMounted } from "@/hooks/use-mounted";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
@@ -25,15 +26,13 @@ const DEFAULTS = {
  */
 export function ThemeTuner() {
     const { theme, setTheme } = useTheme();
-    const [mounted, setMounted] = useState(false);
+    // На сервере useTheme() отдаёт undefined, на клиенте — реальную тему:
+    // без mounted разметка не совпадёт при гидрации.
+    const mounted = useMounted();
     const [radius, setRadius] = useState(DEFAULTS.radius);
     const [hue, setHue] = useState(DEFAULTS.hue);
     const [fontScale, setFontScale] = useState(DEFAULTS.fontScale);
     const [dense, setDense] = useState(DEFAULTS.dense);
-
-    // На сервере useTheme() отдаёт undefined, на клиенте — реальную тему:
-    // без этого разметка не совпадёт при гидрации.
-    useEffect(() => setMounted(true), []);
 
     const style = useMemo(
         () =>

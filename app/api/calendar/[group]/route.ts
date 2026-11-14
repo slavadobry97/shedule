@@ -29,13 +29,15 @@ function generateUID(item: { date: string; time: string; group: string; subject:
     return `${hash}@rgsu-schedule`;
 }
 
-// Экранирование текста для ICS
+// Экранирование текста для ICS. Переносы строк обязательно гасим: без этого
+// через параметр group (%0A в URL) можно дописать произвольные строки в тело
+// VCALENDAR (X-WR-CALNAME строится из него без другой обработки).
 function escapeIcsText(text: string): string {
     return text
         .replace(/\\/g, "\\\\")
         .replace(/;/g, "\\;")
         .replace(/,/g, "\\,")
-        .replace(/\n/g, "\\n");
+        .replace(/\r\n|\r|\n/g, "\\n");
 }
 
 export async function GET(
@@ -73,7 +75,7 @@ export async function GET(
             "PRODID:-//RGSU Schedule//Minsk Branch//RU",
             "CALSCALE:GREGORIAN",
             "METHOD:PUBLISH",
-            `X-WR-CALNAME:Расписание ${itemName}`,
+            `X-WR-CALNAME:Расписание ${escapeIcsText(itemName)}`,
             "X-WR-TIMEZONE:Europe/Minsk",
         ];
 

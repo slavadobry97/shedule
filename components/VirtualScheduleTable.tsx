@@ -323,7 +323,6 @@ export default function VirtualScheduleTable({ isLoading: isLoadingProp = false 
                         setFilterType(value);
                         setFilter("");
                     }}
-                    modal={false}
                 >
                     <SelectTrigger className="max-w-40 order-first rounded-3xl bg-background">
                         <SelectValue placeholder="Выберите тип фильтра" />

@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import { ScheduleItem } from "@/types/schedule";
 import { format } from "date-fns";
 import { DayAgenda } from "./day-agenda";
-import { useHorizontalSwipe } from "@/lib/use-swipe-navigation";
+import { useHorizontalSwipe } from "@/hooks/use-swipe-navigation";
 
 interface DayScheduleViewProps {
     date: Date;
