@@ -6,7 +6,8 @@
     "dev": "node scripts/sync-version.js && next dev -H 0.0.0.0 --webpack",
     "build": "node scripts/sync-version.js && next build --webpack",
     "start": "next start",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "test:cn": "node --test scripts/cn-tokens.test.mjs"
   },
   "dependencies": {
     "@ducanh2912/next-pwa": "^10.2.9",

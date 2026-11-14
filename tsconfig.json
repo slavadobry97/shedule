@@ -24,6 +24,9 @@
     "paths": {
       "@/*": [
         "./*"
+      ],
+      "cn": [
+        "./lib/cn.ts"
       ]
     },
     "typeRoots": [
