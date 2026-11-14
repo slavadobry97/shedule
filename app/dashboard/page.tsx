@@ -6,7 +6,7 @@ import { getAllSubscriptions, getLastCheck, getScheduleSnapshot } from "@/utils/
 import { getDebugAiUsage } from "@/utils/debug-ai-limit";
 
 export const metadata: Metadata = {
-    title: "Дашборд | Расписание РГСУ",
+    title: "Состояние расписания | РГСУ",
     robots: { index: false, follow: false },
 };
 
@@ -64,7 +64,7 @@ export default async function DashboardPage() {
             return (
                 <main className="container mx-auto px-4 py-6">
                     <div className="mx-auto max-w-md rounded-3xl border border-border bg-background p-6 text-center">
-                        <h1 className="text-lg font-semibold">Дашборд не настроен</h1>
+                        <h1 className="text-lg font-semibold">Панель не настроена</h1>
                         <p className="mt-2 text-sm text-muted-foreground">
                             Задайте переменную окружения <code className="font-mono text-xs">DEBUG_PASSWORD</code> —
                             без неё служебный раздел в продакшене закрыт.
@@ -78,9 +78,9 @@ export default async function DashboardPage() {
             <main className="container mx-auto px-4 py-6">
                 <div className="mx-auto max-w-md">
                     <div className="mb-4 text-center">
-                        <h1 className="font-evolventa text-2xl font-bold tracking-[-0.01em]">Дашборд</h1>
+                        <h1 className="font-evolventa text-2xl font-bold tracking-[-0.01em]">Состояние расписания</h1>
                         <p className="mt-1 text-sm text-muted-foreground">
-                            Войдите с тем же паролем, что и на странице отладки
+                            Введите пароль администратора
                         </p>
                     </div>
                     <DebugLoginForm />
@@ -94,8 +94,8 @@ export default async function DashboardPage() {
     return (
         <main className="container mx-auto px-4 py-6">
             <div className="mb-4">
-                <h1 className="font-evolventa text-2xl font-bold tracking-[-0.01em]">Дашборд</h1>
-                <p className="text-xs text-muted-foreground">Состояние сервиса: крон, снапшот, пуш, AI-лимиты</p>
+                <h1 className="font-evolventa text-2xl font-bold tracking-[-0.01em]">Состояние расписания</h1>
+                <p className="text-xs text-muted-foreground">Расписание, уведомления и помощник: всё на одном экране</p>
             </div>
             <DashboardBento data={data} />
         </main>
