@@ -67,6 +67,44 @@ const withPWA = withPWAInit({
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+    // Security-заголовки для всех ответов. CSP собирается частями ниже.
+    // connect-src: fonts.cdnfonts.com — шрифты PDF-экспорта (jspdf грузит их
+    // из браузера), plausible.io — трекер аналитики (если включён).
+    // script-src в dev требует 'unsafe-eval' (eval-based source maps webpack).
+    async headers() {
+        const csp = [
+            "default-src 'self'",
+            // inline-скрипты нужны Next (гидратация), inline-стили — framer-motion и shadcn
+            process.env.NODE_ENV === "development"
+                ? "script-src 'self' 'unsafe-inline' 'unsafe-eval'"
+                : "script-src 'self' 'unsafe-inline'",
+            "style-src 'self' 'unsafe-inline'",
+            "img-src 'self' data:",
+            "connect-src 'self' https://fonts.cdnfonts.com https://plausible.io",
+            "font-src 'self' data:",
+            "object-src 'none'",
+            "base-uri 'self'",
+            "form-action 'self'",
+            // современная замена X-Frame-Options, дублируем её для старых браузеров
+            "frame-ancestors 'none'",
+        ].join("; ");
+
+        return [
+            {
+                source: "/:path*",
+                headers: [
+                    { key: "X-Content-Type-Options", value: "nosniff" },
+                    { key: "X-Frame-Options", value: "DENY" },
+                    { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+                    {
+                        key: "Permissions-Policy",
+                        value: "camera=(), microphone=(), geolocation=()",
+                    },
+                    { key: "Content-Security-Policy", value: csp },
+                ],
+            },
+        ];
+    },
     // class-variance-authority и другие пакеты тянут clsx/tailwind-merge.
     // Алиасим их на cn, чтобы в бандле осталась одна реализация слияния классов.
     turbopack: {

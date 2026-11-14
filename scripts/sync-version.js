@@ -25,7 +25,7 @@ try {
   } else {
     console.warn('\x1b[33m[Sync Version] Warning: No version number found in PUBLIC_CHANGELOG.md (Format expected: ## [x.y.z] ...)\x1b[0m');
   }
-} catch (error) {
+} catch {
   console.error('\x1b[31m[Sync Version] Error:\x1b[0m', error.message);
   process.exit(1);
 }
@@ -50,6 +50,6 @@ try {
     });
     console.log('');
   }
-} catch (e) {
+} catch {
   // Ignore network errors
 }
