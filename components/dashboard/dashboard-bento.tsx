@@ -7,14 +7,9 @@ import {
 import { cn } from "cn";
 
 /**
- * Операционная панель — вариант «Острова» (выбор владельца 14.11).
- * Сервер собирает DashboardData из реальных источников (push-utils Redis,
- * debug-ai-limit) и передаёт готовый снимок; компонент только рисует.
- * null в поле — источник недоступен или пуст: строка честно гасится.
- *
- * Язык панели — для методиста, который ведёт расписание и не разбирается
- * в ИТ: никаких «кронов», «снапшотов» и «лимитов», только то, что это
- * значит для расписания.
+ * Панель состояния для методиста: без ИТ-терминов, только то, что это
+ * значит для расписания. Данные собирает страница; null — источник
+ * недоступен, остров честно гасится.
  */
 
 export type Tone = "success" | "warning" | "danger" | "info" | "neutral";
@@ -43,12 +38,8 @@ const TONE_TEXT: Record<Tone, string> = {
 };
 
 function StatusPill({ tone, label }: { tone: Tone; label?: string }) {
-    // text-xxs — токен globals.css; в cn он выживает: кегли xxs/tiny
-    // зарегистрированы в lib/cn.ts (createCn из cn/config, тест — npm run test:cn).
-    // inline-flex + h-5 + leading-none: глиф центрируется флексом, а не наследует
-    // высокие метрики строки Geist Mono. Внутренний span translate-y-[0.5px] —
-    // оптика: капс кириллицы без сдвига сидит на 0.5px выше геометрического
-    // центра (воздух 5.5/6.5px); +1px перекосяет вниз.
+    // Капс кириллицы в Geist Mono сидит на 0.5px выше центра em-квадрата,
+    // поэтому текст в пилюле оптически сдвинут вниз.
     return (
         <span className={cn("inline-flex h-5 items-center justify-center rounded-full border px-2.5 font-mono text-xxs leading-none uppercase tracking-[0.14em]", PILL[tone])}>
             <span className="translate-y-[0.5px]">{label ?? "Нет данных"}</span>
