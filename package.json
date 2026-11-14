@@ -32,7 +32,7 @@
     "autoprefixer": "^10.4.20",
     "class-variance-authority": "^0.7.1",
     "cmdk": "^1.1.1",
-    "cn": "^0.5.0",
+    "cn": "^0.5.2",
     "csv-parse": "^7.0.3",
     "date-fns": "^3.6.0",
     "framer-motion": "^12.29.0",
