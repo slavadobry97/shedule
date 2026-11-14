@@ -202,6 +202,14 @@ export async function updateLastCheck(): Promise<void> {
     await redis.set(KEYS.LAST_CHECK, Date.now());
 }
 
+/**
+ * Время последней проверки крона (null — ещё не запускалась)
+ */
+export async function getLastCheck(): Promise<number | null> {
+    const data = await redis.get<number>(KEYS.LAST_CHECK);
+    return typeof data === 'number' ? data : null;
+}
+
 // --- Push Sending ---
 
 /**

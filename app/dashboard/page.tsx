@@ -1,79 +1,103 @@
-"use client";
+import type { Metadata } from "next";
+import { DashboardBento, type DashboardData } from "@/components/dashboard/dashboard-bento";
+import { DebugLoginForm } from "@/components/debug/login-form";
+import { isDebugAuthConfigured, isDebugAuthorized } from "@/utils/debug-auth";
+import { getAllSubscriptions, getLastCheck, getScheduleSnapshot } from "@/utils/push-utils";
+import { getDebugAiUsage } from "@/utils/debug-ai-limit";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
-import { ArrowLeftIcon, PaintBoardIcon } from "@/components/icons";
-import { DashboardOps } from "@/components/dashboard/dashboard-ops";
-import { DashboardBento } from "@/components/dashboard/dashboard-bento";
-import { DashboardStatus } from "@/components/dashboard/dashboard-status";
-import { DashboardKpi } from "@/components/dashboard/dashboard-kpi";
-
-type Variant = "ops" | "bento" | "status" | "kpi";
-
-const VARIANTS: Variant[] = ["ops", "bento", "status", "kpi"];
-
-function getVariantFromUrl(): Variant {
-  const v = new URLSearchParams(window.location.search).get("variant");
-  return VARIANTS.includes(v as Variant) ? (v as Variant) : "ops";
-}
-
-const VARIANT_LABEL: Record<Variant, string> = {
-    ops: "Итог (3 + баннер)",
-    bento: "Острова",
-    status: "Статусы",
-    kpi: "KPI + лента",
+export const metadata: Metadata = {
+    title: "Дашборд | Расписание РГСУ",
+    robots: { index: false, follow: false },
 };
 
+// cookies() и Redis-чтение внутри — страница всегда серверная,
+// иначе Next запечёт «закрытый» HTML на сборке (как на /debug).
+export const dynamic = "force-dynamic";
+
 /**
- * Прототип «Операционной панели» (вариант C из аудита): страница состояния
- * сервиса на моках. Вариант по умолчанию — «Итог»: сводка + KPI + лента
- * событий. Прежние варианты оставлены в переключателе для сравнения;
- * после выбора данные подключаются к реальным источникам (снапшот Redis,
- * checks Sheets, push-utils, debug-ai-limit).
+ * Снимок операционной панели. Каждый источник — в своём try/catch:
+ * Redis может быть не настроен (локальная сборка) или лежать — остров
+ * честно гасится («нет данных»), а не роняет всю страницу.
  */
-export default function DashboardPage() {
-  const router = useRouter();
-  const [variant, setVariant] = useState<Variant>("ops");
+async function collectData(): Promise<DashboardData> {
+    let lastCheck: number | null = null;
+    let rows: number | null = null;
+    let total: number | null = null;
+    let withGroup = 0;
+    let withTeacher = 0;
+    let ai = { count: 0, limit: 250 };
 
-  // Глубокая ссылка на вариант (?variant=status) — удобно сравнивать
-  // и делиться конкретным экраном. URL — внешняя система: одноразовая
-  // синхронизация при монтировании (без SSR-расхождения).
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setVariant(getVariantFromUrl());
-  }, []);
+    try {
+        lastCheck = await getLastCheck();
+    } catch {}
 
-  return (
-    <main className="container mx-auto px-4 py-6">
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="font-evolventa text-2xl font-bold tracking-[-0.01em]">Дашборд</h1>
-          <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <PaintBoardIcon className="h-3.5 w-3.5" />
-            Прототип на моках — пробуем «Итог»; данные подключим после финального выбора
-          </p>
-        </div>
-        <Button onClick={() => router.push("/")} variant="outline">
-          <ArrowLeftIcon className="h-4 w-4" />
-          Вернуться на главную
-        </Button>
-      </div>
+    try {
+        const snapshot = await getScheduleSnapshot();
+        rows = snapshot ? snapshot.length : null;
+    } catch {}
 
-      <Tabs value={variant} onValueChange={(v) => setVariant(v as Variant)}>
-        <TabsList className="mb-4">
-          <TabsTrigger value="ops">{VARIANT_LABEL.ops}</TabsTrigger>
-          <TabsTrigger value="bento">{VARIANT_LABEL.bento}</TabsTrigger>
-          <TabsTrigger value="status">{VARIANT_LABEL.status}</TabsTrigger>
-          <TabsTrigger value="kpi">{VARIANT_LABEL.kpi}</TabsTrigger>
-        </TabsList>
-      </Tabs>
+    try {
+        const subs = await getAllSubscriptions();
+        total = subs.length;
+        withGroup = subs.filter((s) => s.filters.groups.length > 0).length;
+        withTeacher = subs.filter((s) => s.filters.teachers.length > 0).length;
+    } catch {}
 
-      {variant === "ops" && <DashboardOps />}
-      {variant === "bento" && <DashboardBento />}
-      {variant === "status" && <DashboardStatus />}
-      {variant === "kpi" && <DashboardKpi />}
-    </main>
-  );
+    try {
+        const usage = await getDebugAiUsage();
+        ai = { count: usage.count, limit: usage.limit };
+    } catch {}
+
+    return {
+        generatedAt: Date.now(),
+        cron: { lastCheck, rows },
+        push: { total, withGroup, withTeacher },
+        ai,
+    };
+}
+
+export default async function DashboardPage() {
+    const authorized = await isDebugAuthorized();
+
+    if (!authorized) {
+        if (!isDebugAuthConfigured()) {
+            return (
+                <main className="container mx-auto px-4 py-6">
+                    <div className="mx-auto max-w-md rounded-3xl border border-border bg-background p-6 text-center">
+                        <h1 className="text-lg font-semibold">Дашборд не настроен</h1>
+                        <p className="mt-2 text-sm text-muted-foreground">
+                            Задайте переменную окружения <code className="font-mono text-xs">DEBUG_PASSWORD</code> —
+                            без неё служебный раздел в продакшене закрыт.
+                        </p>
+                    </div>
+                </main>
+            );
+        }
+
+        return (
+            <main className="container mx-auto px-4 py-6">
+                <div className="mx-auto max-w-md">
+                    <div className="mb-4 text-center">
+                        <h1 className="font-evolventa text-2xl font-bold tracking-[-0.01em]">Дашборд</h1>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                            Войдите с тем же паролем, что и на странице отладки
+                        </p>
+                    </div>
+                    <DebugLoginForm />
+                </div>
+            </main>
+        );
+    }
+
+    const data = await collectData();
+
+    return (
+        <main className="container mx-auto px-4 py-6">
+            <div className="mb-4">
+                <h1 className="font-evolventa text-2xl font-bold tracking-[-0.01em]">Дашборд</h1>
+                <p className="text-xs text-muted-foreground">Состояние сервиса: крон, снапшот, пуш, AI-лимиты</p>
+            </div>
+            <DashboardBento data={data} />
+        </main>
+    );
 }
