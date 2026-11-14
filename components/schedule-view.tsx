@@ -17,9 +17,12 @@ import {
 import {
   DAYS_OF_WEEK,
   DATE_FORMATS,
-  STORAGE_KEYS,
   BREAKPOINTS,
 } from "@/lib/constants";
+import {
+  saveGroupSelection,
+  saveTeacherSelection,
+} from "@/lib/selection-storage";
 import { ru } from "date-fns/locale";
 import { ScheduleItem, ScheduleMeta } from "@/types/schedule";
 import { ScheduleFilters } from "./schedule-filters";
@@ -43,6 +46,14 @@ type ScheduleViewProps = {
   selectedTeacher: string;
   onGroupChange: (group: string) => void;
   onTeacherChange: (teacher: string) => void;
+};
+
+// Границы текущей недели: на уровне модуля — стабильная идентичность,
+// чтобы useMemo ниже не теряли мемоизацию из-за пересоздания функции.
+const getWeekDates = (date: Date) => {
+  const start = startOfWeek(date, { weekStartsOn: 1 });
+  const end = addDays(start, 6);
+  return { start, end };
 };
 
 export function ScheduleView({
@@ -125,37 +136,25 @@ export function ScheduleView({
   }, []);
 
   const handleSaveGroup = () => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem(STORAGE_KEYS.SELECTED_GROUP, selectedGroup);
-      localStorage.setItem(STORAGE_KEYS.SELECTED_TEACHER, "all");
-      onTeacherChange("all");
-      haptic('success');
-      showToast({
-        title: `Группа "${selectedGroup}" сохранена`,
-        message: "Теперь это ваша группа по умолчанию",
-        variant: 'success',
-      });
-    }
+    saveGroupSelection(selectedGroup);
+    onTeacherChange("all");
+    haptic('success');
+    showToast({
+      title: `Группа "${selectedGroup}" сохранена`,
+      message: "Теперь это ваша группа по умолчанию",
+      variant: 'success',
+    });
   };
 
   const handleSaveTeacher = () => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem(STORAGE_KEYS.SELECTED_TEACHER, selectedTeacher);
-      localStorage.setItem(STORAGE_KEYS.SELECTED_GROUP, "all");
-      onGroupChange("all");
-      haptic('success');
-      showToast({
-        title: `Преподаватель "${selectedTeacher}" сохранён`,
-        message: "Теперь это ваш профиль по умолчанию",
-        variant: 'success',
-      });
-    }
-  };
-
-  const getCurrentWeekDates = () => {
-    const start = startOfWeek(date, { weekStartsOn: 1 });
-    const end = addDays(start, 6);
-    return { start, end };
+    saveTeacherSelection(selectedTeacher);
+    onGroupChange("all");
+    haptic('success');
+    showToast({
+      title: `Преподаватель "${selectedTeacher}" сохранён`,
+      message: "Теперь это ваш профиль по умолчанию",
+      variant: 'success',
+    });
   };
 
   // «Сегодня» — мёртвый клик, когда вид уже показывает сегодня (№126):
@@ -167,7 +166,7 @@ export function ScheduleView({
         : isSameWeek(date, new Date(), { weekStartsOn: 1 });
 
   const daysWithDates = useMemo(() => {
-    const { start } = getCurrentWeekDates();
+    const { start } = getWeekDates(date);
     return DAYS_OF_WEEK.map((day, index) => {
       const currentDay = addDays(start, index);
       return {
@@ -183,7 +182,7 @@ export function ScheduleView({
   };
 
   const filteredData = useMemo(() => {
-    const { start, end } = getCurrentWeekDates();
+    const { start, end } = getWeekDates(date);
     return scheduleData.filter((item) => {
       const itemDate = parse(item.date, "dd.MM.yyyy", new Date());
       return (
@@ -232,13 +231,15 @@ export function ScheduleView({
 
   // Применяем значения из адреса через обёртки, чтобы при смене фильтра
   // противоположный сбрасывался (иначе могут остаться оба выбранными).
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (initialGroup && initialGroup !== "all") {
       handleGroupChange(initialGroup);
     } else if (initialTeacher && initialTeacher !== "all") {
       handleTeacherChange(initialTeacher);
     }
+    // Обработчики пересоздаются каждый рендер — включать их в deps нельзя:
+    // эффект обязан срабатывать только на смену параметров из адреса.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialGroup, initialTeacher]);
 
   // Show Welcome Screen if no selection made. Важно: после всех хуков —
@@ -252,17 +253,11 @@ export function ScheduleView({
           teachers={uniqueTeachers}
           onGroupSelect={(g) => {
             onGroupChange(g);
-            if (typeof window !== "undefined") {
-              localStorage.setItem(STORAGE_KEYS.SELECTED_GROUP, g);
-              localStorage.setItem(STORAGE_KEYS.SELECTED_TEACHER, "all");
-            }
+            saveGroupSelection(g);
           }}
           onTeacherSelect={(t) => {
             onTeacherChange(t);
-            if (typeof window !== "undefined") {
-              localStorage.setItem(STORAGE_KEYS.SELECTED_TEACHER, t);
-              localStorage.setItem(STORAGE_KEYS.SELECTED_GROUP, "all");
-            }
+            saveTeacherSelection(t);
           }}
         />
       </div>
@@ -290,11 +285,11 @@ export function ScheduleView({
             (переключатель слева, навигация периодов справа — ml-auto). */}
         <div className="flex w-full flex-col items-end gap-0.5">
             {/* Заголовок */}
-            <h2 className="whitespace-nowrap text-sm font-semibold tabular-nums tracking-tight">
+            <h2 className="font-evolventa whitespace-nowrap text-[22px] font-semibold tabular-nums tracking-[-0.01em]">
                 {view === "day"
                     ? format(date, "d MMMM yyyy", { locale: ru })
                     : view === "week"
-                    ? `${format(getCurrentWeekDates().start, "dd.MM.yyyy")} – ${format(getCurrentWeekDates().end, "dd.MM.yyyy")}`
+                    ? `${format(getWeekDates(date).start, "dd.MM.yyyy")} – ${format(getWeekDates(date).end, "dd.MM.yyyy")}`
                     : format(date, "LLLL yyyy", { locale: ru })}
             </h2>
 
@@ -412,8 +407,8 @@ export function ScheduleView({
           <DesktopScheduleView
             daysWithDates={daysWithDates}
             filteredData={filteredData}
-            weekStart={getCurrentWeekDates().start}
-            weekEnd={getCurrentWeekDates().end}
+            weekStart={getWeekDates(date).start}
+            weekEnd={getWeekDates(date).end}
             showGroup={selectedGroup === "all"}
             showTeacher={selectedTeacher === "all"}
             onLessonClick={handleLessonClick}

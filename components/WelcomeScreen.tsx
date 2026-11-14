@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
+import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
 import { MOTION_DURATION, motionTransition } from "@/lib/motion";
-import { GraduationCapIcon, LoadingIcon, UserIcon } from "@/components/icons";
+import { GraduationCapIcon, LoaderCircleIcon, UserIcon } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ResponsiveComboBox } from "./responsive-combobox";
@@ -41,6 +42,15 @@ export function WelcomeScreen({
     const [selectedValue, setSelectedValue] = useState<string>("");
     const [isLoading, setIsLoading] = useState(false);
 
+    // Сбрасываем выбранное значение при смене роли — официальный паттерн
+    // «подстройка состояния при изменении пропа/стейта» (React Docs):
+    // правка состояния в рендере с защитным условием, без эффекта.
+    const [prevRole, setPrevRole] = useState<Role | null>("student");
+    if (role !== prevRole) {
+        setPrevRole(role);
+        setSelectedValue("");
+    }
+
     const groupItems = useMemo(
         () => groups.map((g) => ({ value: g, label: g })),
         [groups]
@@ -51,10 +61,7 @@ export function WelcomeScreen({
         [teachers]
     );
 
-    // Сбрасываем выбранное значение при смене роли
-    useEffect(() => {
-        setSelectedValue("");
-    }, [role]);
+    // Сброс при смене роли перенесён в рендер (паттерн React Docs) — выше.
 
     // Блокируем прокрутку body, пока открыт полноэкранный приветственный слой
     useEffect(() => {
@@ -147,14 +154,14 @@ export function WelcomeScreen({
             </div>
 
             <Button
-                size="lg"
+                size="2xl"
                 disabled={isLoading}
                 onClick={handleContinue}
-                className="h-14 w-full rounded-3xl text-base font-semibold lg:text-lg"
+                className="w-full text-base font-semibold lg:text-lg"
             >
                 {isLoading ? (
                     <>
-                        <LoadingIcon className="mr-2 h-5 w-5 animate-spin" />
+                        <LoaderCircleIcon className="mr-2 h-5 w-5 animate-spin" />
                         Загрузка...
                     </>
                 ) : (
@@ -181,7 +188,7 @@ export function WelcomeScreen({
                         transition={motionTransition(reduceMotion, { duration: MOTION_DURATION.base })}
                     >
                     <BrandLogo className="mx-auto h-36 w-auto text-white" />
-                    <h1 className="mt-6 text-center text-[28px] font-bold leading-[1.1] tracking-[-0.02em] lg:mt-8 lg:text-5xl">
+                    <h1 className="font-evolventa mt-6 text-center text-[28px] font-bold leading-[1.1] tracking-[-0.02em] lg:mt-8 lg:text-5xl">
                         Ваше расписание.
                         <br />
                         Одним экраном.
@@ -212,6 +219,15 @@ export function WelcomeScreen({
                         )}
                     >
                         {form}
+
+                        {/* О сервисе: точка входа на визитку /landing
+                            (решение владельца 14.11: оставить и привязать) */}
+                        <Link
+                            href="/landing"
+                            className="block text-center text-xs transition-colors max-lg:text-muted-foreground max-lg:hover:text-foreground lg:text-white/60 lg:hover:text-white/90"
+                        >
+                            О сервисе
+                        </Link>
                     </motion.div>
                 </div>
             </div>

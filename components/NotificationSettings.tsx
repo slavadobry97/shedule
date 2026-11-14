@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { BellIcon, BellOffIcon, CheckIcon, LoadingIcon } from "@/components/icons";
+import { BellIcon, BellOffIcon, CheckIcon, LoaderCircleIcon } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import {
     Drawer,
@@ -24,7 +24,7 @@ import {
 import { NotificationsPanel } from "@/components/notifications-panel";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { showToast } from "@/components/ui/sonner";
-import { STORAGE_KEYS } from "@/lib/constants";
+import { readSavedSelection } from "@/lib/selection-storage";
 
 interface NotificationSettingsProps {
     groups: string[];
@@ -76,13 +76,12 @@ export function NotificationSettings({ groups, teachers }: NotificationSettingsP
                 // Фильтры и разрешение — сразу: не ждём service worker, иначе в dev
                 // (SW не зарегистрирован) ready не разрешается никогда и панель
                 // остаётся заблокированной (№132).
-                const savedGroup = localStorage.getItem(STORAGE_KEYS.SELECTED_GROUP);
-                const savedTeacher = localStorage.getItem(STORAGE_KEYS.SELECTED_TEACHER);
+                const saved = readSavedSelection();
 
-                if (savedGroup && savedGroup !== 'all') {
-                    setSelectedGroup(savedGroup);
-                } else if (savedTeacher && savedTeacher !== 'all') {
-                    setSelectedTeacher(savedTeacher);
+                if (saved.group) {
+                    setSelectedGroup(saved.group);
+                } else if (saved.teacher) {
+                    setSelectedTeacher(saved.teacher);
                 }
 
                 // Существующая подписка — только если SW реально зарегистрирован
@@ -99,9 +98,11 @@ export function NotificationSettings({ groups, teachers }: NotificationSettingsP
 
     // Подписка на уведомления
     const handleSubscribe = async () => {
-        if (!isSupported) return;
+        if (!isSupported || isLoading) return;
 
         setIsLoading(true);
+        // Оптимистично: тумблер включается сразу, при ошибке — откат
+        setIsSubscribed(true);
 
         try {
             // Запрашиваем разрешение
@@ -109,6 +110,7 @@ export function NotificationSettings({ groups, teachers }: NotificationSettingsP
             setPermission(permissionResult);
 
             if (permissionResult !== 'granted') {
+                setIsSubscribed(false);
                 showToast({
                     title: 'Уведомления отклонены',
                     message: 'Разрешите уведомления в настройках браузера',
@@ -120,7 +122,7 @@ export function NotificationSettings({ groups, teachers }: NotificationSettingsP
             // Получаем service worker (в dev его нет — warn вместо вечного лоадера)
             const registration = await navigator.serviceWorker.getRegistration();
             if (!registration) {
-                setIsLoading(false);
+                setIsSubscribed(false);
                 showToast({
                     title: 'Service worker недоступен',
                     message: 'Подписка работает на собранной версии сайта',
@@ -160,6 +162,7 @@ export function NotificationSettings({ groups, teachers }: NotificationSettingsP
             });
 
         } catch (error) {
+            setIsSubscribed(false);
             console.error('Subscribe error:', error);
             showToast({
                 title: 'Ошибка',
@@ -173,25 +176,30 @@ export function NotificationSettings({ groups, teachers }: NotificationSettingsP
 
     // Отписка от уведомлений
     const handleUnsubscribe = async () => {
+        if (isLoading) return;
+
         setIsLoading(true);
+        // Оптимистично: тумблер выключается сразу, при ошибке — откат
+        setIsSubscribed(false);
 
         try {
-            const registration = await navigator.serviceWorker.ready;
-            const subscription = await registration.pushManager.getSubscription();
+            const registration = await navigator.serviceWorker.getRegistration();
+            if (registration) {
+                const subscription = await registration.pushManager.getSubscription();
 
-            if (subscription) {
-                // Отписываемся локально
-                await subscription.unsubscribe();
+                if (subscription) {
+                    // Отписываемся локально
+                    await subscription.unsubscribe();
 
-                // Удаляем с сервера
-                await fetch('/api/push/subscribe', {
-                    method: 'DELETE',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ endpoint: subscription.endpoint }),
-                });
+                    // Удаляем с сервера
+                    await fetch('/api/push/subscribe', {
+                        method: 'DELETE',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ endpoint: subscription.endpoint }),
+                    });
+                }
             }
 
-            setIsSubscribed(false);
             showToast({
                 title: 'Уведомления отключены',
                 message: 'Вы больше не будете получать уведомления',
@@ -199,6 +207,7 @@ export function NotificationSettings({ groups, teachers }: NotificationSettingsP
             });
 
         } catch (error) {
+            setIsSubscribed(true);
             console.error('Unsubscribe error:', error);
             showToast({
                 title: 'Ошибка',
@@ -275,6 +284,14 @@ export function NotificationSettings({ groups, teachers }: NotificationSettingsP
                                 if (checked) {
                                     if (selectedGroup || selectedTeacher) {
                                         handleSubscribe();
+                                    } else {
+                                        // Раньше тумблер молча не срабатывал — студент
+                                        // думал, что уведомления включены
+                                        showToast({
+                                            title: 'Выберите группу или преподавателя',
+                                            message: 'Уведомления приходят только о выбранной группе или преподавателе',
+                                            variant: 'info',
+                                        });
                                     }
                                 } else {
                                     handleUnsubscribe();
@@ -283,14 +300,14 @@ export function NotificationSettings({ groups, teachers }: NotificationSettingsP
                         />
     );
 
-    const saveButton = isSubscribed && (
+    const saveButton = isSubscribed && !isLoading && (
                 <Button
                             onClick={handleUpdateFilters}
                             disabled={isLoading || (!selectedGroup && !selectedTeacher)}
-                            className="w-full"
+                            className="w-full h-11 sm:h-9"
                 >
                             {isLoading ? (
-                <LoadingIcon className="h-4 w-4 animate-spin mr-2" />
+                <LoaderCircleIcon className="h-4 w-4 animate-spin mr-2" />
                     ) : (
                 <CheckIcon className="h-4 w-4 mr-2" />
                     )}
@@ -315,7 +332,7 @@ export function NotificationSettings({ groups, teachers }: NotificationSettingsP
                     <BellOffIcon className="h-5 w-5 text-muted-foreground" />
                     )}
                     {isSubscribed && (
-                        <span className="absolute -top-0.5 -right-0.5 size-2 rounded-3xl bg-green-500" />
+                        <span className="absolute -top-0.5 -right-0.5 size-2 rounded-full bg-success" />
                     )}
                         </Button>
 
@@ -326,7 +343,7 @@ export function NotificationSettings({ groups, teachers }: NotificationSettingsP
                 <DrawerHeader>
                     <DrawerTitle>Уведомления об изменениях</DrawerTitle>
                     <DrawerDescription>
-                        Получайте push-уведомления когда расписание изменяется
+                        Получайте push-уведомления, когда расписание изменяется
                     </DrawerDescription>
                 </DrawerHeader>
 
@@ -335,7 +352,7 @@ export function NotificationSettings({ groups, teachers }: NotificationSettingsP
                 <DrawerFooter>
                             {saveButton}
                     <DrawerClose asChild>
-                        <Button variant="outline">Закрыть</Button>
+                        <Button variant="outline" className="h-11 w-full sm:h-9">Закрыть</Button>
                     </DrawerClose>
                 </DrawerFooter>
             </DrawerContent>
@@ -349,7 +366,7 @@ export function NotificationSettings({ groups, teachers }: NotificationSettingsP
                         <SheetHeader className="p-6 pb-2 text-left">
                             <SheetTitle>Уведомления об изменениях</SheetTitle>
                             <SheetDescription>
-                                Получайте push-уведомления когда расписание изменяется
+                                Получайте push-уведомления, когда расписание изменяется
                             </SheetDescription>
                         </SheetHeader>
 
@@ -358,7 +375,7 @@ export function NotificationSettings({ groups, teachers }: NotificationSettingsP
                         <SheetFooter className="mt-auto flex flex-col gap-2 p-6 pt-2 sm:flex-col">
                             {saveButton}
                             <SheetClose asChild>
-                                <Button variant="outline">Закрыть</Button>
+                                <Button variant="outline" className="h-11 w-full sm:h-9">Закрыть</Button>
                             </SheetClose>
                         </SheetFooter>
                     </SheetContent>

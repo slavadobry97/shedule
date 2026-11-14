@@ -4,7 +4,6 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Badge } from "@/components/ui/badge";
 import { cn } from "cn";
 import { getLessonTypeColor } from "@/lib/lesson-type-colors";
-import { getDeclension } from "@/lib/utils";
 import { ScheduleItem } from "@/types/schedule";
 import { isLessonActive, isToday } from "@/lib/time-utils";
 import { TIME_SLOTS } from "@/lib/constants";
@@ -110,11 +109,11 @@ export function DesktopScheduleView({
                                             }}
                                         >
                                             <div className="flex items-start justify-between gap-1">
-                                                <span className="line-clamp-2 text-xs font-semibold leading-tight">
+                                                <span className="line-clamp-2 text-sm font-semibold leading-tight">
                                                     {lessons[0].subject}
                                                 </span>
                                                 {lessons.length > 1 && (
-                                                    <span className="shrink-0 rounded-xl border bg-background px-1 text-xs font-medium text-primary">
+                                                    <span className="shrink-0 rounded-xl border bg-background px-1 text-xs font-medium text-foreground">
                                                         +{lessons.length - 1}
                                                     </span>
                                                 )}

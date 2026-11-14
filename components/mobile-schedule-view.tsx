@@ -3,8 +3,6 @@
 
 import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { cn } from "cn";
 import { getLessonTypeColor } from "@/lib/lesson-type-colors";
 import { getDeclension } from "@/lib/utils";
@@ -25,7 +23,7 @@ import {
 import { addDays, format, isSameDay, parse, getDay } from "date-fns";
 import { ru } from "date-fns/locale";
 import { MobileWeekView } from "./mobile-week-view";
-import { useState, useRef } from "react";
+import { useRef } from "react";
 
 interface MobileScheduleViewProps {
     date: Date;
@@ -48,21 +46,12 @@ export function MobileScheduleView({
 }: MobileScheduleViewProps) {
     const reduceMotion = useReducedMotion();
 
-    // Helper wrapper for setDate to handle function updates if needed, though simpler here
-    const handleSetDate = (newDate: Date | ((prev: Date) => Date)) => {
-        // cast to any if needed or just assume the parent handles it.
-        // But props usually expect a value setter or a specific type.
-        // Let's assume parent passes `setDate` from `useState`, which supports both.
-        // TypeScript might complain if we aren't careful.
-        // Safest:
-        if (typeof newDate === 'function') {
-            setDate(newDate(date)); // This is hacky if setDate isn't the state setter itself.
-        } else {
-            setDate(newDate);
-        }
-    };
-
     // Animation direction logic
+    /* Направление свайпа = сравнение с предыдущей датой через ref:
+       осознанный паттерн «предыдущее значение» — react-hooks/refs запрещает
+       чтение ref в рендере, а альтернативы требуют setState в эффекте
+       (react-hooks/set-state-in-effect). Гасим блок целиком. */
+    /* eslint-disable react-hooks/refs */
     const prevDateRef = useRef(date);
     const direction = date > prevDateRef.current ? 1 : -1;
 
@@ -70,6 +59,7 @@ export function MobileScheduleView({
     if (prevDateRef.current !== date) {
         prevDateRef.current = date;
     }
+    /* eslint-enable react-hooks/refs */
 
     // Swipe logic
     const touchStart = useRef<number | null>(null);
@@ -166,10 +156,10 @@ export function MobileScheduleView({
                     {/* Заголовок дня и счетчик */}
                     <div className="px-1 pb-2 pt-2">
                         <div className="flex items-center justify-between gap-3">
-                            <h2 className="text-xl font-semibold text-brand capitalize tracking-tight">
+                            <h2 className="font-evolventa text-xl font-semibold text-brand first-letter:uppercase tracking-tight">
                                 {format(date, "EEEE, d MMMM", { locale: ru })}
                             </h2>
-                            <span className="text-xs font-bold bg-primary/5 text-primary dark:bg-blue-900/30 dark:text-blue-300 border border-blue-200 px-3 py-1 rounded-full shrink-0 uppercase">
+                            <span className="text-xs font-bold bg-primary/5 text-primary dark:bg-info/10 dark:text-info border border-info/20 px-3 py-1 rounded-full shrink-0 uppercase">
                                 {(() => {
                                     const dayLessons = filteredData.filter(l => isSameDay(parse(l.date, "dd.MM.yyyy", new Date()), date));
                                     const uniqueTimes = new Set(dayLessons.map(l => l.time)).size;
@@ -227,7 +217,7 @@ export function MobileScheduleView({
 
                                 if (sortedGroupKeys.length === 0) {
                                     return (
-                                        <div className="flex flex-col items-center justify-center min-h-[50vh] text-muted-foreground/50">
+                                        <div className="flex flex-col items-center justify-center min-h-[50vh] text-muted-foreground">
  <CalendarDaysIcon strokeWidth={1} className="h-24 w-24 mb-6 opacity-20" />
                                             <p className="text-xl font-normal">Нет занятий в этот день</p>
                                         </div>
@@ -259,7 +249,7 @@ export function MobileScheduleView({
                                                     {isGrouped && (
                                                         <div className={cn(
                                                             "absolute right-3 px-2.5 py-1 rounded-full text-xs font-semibold shadow-xs z-10",
-                                                            isActive ? "top-9 bg-success/10 text-success border-success/20" : "top-3 bg-primary/5 text-primary dark:bg-blue-900/30 dark:text-blue-300 border border-blue-200"
+                                                            isActive ? "top-9 bg-success/10 text-success border-success/20" : "top-3 bg-primary/5 text-primary dark:bg-info/10 dark:text-info border border-info/20"
                                                         )}>
                                                             {groupLessons.length} {getDeclension(groupLessons.length, ['группа', 'группы', 'групп'])}
                                                         </div>
@@ -267,27 +257,27 @@ export function MobileScheduleView({
 
                                                     {isActive && (
                                                         // Концентрические радиусы: tr повторяет угол карточки (rounded-3xl), bl — внутренний скруг.
-                                                        <div className="absolute top-0 right-0 px-3 py-1 bg-success text-success-foreground text-xxs uppercase tracking-wider font-bold rounded-tr-3xl rounded-bl-lg z-20">
+                                                        <div className="absolute top-0 right-0 px-3 py-1 bg-success text-success-foreground text-xs uppercase tracking-wider font-bold rounded-tr-3xl rounded-bl-lg z-20">
                                                             Сейчас
                                                         </div>
                                                     )}
 
                                                     <CardContent className="p-0 flex">
                                                         <div className="flex flex-col items-start justify-center w-20 bg-muted/30 border-r border-border/50 pl-4 shrink-0">
-                                                            <span className="text-xxs font-bold text-brand uppercase tracking-wider mb-0.5 whitespace-nowrap">
+                                                            <span className="text-xs font-bold text-brand uppercase tracking-wider mb-0.5 whitespace-nowrap">
                                                                 {getPairNumber(primaryLesson.time)} пара
                                                             </span>
                                                             <span className="text-xl font-extrabold text-brand leading-none antialiased">
                                                                 {primaryLesson.time.split(' - ')[0]}
                                                             </span>
-                                                            <span className="text-xxs text-muted-foreground mt-0.5 whitespace-nowrap">
+                                                            <span className="text-xs text-muted-foreground mt-0.5 whitespace-nowrap">
                                                                 до {primaryLesson.time.split(' - ')[1]}
                                                             </span>
                                                         </div>
 
                                                         <div className="flex-1 p-4 flex flex-col min-w-0">
                                                             <div className={cn("mb-2", isGrouped ? "pr-24" : isActive ? "pr-16" : "")}>
-                                                                <h3 className="font-semibold text-brand leading-tight mb-1">
+                                                                <h3 className="font-semibold text-foreground leading-tight mb-1">
                                                                     {primaryLesson.subject}
                                                                 </h3>
                                                                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -346,7 +336,7 @@ export function MobileScheduleView({
                                                             <Card key={idx} className="bg-muted/50 border shadow-none">
                                                                 <CardContent className="p-4 space-y-4">
                                                                     <div className="flex items-center gap-4">
-                                                                        <div className="h-10 w-10 rounded-3xl bg-info/10 text-info flex items-center justify-center shrink-0">
+                                                                        <div className="h-10 w-10 rounded-3xl bg-muted text-muted-foreground flex items-center justify-center shrink-0">
  <UserIcon className="h-5 w-5" />
                                                                         </div>
                                                                         <div className="space-y-0.5">
@@ -356,7 +346,7 @@ export function MobileScheduleView({
                                                                     </div>
 
                                                                     <div className="flex items-center gap-4">
-                                                                        <div className="h-10 w-10 rounded-3xl bg-success/10 text-success flex items-center justify-center shrink-0">
+                                                                        <div className="h-10 w-10 rounded-3xl bg-muted text-muted-foreground flex items-center justify-center shrink-0">
  <UsersIcon className="h-5 w-5" />
                                                                         </div>
                                                                         <div className="space-y-0.5">
@@ -367,7 +357,7 @@ export function MobileScheduleView({
 
                                                                     <div className="flex items-center justify-between gap-4">
                                                                         <div className="flex items-center gap-4">
-                                                                            <div className="h-10 w-10 rounded-3xl bg-info/10 text-info flex items-center justify-center shrink-0">
+                                                                            <div className="h-10 w-10 rounded-3xl bg-muted text-muted-foreground flex items-center justify-center shrink-0">
  <ClockIcon className="h-5 w-5" />
                                                                             </div>
                                                                             <div className="space-y-0.5">
@@ -377,7 +367,7 @@ export function MobileScheduleView({
                                                                         </div>
 
                                                                         <div className="flex items-center gap-4 flex-row-reverse text-right">
-                                                                            <div className="h-10 w-10 rounded-3xl bg-lesson-credit/10 text-lesson-credit flex items-center justify-center shrink-0">
+                                                                            <div className="h-10 w-10 rounded-3xl bg-muted text-muted-foreground flex items-center justify-center shrink-0">
  <Location01Icon className="h-5 w-5" />
                                                                             </div>
                                                                             <div className="space-y-0.5">

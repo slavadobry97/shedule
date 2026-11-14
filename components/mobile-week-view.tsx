@@ -2,7 +2,7 @@
 
 import { cn } from "cn";
 import { addDays, format, isSameDay, startOfWeek, isBefore, startOfToday } from "date-fns";
-import React, { useRef, useEffect, useMemo } from "react";
+import React, { useMemo } from "react";
 import { DAYS_OF_WEEK } from "@/lib/constants";
 import { motion, useReducedMotion } from "framer-motion";
 import { MOTION_DURATION, motionTransition } from "@/lib/motion";
@@ -36,7 +36,7 @@ const DayButton = React.memo(({ date, dayLabel, isSelected, isPast, onSelect }: 
             aria-selected={isSelected}
             aria-label={`${dayLabel}, ${dayNumber}`}
             className={cn(
-                "relative flex flex-col items-center justify-center h-16 rounded-3xl transition-[color,background-color,border-color,transform] duration-200 border shrink-0 z-10 p-0",
+                "relative flex flex-col items-center justify-center h-16 gap-0.5 rounded-3xl transition-[color,background-color,border-color,transform] duration-200 border shrink-0 z-10 p-0",
                 isSelected ? "border-transparent font-bold scale-105 hover:bg-transparent" : "border-border hover:bg-muted bg-background",
                 isPast && !isSelected && "opacity-60"
             )}
@@ -49,7 +49,7 @@ const DayButton = React.memo(({ date, dayLabel, isSelected, isPast, onSelect }: 
                 />
             )}
 
-            <span className={cn("text-xs mb-0.5 relative z-20", isSelected ? "text-primary-foreground/90" : "text-muted-foreground")}>
+            <span className={cn("text-xs relative z-20", isSelected ? "text-primary-foreground/90" : "text-muted-foreground")}>
                 {dayLabel}
             </span>
             <span className={cn("text-lg leading-none font-bold relative z-20", isSelected ? "text-primary-foreground" : "text-foreground")}>

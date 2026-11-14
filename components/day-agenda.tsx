@@ -51,16 +51,16 @@ export function DayAgenda({
             {/* Заголовок дня */}
             <div className={cn("flex items-center justify-between gap-2", compact ? "px-4 pt-4 pb-3" : "px-5 pt-5 pb-4")}>
                 <div className="flex items-center gap-2">
-                    <h3 className={cn("font-semibold", compact ? "text-sm" : "text-base")}>
+                    <h3 className={cn("font-semibold", compact ? "text-sm" : "text-base font-evolventa")}>
                         {format(date, "EEEE, d MMMM", { locale: ru })}
                     </h3>
                     {today && (
-                        <span className="text-xxs font-bold bg-primary/10 text-primary px-2 py-0.5 rounded-full">
+                        <span className="text-xs font-bold bg-primary/10 text-primary px-2 py-0.5 rounded-full">
                             Сегодня
                         </span>
                     )}
                 </div>
-                <span className="text-xxs font-bold bg-primary/10 text-primary px-2 py-0.5 rounded-full">
+                <span className="text-xs font-bold bg-primary/10 text-primary px-2 py-0.5 rounded-full">
                     {dayLessons.length} {getDeclension(dayLessons.length, ["пара", "пары", "пар"])}
                 </span>
             </div>
@@ -98,7 +98,7 @@ export function DayAgenda({
                                 <span className="text-xs font-mono text-muted-foreground tabular-nums">
                                     {lesson.time}
                                 </span>
-                                <span className="text-xs font-medium text-primary shrink-0">
+                                <span className="text-xs font-medium text-foreground shrink-0">
                                     ауд. {lesson.classroom}
                                 </span>
                             </div>

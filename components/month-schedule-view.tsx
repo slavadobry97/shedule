@@ -17,7 +17,7 @@ import {
     parse,
 } from "date-fns";
 import { DayAgenda } from "./day-agenda";
-import { useHorizontalSwipe } from "@/lib/use-swipe-navigation";
+import { useHorizontalSwipe } from "@/hooks/use-swipe-navigation";
 
 interface MonthScheduleViewProps {
     date: Date;
@@ -36,7 +36,6 @@ export function MonthScheduleView({
     setDate,
     filteredData,
     selectedGroup,
-    selectedTeacher,
     onLessonClick,
     triggerHaptic,
 }: MonthScheduleViewProps) {
@@ -141,7 +140,7 @@ export function MonthScheduleView({
                                         {format(day, "d")}
                                     </span>
                                     {count > 0 && (
-                                        <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[9px] font-bold text-primary-foreground">
+                                        <span className="inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-primary px-1.5 text-xs font-bold text-primary-foreground">
                                             {count}
                                         </span>
                                     )}

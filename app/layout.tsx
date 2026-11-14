@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from "next";
-import Link from "next/link";
 import { ThemeProvider } from "next-themes";
 import { Toaster } from "@/components/ui/sonner";
 import { Header } from "@/components/Header";
@@ -20,6 +19,14 @@ const evolventa = localFont({
   display: "swap", // Prevents font blocking
 });
 
+// Геометрический моно для чисел (гайдлайн §4): время, даты, таблицы.
+// Файл лежал в app/fonts, но не был подключён (аудит 14.11).
+const geistMono = localFont({
+  src: [{ path: "./fonts/GeistMonoVF.woff", weight: "100 900", style: "normal" }],
+  variable: "--font-geist-mono",
+  display: "swap",
+});
+
 // Настройки вьюпорта и темы.
 // viewportFit=cover обязателен: без него env(safe-area-inset-*) на iOS = 0.
 // theme-color — по схеме на тему (светлая/тёмная), цвет — полотно страницы.
@@ -38,6 +45,12 @@ export const metadata: Metadata = {
   description: "Актуальное расписание занятий Филиала РГСУ в г. Минске на 2026-2027 учебный год. Поиск по группам, преподавателям и датам. Экспорт в PDF.",
   keywords: ["расписание", "РГСУ", "Минск", "занятия", "университет", "студенты", "преподаватели"],
   authors: [{ name: "Филиал РГСУ в г. Минске" }],
+  /* Запрет автоперевода: Chrome на Android misdetect'ил язык (заставка без
+     текста + коды групп) и «переводил» русский на русский с коверканьем.
+     translate="no" на <html> + эта мета — стандартный выход (аудит-жалоба). */
+  other: {
+    google: "notranslate",
+  },
   robots: {
     index: true,
     follow: true,
@@ -89,7 +102,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="ru" className={evolventa.variable} suppressHydrationWarning>
+    <html lang="ru" translate="no" className={`${evolventa.variable} ${geistMono.variable}`} suppressHydrationWarning>
 
       <body>
         <ThemeProvider
