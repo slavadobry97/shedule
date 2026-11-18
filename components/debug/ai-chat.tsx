@@ -833,6 +833,14 @@ export function DebugAIChat({ stats, dashboard = null, activeTab = "checks", cla
         setInput("");
         setIsLoading(true);
 
+        // Длительность переписки: id сообщений — это Date.now() в base 10,
+        // первый id — момент старта диалога. Считаем по всем сообщениям,
+        // а не по обрезанному окну истории: серверу нужен весь срок сессии.
+        const firstId = Number(messages[0]?.id ?? userMessage.id);
+        const sessionMinutes = Number.isFinite(firstId) && firstId > 0
+            ? Math.max(0, Math.round((Date.now() - firstId) / 60000))
+            : 0;
+
         // Сервер понимает role: "assistant", а в истории чата роль называется
         // "ai". Без перевода модель видела только вопросы и не помнила ответы.
         const history = [...messages, userMessage]
@@ -856,6 +864,7 @@ export function DebugAIChat({ stats, dashboard = null, activeTab = "checks", cla
                     context: stats,
                     dashboard,
                     activeTab,
+                    sessionMinutes,
                     ...(selection ? { provider: selection.provider, model: selection.model } : {}),
                 }),
             });
