@@ -34,6 +34,36 @@ export function isLessonActive(timeSlot: string, dateStr: string): boolean {
 }
 
 /**
+ * Доля прошедшего времени пары (0…1) или null, если пара не идёт сегодня.
+ * Форматы те же, что у isLessonActive: "HH.MM - HH.MM" и "dd.MM.yyyy".
+ * Используется баннером текущего занятия (№131) для полосы продолжительности.
+ */
+export function getLessonProgress(timeSlot: string, dateStr: string): number | null {
+    try {
+        const now = new Date();
+        const lessonDate = parse(dateStr, "dd.MM.yyyy", new Date());
+        if (!isSameDay(now, lessonDate)) return null;
+
+        const [startStr, endStr] = timeSlot.split(" - ");
+        if (!startStr || !endStr) return null;
+
+        const [startHour, startMinute] = startStr.split(".").map(Number);
+        const [endHour, endMinute] = endStr.split(".").map(Number);
+
+        const startTime = set(now, { hours: startHour, minutes: startMinute, seconds: 0, milliseconds: 0 });
+        const endTime = set(now, { hours: endHour, minutes: endMinute, seconds: 0, milliseconds: 0 });
+
+        const total = endTime.getTime() - startTime.getTime();
+        if (total <= 0) return null;
+
+        return Math.min(1, Math.max(0, (now.getTime() - startTime.getTime()) / total));
+    } catch (error) {
+        console.error("Error computing lesson progress:", error);
+        return null;
+    }
+}
+
+/**
  * Checks if the given date string corresponds to today.
  * @param dateStr - format "dd.MM.yyyy"
  */

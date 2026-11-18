@@ -8,13 +8,13 @@ import { getLessonTypeColor } from "@/lib/lesson-type-colors";
 import { getDeclension } from "@/lib/utils";
 import { ScheduleItem } from "@/types/schedule";
 import { isLessonActive, isLessonPast } from "@/lib/time-utils";
+import { LessonProgressStrip } from "./now-banner";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { MOTION_DURATION, MOTION_EASE, MOTION_SPRING } from "@/lib/motion";
 import { DATE_FORMATS, getPairNumber } from "@/lib/constants";
 import {
  CalendarDaysIcon,
  ClockIcon,
- FileTextIcon,
  Location01Icon,
  SearchIcon,
  UserIcon,
@@ -262,6 +262,15 @@ export function MobileScheduleView({
                                                         </div>
                                                     )}
 
+                                                    {/* Полоса продолжительности идущей пары (№131): углы
+                                                        срезаются overflow-hidden карточки */}
+                                                    {isActive && (
+                                                        <LessonProgressStrip
+                                                            timeSlot={primaryLesson.time}
+                                                            dateStr={format(date, DATE_FORMATS.FULL)}
+                                                        />
+                                                    )}
+
                                                     <CardContent className="p-0 flex">
                                                         <div className="flex flex-col items-start justify-center w-20 bg-muted/30 border-r border-border/50 pl-4 shrink-0">
                                                             <span className="text-xs font-bold text-brand uppercase tracking-wider mb-0.5 whitespace-nowrap">
@@ -281,7 +290,6 @@ export function MobileScheduleView({
                                                                     {primaryLesson.subject}
                                                                 </h3>
                                                                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
- <FileTextIcon className="h-3 w-3 shrink-0" />
                                                                     <span className={cn("inline-block h-2 w-2 shrink-0 rounded-full", getLessonTypeColor(primaryLesson.lessonType).dot)} />
                                                                     <span className="truncate">
                                                                         {primaryLesson.lessonType}

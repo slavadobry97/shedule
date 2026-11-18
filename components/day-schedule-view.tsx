@@ -4,6 +4,8 @@ import { useMemo } from "react";
 import { ScheduleItem } from "@/types/schedule";
 import { format } from "date-fns";
 import { DayAgenda } from "./day-agenda";
+import { NowBanner } from "./now-banner";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useHorizontalSwipe } from "@/hooks/use-swipe-navigation";
 
 interface DayScheduleViewProps {
@@ -30,6 +32,8 @@ export function DayScheduleView({
     onPrevDate,
     onNextDate,
 }: DayScheduleViewProps) {
+    const isMobile = useIsMobile();
+
     const dayLessons = useMemo(() => {
         const key = format(date, "dd.MM.yyyy");
         return filteredData.filter((item) => item.date === key);
@@ -40,6 +44,11 @@ export function DayScheduleView({
 
     return (
         <div {...swipe}>
+            {/* Баннер идущей пары — только на мобильном (№131); на десктопе
+                день и так весь виден целиком */}
+            {isMobile && (
+                <NowBanner lessons={dayLessons} showGroups={selectedGroup === "all"} />
+            )}
             <DayAgenda
                 date={date}
                 lessons={dayLessons}
