@@ -57,3 +57,6 @@ next-env.d.ts
 
 # ZCode рабочие артефакты
 /.zcode/
+
+# Архивы исходников для ручного деплоя на cPanel (см. docs/deployment/DEPLOYMENT_GUIDE.md)
+/deploy-source*.zip
